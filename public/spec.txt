@@ -1,0 +1,104 @@
+% Disable warnings about definitions not being next to their use. 
+:-style_check(-discontiguous).
+
+% Define subsets operator.
+:- op(500, xfx, subsets).
+:- table subsets/2.
+
+% Define 'have' (property) mapping.
+:- op(500, xfx, have).    
+
+% Define structure operator.
+:- op(500, xfx, structures).
+:- table structures/2.
+
+% Enumerate available structures.
+structure(X) :-
+    linear(X)
+;   digraph(X)
+;   tree(X).
+
+structure_type(Struct, Type) :-
+    linear(Struct), Type=linear
+;   digraph(Struct), Type=digraph.
+
+% content \= webpages. % order doesn't matter in Prolog, it will "do the right thing" with unification. Neat!
+
+% -------- interface specification --------
+
+% -- Describe tabs
+objects(selected_tabs).
+objects(tabs).
+singleton(active_tab).
+selected_tabs subsets tabs.
+active_tab subsets selected_tabs.
+
+linear(tab_order).
+tab_order structures tabs.
+% ?- tab_order structures selected_tabs => true.
+
+% tabs have content. % NOTE: Content is a variable (because it's capitalized)
+
+% -- Describe web pages
+digraph(internet).
+objects(webpages).
+singleton(active_webpage).
+internet structures webpages.
+active_webpage subsets webpages.
+%webpages have elements.
+
+objects(elements).
+objects(hyperlinks).
+objects(headers).
+objects(divs).
+hyperlinks subsets elements.
+headers subsets elements.
+divs subsets elements.
+
+tree(dom).
+dom structures elements.
+linear(screen_reader_order).
+objects(focusable_elements).
+screen_reader_order structures focusable_elements.
+focusable_elements subsets elements.
+focused_element subsets elements.
+
+% -- Describe state machine
+objects(states).
+singleton(current_state).
+digraph(actions).
+actions structures states.
+current_state subsets states.
+
+:- table can_do_history/3.
+can_do_history(Items, Focus_item, Graph) :-
+    singleton(Focus_item),
+	Focus_item subsets Items,
+    digraph(Graph),
+	Graph structures Items.
+	% would be nice to have the representation stuff, maybe even action stuff.
+
+% ------------- logical rules -------------
+
+
+
+% subsets for the transitive property
+A subsets C :-
+    A subsets B,
+    B subsets C.
+
+% if a structure A applies to a set C, it applies to it subset B
+A structures B :-
+    B subsets C,
+    A structures C.
+
+% ------------ Relaxation rules ------------
+% Maybe this is a second layer of rules if you're reaching for more suggestions?
+
+% linear structures are also directed graphs.
+digraph(A) :-  % this isn't enough to propagate to linear(X) structures Y.
+    linear(A).
+	% todo: others
+
+%objects(A) :-
+%    singleton(A).

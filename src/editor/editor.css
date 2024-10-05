@@ -1,0 +1,41 @@
+.cm-editor,
+.ͼ1 .cm-scroller {
+  font-family: var(--monospace-font) !important;
+}
+
+.cm-editor {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.137);
+  box-shadow: var(--shadow-elevation-medium);
+}
+
+.cm-gutter {
+  background: white;
+  color: black;
+}
+
+.cm-gutterElement {
+  min-width: 20px !important;
+  opacity: 0.4;
+}
+
+.ͼ1 .cm-content {
+  padding: 10px 10px;
+}
+
+.ͼg {
+  color: black;
+}
+.ͼb {
+  color: #4e4e4e;
+}
+.ͼd {
+  color: #005cc5;
+}
+.ͼe {
+  color: #032f62;
+}
+
+.ͼl {
+  color: #0451a5;
+}

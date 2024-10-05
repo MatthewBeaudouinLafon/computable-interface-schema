@@ -1,0 +1,138 @@
+/* TODO: Remove unused fonts */
+@import url('https://fonts.googleapis.com/css2?family=Mate:ital@0;1&family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+
+:root {
+  --shadow-color: 0deg 0% 54%;
+  --shadow-elevation-low: 0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.36),
+    0.3px 0.5px 0.7px -1.2px hsl(var(--shadow-color) / 0.36),
+    0.8px 1.3px 1.7px -2.5px hsl(var(--shadow-color) / 0.36);
+  --shadow-elevation-medium: 0.1px 0.1px 0.2px hsl(var(--shadow-color) / 0.22),
+    0.4px 0.5px 0.8px -0.7px hsl(var(--shadow-color) / 0.24),
+    0.8px 1.1px 1.6px -1.4px hsl(var(--shadow-color) / 0.26),
+    1.9px 2.5px 3.7px -2.1px hsl(var(--shadow-color) / 0.28);
+  --shadow-elevation-high: 0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.4),
+    1.4px 2.2px 2.9px -0.4px hsl(var(--shadow-color) / 0.4),
+    2.7px 4.3px 5.7px -0.8px hsl(var(--shadow-color) / 0.4),
+    4.7px 7.5px 10px -1.2px hsl(var(--shadow-color) / 0.4),
+    8px 12.8px 17px -1.7px hsl(var(--shadow-color) / 0.4),
+    13.2px 21.1px 28px -2.1px hsl(var(--shadow-color) / 0.4),
+    20.8px 33.3px 44.2px -2.5px hsl(var(--shadow-color) / 0.4);
+  --node-transition: 0.2s cubic-bezier(0.86, 0, 0.07, 1);
+
+  --monospace-font: 'Ubuntu Sans Mono';
+  --header-font: 'Neuton';
+  --sans-serif-font: 'Source Sans 3';
+  --serif-font: 'Source Serif 4';
+  --pane-height: 800px;
+}
+
+/* Some of the styles are adapted from https://niklasfasching.de/posts/just-enough-css/ */
+html {
+  overflow-y: scroll;
+  height: 100%;
+  word-wrap: break-word;
+  margin: 0 auto;
+  padding: 1.5em;
+  font-family: var(--sans-serif-font);
+  background: #f6f5f0;
+}
+
+@media (min-width: 768px) {
+  html {
+    max-width: 42em;
+  }
+}
+
+h1 {
+  font-size: 2em;
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 2.5rem 0 1.5rem 0;
+  line-height: 1.25;
+  color: #000000;
+  font-family: var(--header-font);
+}
+
+a {
+  text-decoration: none;
+}
+a:hover,
+a:focus,
+a:active {
+  text-decoration: underline;
+}
+
+.spec-editor {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-editor > .cm-editor {
+  height: 400px;
+
+  resize: vertical;
+  overflow: auto;
+}
+
+.query-editor > .cm-editor {
+  height: 50px;
+}
+
+.editor-heading {
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.cm-editor {
+  height: 100%;
+  background: white;
+
+}
+
+.query-result-container {
+  display: flex;
+  font-family: var(--monospace-font);
+  
+  width: fit-content;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.query-result {
+  display: flex;
+}
+
+.editor-status {
+  margin-top: 15px;
+  flex-wrap: wrap;
+  position: relative;
+  padding-left: 15px;
+  white-space: pre;
+  color: rgba(0,0,0,0.8)
+}
+
+.editor-status::before {
+  content: '';
+  height: 100%;
+  width: 2px;
+  border-right: 1px solid rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 0px;
+  left: 3px;
+}
+
+.query-result-entry {
+  color: black;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  padding: 1px 2px;
+}
