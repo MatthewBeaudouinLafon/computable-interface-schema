@@ -28,7 +28,10 @@ import { EditorView } from "codemirror";
 import { create_el } from "../utilities";
 import "./editor.css";
 
-export function create_default_editor(heading_label: string = "") {
+export function create_default_editor(
+  heading_label: string = "",
+  default_text: string
+) {
   const parent = create_el("div", "editor-container", document.body);
 
   if (heading_label != "") {
@@ -72,11 +75,15 @@ export function create_default_editor(heading_label: string = "") {
     ]),
   ])();
 
+  const editor = new EditorView({
+    extensions: [...basic_setup, StreamLanguage.define(erlang)],
+    parent: parent,
+  });
+
+  editor.dispatch({ changes: [{ from: 0, insert: default_text }] });
+
   return {
-    editor: new EditorView({
-      extensions: [...basic_setup, StreamLanguage.define(erlang)],
-      parent: parent,
-    }),
+    editor,
     parent,
   };
 }

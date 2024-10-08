@@ -109,7 +109,7 @@ a:active {
   display: flex;
 }
 
-.editor-status {
+.editor-output {
   margin-top: 15px;
   flex-wrap: wrap;
   position: relative;
@@ -118,7 +118,7 @@ a:active {
   color: rgba(0,0,0,0.8)
 }
 
-.editor-status::before {
+.editor-output::before {
   content: '';
   height: 100%;
   width: 2px;
@@ -135,4 +135,9 @@ a:active {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   padding: 1px 2px;
+}
+
+
+.diagram-output {
+  padding: 40px;
 }

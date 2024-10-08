@@ -38,3 +38,35 @@ export function hash_code(str: string): number {
   }
   return (0.5 * hash) / 2_147_483_647 + 0.5;
 }
+
+export function query_result_to_div(
+  query_code: string,
+  data: { [key: string]: string }
+) {
+  // Create a container
+  const container = create_el("div", "query-result-container");
+  let html = query_code;
+
+  console.log(data);
+
+  // Add in each result
+  for (const [key, value] of Object.entries(data)) {
+    if (key.startsWith("$")) continue;
+
+    const index = html.indexOf(key);
+
+    if (index >= 0) {
+      const value_entry = create_el("div", "query-result-entry");
+      value_entry.innerText = value;
+      const hue = Math.floor(hash_code(value) * 360);
+      value_entry.style.background = `oklch(0.7 0.4 ${hue}deg / 0.15)`;
+
+      html =
+        html.slice(0, index) + value_entry.outerHTML + html.slice(index + 1);
+    }
+  }
+
+  container.innerHTML = html;
+
+  return container;
+}
