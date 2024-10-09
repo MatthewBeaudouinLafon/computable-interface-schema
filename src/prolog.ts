@@ -1,3 +1,4 @@
+import { setup_bloom } from "./bloom";
 import { State } from "./State";
 import { query_result_to_div } from "./utilities";
 
@@ -20,10 +21,10 @@ export async function execute_prolog() {
     success = spec_query_ret.success;
   } catch (e) {
     success = false;
-    console.log("[run_prolog > spec_query_ret]");
+    // console.log("[run_prolog > spec_query_ret]", e);
   }
 
-  console.log("[run_prolog > spec_query_ret]", spec_query_ret);
+  // console.log("[run_prolog > spec_query_ret]", spec_query_ret);
   spec_output.innerText = success ? "Success." : "Fail.";
 
   query_output.innerHTML = "";
@@ -33,13 +34,13 @@ export async function execute_prolog() {
     const query = swipl.prolog.query(query_code);
     let query_ret = query.next() as any;
     query_output.append(query_result_to_div(query_code, query_ret.value ?? {}));
-    console.log("[run_prolog > query_ret]", query_ret);
+    // console.log("[run_prolog > query_ret]", query_ret);
 
     let MAX_LIMIT = 50;
     let ITERS = 0;
     while (query_ret?.done != true && ITERS < MAX_LIMIT) {
       query_ret = query.next();
-      console.log("[run_prolog > query_ret]", query_ret);
+      // console.log("[run_prolog > query_ret]", query_ret);
       query_output.append(
         query_result_to_div(query_code, query_ret.value ?? {})
       );
@@ -53,4 +54,6 @@ export async function execute_prolog() {
 
     query_output.innerHTML += `${Math.round(performance.now() - time)}ms.`;
   }
+
+  setup_bloom();
 }

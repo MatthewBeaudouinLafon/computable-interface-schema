@@ -1,3 +1,5 @@
+import { State } from "./State";
+
 export function create_el(
   tag: string,
   classes: string[] | string = [],
@@ -41,13 +43,11 @@ export function hash_code(str: string): number {
 
 export function query_result_to_div(
   query_code: string,
-  data: { [key: string]: string }
+  data: { [key: string]: string } // { X: 'tabs', Y: '...' }
 ) {
   // Create a container
   const container = create_el("div", "query-result-container");
   let html = query_code;
-
-  console.log(data);
 
   // Add in each result
   for (const [key, value] of Object.entries(data)) {
@@ -69,4 +69,23 @@ export function query_result_to_div(
   container.innerHTML = html;
 
   return container;
+}
+
+export function get_all_prolog_query_results(
+  query_raw: string,
+  limit: number = 50
+) {
+  const query = State.swipl.prolog.query(query_raw);
+  let query_ret = query.next() as any;
+
+  let query_results: any[] = [];
+  let iters = 0;
+  while (query_ret?.done != true && iters < limit) {
+    delete query_ret.value["$tag"];
+    query_results.push(query_ret.value);
+    query_ret = query.next();
+    iters++;
+  }
+
+  return query_results;
 }
