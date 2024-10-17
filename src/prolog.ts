@@ -5,10 +5,24 @@ import { query_result_to_div } from "./utilities";
 export async function execute_prolog() {
   const time = performance.now();
   const { swipl, spec_output, query_output } = State;
+  const header_code = State.header_editor.state.doc.toString();
   const spec_code = State.spec_editor.state.doc.toString();
+  const design_patterns_code = State.design_patterns_editor.state.doc.toString();
+  const rules_code = State.rules_editor.state.doc.toString();
   const query_code = State.query_editor.state.doc.toString();
 
-  swipl.FS.writeFile("/spec.pl", spec_code);
+  const full_code = [
+    header_code,
+    spec_code,
+    rules_code,
+    design_patterns_code,
+    rules_code
+  ].reduce((accumulator, currentValue) => accumulator + '\n' + currentValue,
+    '',
+  )
+
+  // TODO: consider renaming spec.pl to something like full_code.
+  swipl.FS.writeFile("/spec.pl", full_code);
 
   // Execute the spec
   let spec_query;

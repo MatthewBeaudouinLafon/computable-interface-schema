@@ -30,12 +30,17 @@ import "./editor.css";
 
 export function create_default_editor(
   heading_label: string = "",
-  default_text: string
+  default_text: string,
+  default_open: boolean = false, 
 ) {
-  const parent = create_el("div", "editor-container", document.body);
+  const parent = create_el("details", "editor-container", document.body);
+
+  if (default_open) {
+    parent.setAttribute("open", "");
+  }
 
   if (heading_label != "") {
-    const heading = create_el("div", "editor-heading", parent);
+    const heading = create_el("summary", "editor-heading", parent);
     heading.innerText = `${heading_label}:`;
   }
 
