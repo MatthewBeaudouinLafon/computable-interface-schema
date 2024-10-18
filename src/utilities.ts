@@ -50,19 +50,31 @@ export function query_result_to_div(
   let html = query_code;
 
   // Add in each result
+  console.log(data);
   for (const [key, value] of Object.entries(data)) {
     if (key.startsWith("$")) continue;
 
-    const index = html.indexOf(key);
+    const index_start = html.indexOf(key);
 
-    if (index >= 0) {
+    // Find index of next space or comma. Find index of each possible stop 
+    // character, then pick the smallest value that's not -1.
+    const html_length: number = html.length;
+    const index_end: number = [' ', ',',')'].map(
+      (char) => {
+        return html.indexOf(char, index_start);
+    }).reduce(
+      (acc: number, curr: number) => curr > -1 ? Math.min(acc, curr) : acc,
+      html_length
+    );
+
+    if (index_start >= 0) {
       const value_entry = create_el("div", "query-result-entry");
       value_entry.innerText = value;
       const hue = Math.floor(hash_code(value) * 360);
       value_entry.style.background = `oklch(0.7 0.4 ${hue}deg / 0.15)`;
 
       html =
-        html.slice(0, index) + value_entry.outerHTML + html.slice(index + 1);
+        html.slice(0, index_start) + value_entry.outerHTML + html.slice(index_end);
     }
   }
 
