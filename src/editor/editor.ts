@@ -23,6 +23,11 @@ import {
   keymap,
   // lineNumbers,
   rectangularSelection,
+  Decoration,
+  MatchDecorator,
+  ViewPlugin,
+  DecorationSet,
+  ViewUpdate,
 } from "@codemirror/view";
 import { EditorView } from "codemirror";
 import { create_el } from "../utilities";
@@ -39,30 +44,36 @@ export function prepare_spec_dropdown(items: string[]) {
     }
 
     // TODO: sanitize spec_name?
-    const target = event.target as HTMLSelectElement
+    const target = event.target as HTMLSelectElement;
     const spec_name = target.value;
-    const new_spec = await (await fetch(`./interface-schema/specifications/${spec_name}.pl`)).text();
+    const new_spec = await (
+      await fetch(`./interface-schema/specifications/${spec_name}.pl`)
+    ).text();
 
     console.log(new_spec.startsWith("<!DOCTYPE html>"));
-    if (new_spec.startsWith('<!DOCTYPE html>')) {
+    if (new_spec.startsWith("<!DOCTYPE html>")) {
       // For some reason fetch returns the html file when it doens't find the prolog file...
       // In which case, show an empty file.
-      State.spec_editor.dispatch({changes: {
-        from: 0,
-        to: State.spec_editor.state.doc.length
-      }});
+      State.spec_editor.dispatch({
+        changes: {
+          from: 0,
+          to: State.spec_editor.state.doc.length,
+        },
+      });
     } else {
       // Else we pick an actual file and put it in the editor.
 
       // TODO: probably keep state of edited files in memory. Maybe do:
       // State.spec_states = { file_name: CodeMirrorState }
-      State.spec_editor.dispatch({changes: {
-        from: 0,
-        to: State.spec_editor.state.doc.length,
-        insert: new_spec
-      }});
+      State.spec_editor.dispatch({
+        changes: {
+          from: 0,
+          to: State.spec_editor.state.doc.length,
+          insert: new_spec,
+        },
+      });
     }
-  }
+  };
 
   items.forEach((item) => {
     const option = create_el("option", "editor-dropdown-option", dropdownEl);
@@ -73,11 +84,43 @@ export function prepare_spec_dropdown(items: string[]) {
   return dropdownEl;
 }
 
+// Interface schema syntax highlighting
+const CustomOperatorMatcher = new MatchDecorator({
+  regexp: /structures|subsets/g,
+  decoration: (match) => {
+    console.log(match);
+    return Decoration.mark({ class: "cm-custom-highlight" });
+  },
+  maxLength: 1,
+});
+
+const customHighlight = ViewPlugin.fromClass(
+  class {
+    customHighlight: DecorationSet;
+    constructor(view: EditorView) {
+      this.customHighlight = CustomOperatorMatcher.createDeco(view);
+    }
+    update(update: ViewUpdate) {
+      this.customHighlight = CustomOperatorMatcher.updateDeco(
+        update,
+        this.customHighlight
+      );
+    }
+  },
+  {
+    decorations: (instance) => instance.customHighlight,
+    provide: (plugin) =>
+      EditorView.atomicRanges.of((view) => {
+        return view.plugin(plugin)?.customHighlight || Decoration.none;
+      }),
+  }
+);
+
 export function create_default_editor(
   heading_label: string = "",
   default_text: string,
-  default_open: boolean = false, 
-  dropdownEl: HTMLElement | null = null,
+  default_open: boolean = false,
+  dropdownEl: HTMLElement | null = null
 ) {
   const parent = create_el("details", "editor-container", document.body);
 
@@ -119,6 +162,7 @@ export function create_default_editor(
     crosshairCursor(),
     // highlightActiveLine(),
     highlightSelectionMatches(),
+    customHighlight,
     keymap.of([
       ...closeBracketsKeymap,
       ...defaultKeymap,

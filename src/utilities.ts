@@ -1,3 +1,4 @@
+import { EditorView } from "codemirror";
 import { State } from "./State";
 
 export function create_el(
@@ -56,16 +57,17 @@ export function query_result_to_div(
 
     const index_start = html.indexOf(key);
 
-    // Find index of next space or comma. Find index of each possible stop 
+    // Find index of next space or comma. Find index of each possible stop
     // character, then pick the smallest value that's not -1.
     const html_length: number = html.length;
-    const index_end: number = [' ', ',',')'].map(
-      (char) => {
+    const index_end: number = [" ", ",", ")"]
+      .map((char) => {
         return html.indexOf(char, index_start);
-    }).reduce(
-      (acc: number, curr: number) => curr > -1 ? Math.min(acc, curr) : acc,
-      html_length
-    );
+      })
+      .reduce(
+        (acc: number, curr: number) => (curr > -1 ? Math.min(acc, curr) : acc),
+        html_length
+      );
 
     if (index_start >= 0) {
       const value_entry = create_el("div", "query-result-entry");
@@ -74,7 +76,9 @@ export function query_result_to_div(
       value_entry.style.background = `oklch(0.7 0.4 ${hue}deg / 0.15)`;
 
       html =
-        html.slice(0, index_start) + value_entry.outerHTML + html.slice(index_end);
+        html.slice(0, index_start) +
+        value_entry.outerHTML +
+        html.slice(index_end);
     }
   }
 
@@ -100,4 +104,21 @@ export function get_all_prolog_query_results(
   }
 
   return query_results;
+}
+
+const highlight_keywords = ["structures", "subsets"];
+
+// export function custom_highlighting(editor: EditorView);
+
+export function add_custom_highlighting(editor: EditorView) {
+  editor.dom.addEventListener("change", (_) => {
+    // console.log(editor.dom)
+    const els = [...editor.dom.querySelectorAll(".ͼc")] as HTMLElement[];
+
+    for (const el of els) {
+      if (highlight_keywords.includes(el.innerText)) {
+        el.classList.add("cm-ok-dev");
+      }
+    }
+  });
 }
