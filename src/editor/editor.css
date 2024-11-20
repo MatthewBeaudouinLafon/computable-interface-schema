@@ -5,8 +5,8 @@
 
 .cm-editor {
   width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.137);
-  box-shadow: var(--shadow-elevation-medium);
+  /* border: 1px solid rgba(0, 0, 0, 0.137); */
+  outline: none !important;
 }
 
 .cm-gutter {

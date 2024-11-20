@@ -1,102 +1,99 @@
 import SWIPL from "swipl-wasm";
-import { setup_bloom } from "./bloom";
-import { create_default_editor, prepare_spec_dropdown } from "./editor/editor";
-import { execute_prolog } from "./prolog";
+import { loop_scene } from "./diagram/scene";
+import { create_editor, Editor } from "./editor/editor";
 import { State } from "./State";
 import "./style.css";
-import { add_custom_highlighting, create_el } from "./utilities";
+import { create_el } from "./utilities/utilities";
+
+const file_picker_button = create_el("button", "file-picker-button", document.body);
+file_picker_button.innerText = "Choose save folder";
+
+const editors_container = create_el("div", "editors-container", document.body);
+
+const SPEC_PATHS = ["chrome_tabs.pl", "ios_tabs.pl"];
 
 async function setup() {
-  // --- Header editor
-  // TODO: hide when in some kind of user facing mode.
-  const { editor: header_editor, parent: header_parent } =
-    create_default_editor(
-      "Header",
-      await (await fetch("./interface-schema/header.pl")).text()
-    );
-  header_parent.classList.add("spec-editor");
-  State.header_editor = header_editor;
+  /* -------------------- Header editor ------------------- */
+  State.header_editor = create_editor("Header", await (await fetch("./interface-schema/header.pl")).text());
 
-  // --- Spec editor
-  // Setup dropdown
-  const spec_dropdown = prepare_spec_dropdown(State.spec_list);
-
-  // Setup editor
-  const { editor: spec_editor, parent: spec_parent } = create_default_editor(
-    "Specification",
-    // TODO: make dropdown for different default specs.
-    await (
-      await fetch("./interface-schema/specifications/web-browser.pl")
-    ).text(),
-    true,
-    spec_dropdown
+  /* ---------------- Specification editor ---------------- */
+  State.spec_editors = await Promise.all(
+    SPEC_PATHS.map(async (spec) =>
+      create_editor(spec, await (await fetch(`./interface-schema/specifications/${spec}`)).text()),
+    ),
   );
-  spec_parent.classList.add("spec-editor");
-  State.spec_editor = spec_editor;
 
-  // --- Design patterns editor
-  // TODO: hide when in some kind of user facing mode.
-  const { editor: design_patterns_editor, parent: design_patterns_parent } =
-    create_default_editor(
-      "Design Patterns",
-      // TODO: combine patterns in the folder
-      await (
-        await fetch("./interface-schema/design-patterns/history.pl")
-      ).text()
-    );
-  design_patterns_parent.classList.add("spec-editor");
-  State.design_patterns_editor = design_patterns_editor;
+  State.spec_editors.forEach((editor) => editors_container.append(editor.parent));
 
-  // --- Rules editor
-  // TODO: hide when in some kind of user facing mode.
-  const { editor: rules_editor, parent: rules_parent } = create_default_editor(
-    "Rules",
-    await (await fetch("./interface-schema/rules.pl")).text()
+  /* --------------- Design patterns editor --------------- */
+  State.design_patterns_editor = create_editor(
+    "Design Patterns",
+    // TODO: combine patterns in the folder
+    await (await fetch("./interface-schema/design-patterns/history.pl")).text(),
   );
-  rules_parent.classList.add("spec-editor");
-  State.rules_editor = rules_editor;
 
-  // --- Query editor
-  const { editor: query_editor, parent: query_parent } = create_default_editor(
-    "Query",
-    `objects(X).`,
-    true
-  );
-  query_parent.classList.add("query-editor");
-  State.query_editor = query_editor;
+  /* -------------------- Rules editor -------------------- */
+  State.rules_editor = create_editor("Rules", await (await fetch("./interface-schema/rules.pl")).text());
+
+  /* -------------------- Query editor -------------------- */
+  State.query_editor = create_editor("Query", `X subsets Y.`);
+  State.query_editor.parent.classList.add("query-editor");
 
   // Output(s)
-  State.spec_output = create_el("div", "editor-output", spec_parent);
-  State.query_output = create_el("div", "editor-output", query_parent);
-
-  // Diagram output
-  State.diagram_output = create_el("div", "diagram-output", document.body);
+  State.query_output = create_el("div", "editor-output", State.query_editor.parent);
 
   // SWIPL WASM setup
   State.swipl = await SWIPL({ arguments: ["-q"] });
 
+  // Diagram view
+  // State.scene = create_scene(State.spec_editor.parent);
+
   // Live programming
   let typingTimer: any | null;
 
-  spec_editor.dom.addEventListener("change", (_) => {
-    if (typingTimer != null) clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => execute_prolog(), 1000); // Should this be synchronous?
-  });
+  State.spec_editors.map((editor) =>
+    editor.editor_view.dom.addEventListener("change", (_) => {
+      if (typingTimer != null) clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => update(editor), 1000); // Should this be synchronous?
+    }),
+  );
+}
 
-  query_editor.dom.addEventListener("change", (_) => {
-    if (typingTimer != null) clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => execute_prolog(), 1000);
-  });
+async function update(from: Editor) {
+  if (State.file_system_handle != null) {
+    const file_handle = await State.file_system_handle.getFileHandle(from.path, { create: true });
+
+    // Create a FileSystemWritableFileStream to write to.
+    const writable = await file_handle.createWritable();
+
+    // Write the contents of the file to the stream.
+    const raw = from.editor_view.state.doc.toString();
+    await writable.write(raw);
+    await writable.close();
+  } else {
+    alert("Note: file not being saved. Please select a folder.");
+  }
+
+  // await execute_prolog();
 }
 
 async function main() {
+  // Write out the file
+  file_picker_button.addEventListener("click", async () => {
+    State.file_system_handle = await window.showDirectoryPicker();
+  });
+
   await setup();
 
   // Initial execute
-  await execute_prolog();
+  // await update();
+}
 
-  // Setup bloom
-  await setup_bloom();
+async function loop() {
+  if (State.scene != null) loop_scene(State.scene);
+
+  requestAnimationFrame(loop);
 }
 
 main();
+loop();

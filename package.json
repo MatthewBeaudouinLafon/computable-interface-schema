@@ -15,10 +15,18 @@
     "@codemirror/legacy-modes": "^6.4.1",
     "@penrose/bloom": "^4.0.0-alpha.3",
     "@types/codemirror": "^5.60.15",
+    "@types/d3-force": "^3.0.10",
     "codemirror": "^6.0.1",
+    "curved-arrows": "^0.3.0",
+    "d3-force": "^3.0.0",
+    "perfect-arrows": "^0.3.7",
     "swipl-wasm": "^4.0.8",
     "typescript": "^5.6.2",
     "vite": "^5.4.8",
-    "vite-plugin-top-level-await": "^1.4.4"
+    "vite-plugin-top-level-await": "^1.4.4",
+    "webcola": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/wicg-file-system-access": "^2023.10.5"
   }
 }

@@ -1,0 +1,11 @@
+.s-arrow {
+  stroke-width: 0.8px;
+  fill: none;
+  stroke: #959595;
+  opacity: 1;
+}
+
+.s-arrow-head {
+  fill: #4c4c4c;
+  opacity: 1;
+}
