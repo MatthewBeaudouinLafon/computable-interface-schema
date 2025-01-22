@@ -1,0 +1,32 @@
+IS {
+  
+  program 
+    = (statement eol)*statement
+    
+  statement 
+    =  relation -- relation
+    | pattern -- pattern
+    | def -- definition
+    
+  pattern = "pattern " ident (" extends " ident)?":"eol
+     ("\t"statement eol)+"end"
+     
+  relation = (def | expr) " " ("mapto many"  | "mapto" | "structures" | "constrains") " " expr
+
+  def  (definition statement)
+    = (ident": ") + ident
+   
+  expr
+    = ident -- var
+    | expr ("." | "->") expr -- binary
+    | (expr | def) " covers " expr " along " expr -- cover
+   
+  ident  (an identifier)
+    = letter alnum*
+
+  number  (a number)
+    = digit* "." digit+  -- fract
+    | digit+             -- whole
+  
+  eol = "\r"? "\n"
+}

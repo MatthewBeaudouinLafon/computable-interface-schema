@@ -46,6 +46,13 @@ test("multiple declaration", async () => {
   } as Node & { type: "Program" });
 });
 
+/*
+
+pattern text extends text:
+	many: text: concepts mapto many words
+	digraph: mindmap structures concepts
+  
+  */
 test("pattern declaration", async () => {
   expect(
     parse(
