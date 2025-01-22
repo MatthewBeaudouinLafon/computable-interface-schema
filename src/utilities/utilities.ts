@@ -23,6 +23,10 @@ export function create_el(tag: string, classes: string[] | string = [], parent?:
   return el;
 }
 
+export function assert_never(_never: never, message?: string): never {
+  throw new Error(message || `Reached unreachable code: unexpected value ${_never}`);
+}
+
 /**
  * Returns a hash code from a string
  * @param  {String} str The string to hash.
