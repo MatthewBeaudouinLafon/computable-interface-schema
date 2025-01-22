@@ -1,6 +1,6 @@
-import { Program } from "./parser_types";
+import { Node } from "./parser_types";
 
-export function parse(code: string): Program {
+export function parse(code: string): Node & { type: "Program" } {
   const lines = code.split("\n");
 
   for (const line of lines) {
