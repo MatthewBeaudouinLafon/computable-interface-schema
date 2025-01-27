@@ -5,7 +5,8 @@ IS {
     = (statement eol+)*statement eol*
     
   statement 
-    =  relation -- relation
+    = "%" (ident | " ")* -- comment
+    | relation -- relation
     | pattern -- pattern
     | def -- definition
     | expr -- expression
