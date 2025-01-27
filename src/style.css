@@ -92,7 +92,6 @@ html {
   white-space: pre;
   color: rgba(0,0,0,0.8);
   font-family: var(--monospace-font);
-  line-height: 1.7em;
 }
 
 .editor-output::before {

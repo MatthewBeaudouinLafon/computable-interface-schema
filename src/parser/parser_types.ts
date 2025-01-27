@@ -54,10 +54,12 @@ export type Statement =
   | {
       _type: "PatternStatement";
       name: Expression & { _type: "Identifier" };
-      args: (
-        | (Expression & { _type: "Identifier" })
-        | (Statement & { _type: "DefinitionStatement" })
-      )[];
+      args:
+        | (
+            | (Expression & { _type: "Identifier" })
+            | (Statement & { _type: "DefinitionStatement" })
+          )[]
+        | undefined;
       statements: Statement[];
       extends?: Expression & { _type: "Identifier" };
     };
@@ -76,7 +78,11 @@ export type Node =
           statements: Statement[];
         }
     )
-  | WithExpression;
+  | WithExpression
+  | {
+      _type: "Error";
+      reason: string;
+    };
 
 export type Expression =
   | {

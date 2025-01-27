@@ -1,4 +1,5 @@
 import SWIPL from "swipl-wasm";
+import YAML from 'yaml';
 import { create_editor_alt, Editor } from "./editor/editor";
 import { parse } from "./parser/parser";
 import { State } from "./State";
@@ -46,6 +47,7 @@ async function setup() {
   output = create_el('div', 'editor-output', document.body, { innerText: "Output"})
 
   spec_editors.map(editor => update(editor))
+  
 }
 
 async function update(from: Editor) {
@@ -70,7 +72,7 @@ async function update(from: Editor) {
   }
 
   const parsed = parse(raw);
-  output.innerText = parsed;
+  output.innerText = YAML.stringify(parsed);
 }
 
 async function main() {

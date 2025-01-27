@@ -131,7 +131,7 @@ semantics.addOperation("parse", {
   },
 });
 
-export function parse(code: string): string {
+export function parse(code: string): Node {
   // Pre-process
   code =
     code
@@ -144,21 +144,15 @@ export function parse(code: string): string {
   console.log("Preprocessed code\n");
   console.log(code);
 
-  try {
-    const m = grammar.match(code);
+  const m = grammar.match(code);
 
-    if (!m.succeeded()) {
-      return `[Failed!]\n\nDid you make sure to use backward arrows?\nEnd a pattern with an 'end'?\nUse the plural for covers?\nRemove inline comments?\n\nHere's what the parser has to say about it:\n${m.message}`;
-    }
-
-    const parsed = semantics(grammar.match(code)).parse();
-    return `[Parsed!]\n\n${str(parsed)}`;
-  } catch (e) {
-    console.error(e);
-    return `[Failed!]\n\n${e}`;
+  if (!m.succeeded()) {
+    return {
+      _type: "Error",
+      reason: `[Failed!]\n\nDid you make sure to use backward arrows?\nEnd a pattern with an 'end'?\nUse the plural for covers?\nRemove inline comments?\n\nHere's what the parser has to say about it:\n${m.message}`,
+    };
   }
-}
 
-export function str(ast: Node): string {
-  return JSON.stringify(ast, null, 2);
+  const parsed = semantics(grammar.match(code)).parse();
+  return parsed;
 }
