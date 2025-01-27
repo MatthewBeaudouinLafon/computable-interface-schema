@@ -1,4 +1,8 @@
-import { closeBrackets, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
+import {
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
   bracketMatching,
@@ -10,100 +14,147 @@ import {
 } from "@codemirror/language";
 import { erlang } from "@codemirror/legacy-modes/mode/erlang";
 import { lintKeymap } from "@codemirror/lint";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { EditorState } from "@codemirror/state";
+import {
+  highlightSelectionMatches,
+  RegExpCursor,
+  searchKeymap,
+} from "@codemirror/search";
+import { EditorState, Range, StateEffect, StateField } from "@codemirror/state";
 import {
   crosshairCursor,
   Decoration,
-  DecorationSet,
   dropCursor,
   highlightSpecialChars,
   keymap,
-  MatchDecorator,
   // lineNumbers,
   rectangularSelection,
-  ViewPlugin,
-  ViewUpdate,
 } from "@codemirror/view";
 import { EditorView } from "codemirror";
 import { create_el } from "../utilities/utilities";
 import "./editor.css";
 
-// export function prepare_spec_dropdown(items: string[]) {
-//   const dropdownEl = document.createElement("select");
-//   dropdownEl.classList.add("editor-dropdown");
+const keywords = [
+  "structures",
+  "subsets",
+  "constrains",
+  "covers",
+  "along",
+  "groups",
+  "represents",
+  "with",
+];
 
-//   dropdownEl.onchange = async function (event) {
-//     if (!event.target) {
-//       return;
-//     }
+export function create_editor_alt(
+  path: string = "",
+  default_text: string
+): Editor {
+  const parent = create_el("div", "editor-container");
 
-//     // TODO: sanitize spec_name?
-//     const target = event.target as HTMLSelectElement;
-//     const spec_name = target.value;
-//     const new_spec = await (await fetch(`./interface-schema/specifications/${spec_name}.pl`)).text();
+  if (path != "") {
+    const heading = create_el("div", "editor-heading", parent);
+    heading.innerText = `${path}`;
+  }
 
-//     console.log(new_spec.startsWith("<!DOCTYPE html>"));
-//     if (new_spec.startsWith("<!DOCTYPE html>")) {
-//       // For some reason fetch returns the html file when it doens't find the prolog file...
-//       // In which case, show an empty file.
-//       State.spec_editor.editor_view.dispatch({
-//         changes: {
-//           from: 0,
-//           to: State.spec_editor.editor_view.state.doc.length,
-//         },
-//       });
-//     } else {
-//       // Else we pick an actual file and put it in the editor.
+  /* -------------------- Highlighting -------------------- */
+  const highlight_effect = StateEffect.define<Range<Decoration>[]>();
 
-//       // TODO: probably keep state of edited files in memory. Maybe do:
-//       // State.spec_states = { file_name: CodeMirrorState }
-//       State.spec_editor.editor_view.dispatch({
-//         changes: {
-//           from: 0,
-//           to: State.spec_editor.editor_view.state.doc.length,
-//           insert: new_spec,
-//         },
-//       });
-//     }
-//   };
+  const highlight_extension = StateField.define({
+    create() {
+      return Decoration.none;
+    },
+    update(value, transaction) {
+      value = value.map(transaction.changes);
 
-//   items.forEach((item) => {
-//     const option = create_el("option", "editor-dropdown-option", dropdownEl);
-//     option.setAttribute("value", item);
-//     option.textContent = item;
-//   });
+      for (let effect of transaction.effects) {
+        if (effect.is(highlight_effect))
+          value = value.update({ add: effect.value, sort: true });
+      }
 
-//   return dropdownEl;
-// }
+      return value;
+    },
+    provide: (f) => EditorView.decorations.from(f),
+  });
 
-// Interface schema syntax highlighting
-const CustomOperatorMatcher = new MatchDecorator({
-  regexp: /structures|subsets/g,
-  decoration: (match) => {
-    return Decoration.mark({ class: "cm-custom-highlight" });
-  },
-  maxLength: 1,
-});
+  const update_listener = EditorView.updateListener.of((update) => {
+    if (update.docChanged) {
+      let cursor = new RegExpCursor(
+        view.state.doc,
+        keywords.map((k) => `(${k})`).join("|")
+      );
 
-const customHighlight = ViewPlugin.fromClass(
-  class {
-    customHighlight: DecorationSet;
-    constructor(view: EditorView) {
-      this.customHighlight = CustomOperatorMatcher.createDeco(view);
+      while (cursor.next() && !cursor.done) {
+        const highlight_decoration = Decoration.mark({
+          attributes: { class: "cm-custom-highlight" },
+        });
+
+        view.dispatch({
+          effects: highlight_effect.of([
+            highlight_decoration.range(cursor.value.from, cursor.value.to),
+          ]),
+        });
+      }
     }
-    update(update: ViewUpdate) {
-      this.customHighlight = CustomOperatorMatcher.updateDeco(update, this.customHighlight);
-    }
-  },
-  {
-    decorations: (instance) => instance.customHighlight,
-    provide: (plugin) =>
-      EditorView.atomicRanges.of((view) => {
-        return view.plugin(plugin)?.customHighlight || Decoration.none;
-      }),
-  },
-);
+  });
+
+  // https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
+  const basic_setup = (() => [
+    EditorView.updateListener.of((v) => {
+      if (v.docChanged) {
+        const event = new CustomEvent("change", { detail: v });
+        v.view.dom.dispatchEvent(event);
+      }
+    }),
+    // lineNumbers(),
+    // highlightActiveLineGutter(),
+    highlightSpecialChars(),
+    history(),
+    // foldGutter(),
+    // drawSelection(),
+    dropCursor(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    bracketMatching(),
+    closeBrackets(),
+    // autocompletion(),
+    rectangularSelection(),
+    crosshairCursor(),
+    // highlightActiveLine(),
+    highlightSelectionMatches(),
+    keymap.of([
+      ...closeBracketsKeymap,
+      ...defaultKeymap,
+      ...searchKeymap,
+      ...historyKeymap,
+      ...foldKeymap,
+      ...completionKeymap,
+      ...lintKeymap,
+    ]),
+  ])();
+
+  const state = EditorState.create({
+    extensions: [
+      ...basic_setup,
+      StreamLanguage.define(erlang),
+      EditorView.lineWrapping,
+      update_listener,
+      highlight_extension,
+    ],
+  });
+
+  const view = new EditorView({
+    state,
+    parent: parent,
+  });
+
+  view.dispatch({ changes: [{ from: 0, insert: default_text }] });
+
+  return {
+    editor_view: view,
+    parent,
+    path,
+  };
+}
 
 export type Editor = {
   parent: HTMLElement;
@@ -144,7 +195,6 @@ export function create_editor(path: string = "", default_text: string): Editor {
     crosshairCursor(),
     // highlightActiveLine(),
     highlightSelectionMatches(),
-    customHighlight,
     keymap.of([
       ...closeBracketsKeymap,
       ...defaultKeymap,
@@ -158,7 +208,11 @@ export function create_editor(path: string = "", default_text: string): Editor {
 
   const editor_view = new EditorView({
     state: EditorState.create({
-      extensions: [...basic_setup, StreamLanguage.define(erlang), EditorView.lineWrapping],
+      extensions: [
+        ...basic_setup,
+        StreamLanguage.define(erlang),
+        EditorView.lineWrapping,
+      ],
     }),
     parent: parent,
   });

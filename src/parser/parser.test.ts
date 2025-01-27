@@ -9,7 +9,7 @@ test("basic declaration", async () => {
       {
         type: "DefinitionStatement",
         decorators: ["text"],
-        var: { type: "Var", name: "prompt" },
+        name: { type: "Identifier", name: "prompt" },
       },
     ],
   } as Node & { type: "Program" });
@@ -22,7 +22,7 @@ test("declaration with multiple decorators", async () => {
       {
         type: "DefinitionStatement",
         decorators: ["text", "many"],
-        var: { type: "Var", name: "prompts" },
+        name: { type: "Identifier", name: "prompts" },
       },
     ],
   } as Node & { type: "Program" });
@@ -35,12 +35,12 @@ test("multiple declaration", async () => {
       {
         type: "DefinitionStatement",
         decorators: ["text"],
-        var: { type: "Var", name: "prompt" },
+        name: { type: "Identifier", name: "prompt" },
       },
       {
         type: "DefinitionStatement",
         decorators: ["text"],
-        var: { type: "Var", name: "response" },
+        name: { type: "Identifier", name: "response" },
       },
     ],
   } as Node & { type: "Program" });
@@ -58,47 +58,47 @@ test("pattern declaration", async () => {
     parse(
       `pattern text extends text:` +
         `\n\tmany: text: concepts mapto many words` +
-        `\n\tdigraph: mindmap structures concepts`,
-    ),
+        `\n\tdigraph: mindmap structures concepts`
+    )
   ).toEqual({
     type: "Program",
     statements: [
       {
         type: "PatternStatement",
         pattern_name: {
-          type: "Var",
+          type: "Identifier",
           name: "text",
         },
         args: [],
         statements: [
           {
-            type: "RelationStatement",
+            _type: "RelationStatement",
             left: {
               type: "DefinitionStatement",
               decorators: ["many", "text"],
-              var: { type: "Var", name: "concepts" },
+              name: { type: "Identifier", name: "concepts" },
             },
             relation: "mapto many",
             right: {
-              type: "Var",
+              type: "Identifier",
               name: "words",
             },
           },
           {
-            type: "RelationStatement",
+            _type: "RelationStatement",
             left: {
               type: "DefinitionStatement",
               decorators: ["digraph"],
-              var: { type: "Var", name: "mindmap" },
+              name: { type: "Identifier", name: "mindmap" },
             },
             relation: "structures",
             right: {
-              type: "Var",
+              type: "Identifier",
               name: "words",
             },
           },
         ],
-        extends: { type: "Var", name: "text" },
+        extends: { type: "Identifier", name: "text" },
       },
     ],
   } as Node & { type: "Program" });

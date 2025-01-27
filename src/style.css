@@ -90,7 +90,9 @@ html {
   position: relative;
   padding-left: 15px;
   white-space: pre;
-  color: rgba(0,0,0,0.8)
+  color: rgba(0,0,0,0.8);
+  font-family: var(--monospace-font);
+  line-height: 1.7em;
 }
 
 .editor-output::before {
@@ -120,28 +122,24 @@ html {
 /* Overriding Codemirror Syntax Highlighting Theme */
 
 .ͼm {
-  color:#088C0E !important;
+  color: #708090 !important;
 }
 
 .ͼc {
-  color:#135FC2 !important;
+  color: #272727 !important;
 }
 
 .ͼi {
-  color:#af7106 !important;
+  color: #dd4a68 !important;
 }
 
 .cm-custom-highlight > .ͼc {
-  color:#af7106 !important;
+  color: #135FC2 !important;
 }
 
 .cm-line {
   color:#747474;
 }
-
-/* .cm-matchingBracket {
-  color:red !important;
-} */
 
 
 .editors-container {

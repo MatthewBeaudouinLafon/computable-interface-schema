@@ -8,47 +8,58 @@ export function rangeString({ source, start, end }: Range): string {
   return source.slice(start, end);
 }
 
-export type Statement =
+export type RelationStatement =
   | {
-      type: "ExpressionStatement";
-      expression: Expression;
-    }
-  | {
-      type: "RelationStatement";
-      left: Expression | (Statement & { type: "DefinitionStatement" });
+      _type: "BinaryRelation";
+      left: Expression | (Statement & { _type: "DefinitionStatement" });
       right: Expression;
       relation: "mapto" | "mapto many" | "structures" | "constrains";
     }
   | {
-      type: "DefinitionStatement";
+      _type: "CoverRelation";
+      left: Expression | (Statement & { _type: "DefinitionStatement" });
+      middle: Expression;
+      right: Expression;
+    }
+  | {
+      _type: "RepresentsRelation";
+      view: Expression | (Statement & { _type: "DefinitionStatement" });
+      data: WithExpression;
+      structure?: WithExpression;
+    };
+
+export type WithExpression = {
+  _type: "WithExpression";
+  left: Expression;
+  right?: Expression;
+};
+
+export type Statement =
+  | RelationStatement
+  | {
+      _type: "ExpressionStatement";
+      expression: Expression;
+    }
+  | {
+      _type: "DefinitionStatement";
       decorators: (
         | "many"
         | "single"
         | "structure"
         | string
-        | (Node & { type: "PatternCall" })
+        | (Node & { _type: "PatternCall" })
       )[];
-      var: Node & { type: "Var" };
+      name: Node & { _type: "Identifier" };
     }
   | {
-      type: "PatternStatement";
-      pattern_name: Expression & { type: "Var" };
-      args: (Expression & { type: "Var" })[];
+      _type: "PatternStatement";
+      name: Expression & { _type: "Identifier" };
+      args: (
+        | (Expression & { _type: "Identifier" })
+        | (Statement & { _type: "DefinitionStatement" })
+      )[];
       statements: Statement[];
-      requires?: Statement[];
-      extends?: Expression & { type: "Var" };
-    }
-  | {
-      type: "ViewDefinitionStatement";
-      name: Expression & { type: "Var" };
-      data: {
-        left: Expression;
-        right?: Expression;
-      };
-      structure?: {
-        left: Expression;
-        right?: Expression;
-      };
+      extends?: Expression & { _type: "Identifier" };
     };
 
 export type Node =
@@ -56,30 +67,25 @@ export type Node =
   | Statement
   | (
       | {
-          type: "PatternCall";
-          args: (Expression & { type: "Var" })[];
-          pattern_name: Expression & { type: "Var" };
+          _type: "PatternCall";
+          args: (Expression & { _type: "Identifier" })[];
+          name: Expression & { _type: "Identifier" };
         }
       | {
-          type: "Program";
+          _type: "Program";
           statements: Statement[];
         }
-    );
+    )
+  | WithExpression;
 
 export type Expression =
   | {
-      type: "Var";
+      _type: "Identifier";
       name: string;
     }
   | {
-      type: "BinaryExpression";
+      _type: "BinaryExpression";
       op: "." | "->";
       left: Expression;
-      right: Expression;
-    }
-  | {
-      type: "CoverExpression";
-      left: Expression | (Statement & { type: "DefinitionStatement" });
-      middle: Expression;
       right: Expression;
     };

@@ -1,9 +1,164 @@
+import * as ohm from "ohm-js";
 import { Node } from "./parser_types";
 
-export function parse(code: string): Node & { type: "Program" } {
-  const lines = code.split("\n");
+const grammar = ohm.grammar(String.raw`
+IS {
+  
+  program = (statement eol+)*
+    
+  statement  (statement)
+  = relation -- relation
+    | pattern -- pattern
+    | def -- definition
+    | expr -- expression
+    
+  pattern = "pattern " ident pattern_args? (" extends " ident)?":"eol
+     ("\t"statement eol)+"end"
+     
+  pattern_args = "(" ((def | expr) ", ")* (def | expr) ")"
+     
+  relation = ((def | expr) " represents " with_expr) (" as " with_expr)? -- represents
+  | (def | expr) " covers " expr " along " expr -- cover
+            | (def | expr) " " ("mapto many"  | "mapto" | "structures" | "constrains" | "groups") " " expr -- binary
 
-  for (const line of lines) {
-    // Identify the statement
+  with_expr = expr (" with " expr)?
+
+  def  (definition statement)
+    = (expr": ") + ident
+   
+  expr
+    = expr ("." | "<-") expr -- binary
+    | ident -- name
+   
+  ident  (an identifier)
+    = (alnum | "_")+
+
+  number  (a number)
+    = digit* "." digit+  -- fract
+    | digit+             -- whole
+      
+  eol = "\r"? "\n"
+}
+`);
+
+const semantics = grammar.createSemantics();
+
+semantics.addOperation("parse", {
+  program(statements, _eol) {
+    return {
+      _type: "Program",
+      statements: statements.children.map((s) => s.parse()),
+    };
+  },
+  statement(s) {
+    return s.children[0].parse();
+  },
+  def(decorators, _, name) {
+    return {
+      _type: "DefinitionStatement",
+      decorators: decorators.children.map((d) => d.sourceString),
+      name: name.parse(),
+    };
+  },
+  ident(v) {
+    return {
+      _type: "Identifier",
+      name: v.sourceString,
+    };
+  },
+  relation_binary(left, _space, relation, _space2, right) {
+    return {
+      _type: "BinaryRelation",
+      left: left.parse(),
+      right: right.parse(),
+      relation: relation.sourceString,
+    };
+  },
+  relation_cover(left, _covers, middle, _along, right) {
+    return {
+      _type: "CoverRelation",
+      left: left.parse(),
+      middle: middle.parse(),
+      right: right.parse(),
+    };
+  },
+  relation_represents(view, _represents, data_expr, _as, structure_expr) {
+    return {
+      _type: "RepresentsRelation",
+      view: view.parse(),
+      data: data_expr.parse(),
+      structure: structure_expr.children.at(0)?.parse() ?? undefined,
+    };
+  },
+  with_expr(left, _with, right_parent) {
+    return {
+      _type: "WithExpression",
+      left: left.parse(),
+      right: right_parent?.children.at(0)?.parse() ?? undefined,
+    };
+  },
+  expr_binary(left, op, right) {
+    return {
+      _type: "BinaryExpression",
+      op: op.sourceString,
+      left: left.parse(),
+      right: right.parse(),
+    };
+  },
+  pattern(
+    _pattern,
+    name,
+    pattern_args,
+    _extends,
+    extend_expr,
+    _colon,
+    _eol,
+    _indents,
+    statements,
+    _newlines,
+    _eol2
+  ) {
+    return {
+      _type: "PatternStatement",
+      name: name.parse(),
+      args: pattern_args.children.at(0)?.parse() ?? undefined,
+      statements: statements.children.map((s) => s.parse()),
+      extends: extend_expr?.children.at(0)?.parse() ?? undefined,
+    };
+  },
+  pattern_args(_lbracket, tail, _commas, head, _rbracket) {
+    return [...tail.children.map((arg) => arg.parse()), head.parse()];
+  },
+});
+
+export function parse(code: string): string {
+  // Pre-process
+  code =
+    code
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("%") && line.trim() !== "")
+      .map((line) => (line.startsWith("  ") ? `\t${line.slice(2)}` : line))
+      .map((line) => (line.startsWith("    ") ? `\t${line.slice(4)}` : line))
+      .join("\n") + "\n";
+
+  console.log("Preprocessed code\n");
+  console.log(code);
+
+  try {
+    const m = grammar.match(code);
+
+    if (!m.succeeded()) {
+      return `[Failed!]\n\nDid you make sure to use backward arrows?\nEnd a pattern with an 'end'?\nUse the plural for covers?\nRemove inline comments?\n\nHere's what the parser has to say about it:\n${m.message}`;
+    }
+
+    const parsed = semantics(grammar.match(code)).parse();
+    return `[Parsed!]\n\n${str(parsed)}`;
+  } catch (e) {
+    console.error(e);
+    return `[Failed!]\n\n${e}`;
   }
+}
+
+export function str(ast: Node): string {
+  return JSON.stringify(ast, null, 2);
 }

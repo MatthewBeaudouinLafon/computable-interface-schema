@@ -1,9 +1,13 @@
 import { EditorView } from "codemirror";
-import * as perfect_arrows from "perfect-arrows";
 import { Query } from "swipl-wasm";
 import { State } from "../State";
 
-export function create_el(tag: string, classes: string[] | string = [], parent?: Element, prepend: boolean = false) {
+export function create_el(
+  tag: string,
+  classes: string[] | string = [],
+  parent?: Element,
+  options?: Partial<HTMLElement> | Partial<SVGElement>
+) {
   const el = document.createElement(tag);
 
   if (Array.isArray(classes)) {
@@ -12,19 +16,17 @@ export function create_el(tag: string, classes: string[] | string = [], parent?:
     el.classList.add(classes);
   }
 
-  if (parent != undefined) {
-    if (prepend) {
-      parent.prepend(el);
-    } else {
-      parent.appendChild(el);
-    }
-  }
+  parent?.appendChild(el);
+
+  Object.assign(el, options ?? {});
 
   return el;
 }
 
 export function assert_never(_never: never, message?: string): never {
-  throw new Error(message || `Reached unreachable code: unexpected value ${_never}`);
+  throw new Error(
+    message || `Reached unreachable code: unexpected value ${_never}`
+  );
 }
 
 /**
@@ -45,7 +47,7 @@ export function hash_code(str: string): number {
 
 export function query_result_to_div(
   query_code: string,
-  data: { [key: string]: string }, // { X: 'tabs', Y: '...' }
+  data: { [key: string]: string } // { X: 'tabs', Y: '...' }
 ) {
   // Create a container
   const container = create_el("div", "query-result-container");
@@ -64,7 +66,10 @@ export function query_result_to_div(
       .map((char) => {
         return html.indexOf(char, index_start);
       })
-      .reduce((acc: number, curr: number) => (curr > -1 ? Math.min(acc, curr) : acc), html_length);
+      .reduce(
+        (acc: number, curr: number) => (curr > -1 ? Math.min(acc, curr) : acc),
+        html_length
+      );
 
     if (index_start >= 0) {
       const value_entry = create_el("div", "query-result-entry");
@@ -72,7 +77,10 @@ export function query_result_to_div(
       const hue = Math.floor(hash_code(value) * 360);
       value_entry.style.background = `oklch(0.7 0.4 ${hue}deg / 0.15)`;
 
-      html = html.slice(0, index_start) + value_entry.outerHTML + html.slice(index_end);
+      html =
+        html.slice(0, index_start) +
+        value_entry.outerHTML +
+        html.slice(index_end);
     }
   }
 
@@ -83,7 +91,7 @@ export function query_result_to_div(
 
 export function get_all_prolog_query_results(
   query_raw: string,
-  options: { limit?: number; do_not_include_logical_rules?: boolean } = {},
+  options: { limit?: number; do_not_include_logical_rules?: boolean } = {}
 ) {
   let query: Query;
 
@@ -136,7 +144,10 @@ export function range(size: number, start: number = 0): Array<number> {
   return [...Array(size).keys()].map((i) => i + start);
 }
 
-export function create_svg_element(classes: string[] | string = [], parent?: Element) {
+export function create_svg_element(
+  classes: string[] | string = [],
+  parent?: Element
+) {
   const svg_el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
   if (Array.isArray(classes)) {
@@ -152,7 +163,10 @@ export function create_svg_element(classes: string[] | string = [], parent?: Ele
   return svg_el;
 }
 
-export function create_path_element(classes: string[] | string = [], parent?: Element): SVGPathElement {
+export function create_path_element(
+  classes: string[] | string = [],
+  parent?: Element
+): SVGPathElement {
   const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
   if (Array.isArray(classes)) {
@@ -168,8 +182,14 @@ export function create_path_element(classes: string[] | string = [], parent?: El
   return pathEl;
 }
 
-export function create_polygon_element(classes: string[] | string = [], parent?: Element): SVGPolygonElement {
-  const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+export function create_polygon_element(
+  classes: string[] | string = [],
+  parent?: Element
+): SVGPolygonElement {
+  const pathEl = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "polygon"
+  );
 
   if (Array.isArray(classes)) {
     pathEl.classList.add(...classes);
@@ -184,45 +204,11 @@ export function create_polygon_element(classes: string[] | string = [], parent?:
   return pathEl;
 }
 
-export function get_bbox_arrow_paths(
-  t1: { x: number; y: number; width: number; height: number },
-  t2: { x: number; y: number; width: number; height: number },
-  options: perfect_arrows.ArrowOptions = {},
-  arrow_head_scale: number = 1,
-) {
-  const default_options = {
-    bow: 0,
-    padEnd: 7,
-    stretch: 0.2,
-    stretchMin: 0,
-    stretchMax: 420,
-    padStart: 0,
-    flip: false,
-    straights: true,
-  };
-  const arrow = perfect_arrows.getBoxToBoxArrow(t1.x, t1.y, t1.width, t1.height, t2.x, t2.y, t2.width, t2.height, {
-    ...default_options,
-    ...options,
-  });
-
-  let [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
-
-  const endAngleAsDegrees = ae * (180 / Math.PI);
-
-  const arrow_size_scale = arrow_head_scale;
-
-  return {
-    arrow_head_points: `0,${-3 * arrow_size_scale} ${6 * arrow_size_scale},0, 0,${3 * arrow_size_scale}`,
-    arrow_head_transform: `translate(${ex},${ey}) rotate(${endAngleAsDegrees})`,
-    path_points: `M${sx},${sy} Q${cx},${cy} ${ex},${ey}`,
-  };
-}
-
 export function setup_drag(
   el: HTMLElement,
   on_begin_drag: () => void,
   on_drag: (dx: number, dy: number) => void,
-  on_release_drag: () => void,
+  on_release_drag: () => void
 ) {
   let mx = 0;
   let my = 0;
@@ -260,7 +246,10 @@ export function lerp(a: number, b: number, t: number, threshold: number = 0) {
   return a * (1 - t) + b * t;
 }
 
-export function squared_polar(point: [number, number], centre: [number, number]) {
+export function squared_polar(
+  point: [number, number],
+  centre: [number, number]
+) {
   return [
     Math.atan2(point[1] - centre[1], point[0] - centre[0]),
     (point[0] - centre[0]) ** 2 + (point[1] - centre[1]) ** 2, // Square of distance
@@ -276,7 +265,10 @@ export function poly_sort(points: [number, number][]) {
   ];
 
   // Sort by polar angle and distance, centered at this centre of mass.
-  let polars = points.map((p) => ({ point: p, polar: squared_polar(p, centre) }));
+  let polars = points.map((p) => ({
+    point: p,
+    polar: squared_polar(p, centre),
+  }));
   polars.sort((a, b) => a.polar[0] - b.polar[0] || a.polar[1] - b.polar[1]);
 
   return polars.map((p) => p.point);
@@ -287,7 +279,7 @@ export function get_curve_points(
   pts: number[],
   tension: number = 0.5,
   isClosed: boolean = false,
-  numOfSegments: number = 16,
+  numOfSegments: number = 16
 ) {
   var _pts = [],
     res = [], // clone array
@@ -362,7 +354,9 @@ export function get_curve_points(
   return res;
 }
 
-export function union_bboxes(bboxes: { left: number; top: number; width: number; height: number }[]) {
+export function union_bboxes(
+  bboxes: { left: number; top: number; width: number; height: number }[]
+) {
   const left = Math.min(...bboxes.map((b) => b.left));
   const top = Math.min(...bboxes.map((b) => b.top));
 

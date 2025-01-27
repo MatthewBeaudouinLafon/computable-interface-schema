@@ -1,5 +1,6 @@
 import SWIPL from "swipl-wasm";
-import { create_editor, Editor } from "./editor/editor";
+import { create_editor_alt, Editor } from "./editor/editor";
+import { parse } from "./parser/parser";
 import { State } from "./State";
 import "./style.css";
 import { create_el } from "./utilities/utilities";
@@ -12,15 +13,15 @@ const file_picker_button = create_el(
 file_picker_button.innerText = "Choose save folder";
 
 const editors_container = create_el("div", "editors-container", document.body);
-const SPEC_PATHS = ["browser.is", "video_editor.is"];
+const SPEC_PATHS = ["video_editor.is"];
 
-let spec_editors: Editor[], swipl: SWIPL.SWIPLModule;
+let spec_editors: Editor[], swipl: SWIPL.SWIPLModule, output: HTMLElement;
 
 async function setup() {
   /* ---------------- Specification editor ---------------- */
   spec_editors = await Promise.all(
     SPEC_PATHS.map(async (spec) =>
-      create_editor(
+      create_editor_alt(
         spec,
         await (await fetch(`./interface-schema/specifications/${spec}`)).text(),
       ),
@@ -41,9 +42,16 @@ async function setup() {
       typingTimer = setTimeout(() => update(editor), 1000); // Should this be synchronous?
     }),
   );
+
+  output = create_el('div', 'editor-output', document.body, { innerText: "Output"})
+
+  spec_editors.map(editor => update(editor))
 }
 
 async function update(from: Editor) {
+  const raw = from.editor_view.state.doc.toString();
+
+  // Sync with file on disk
   if (State.file_system_handle != null) {
     const file_handle = await State.file_system_handle.getFileHandle(
       from.path,
@@ -54,12 +62,15 @@ async function update(from: Editor) {
     const writable = await file_handle.createWritable();
 
     // Write the contents of the file to the stream.
-    const raw = from.editor_view.state.doc.toString();
     await writable.write(raw);
     await writable.close();
   } else {
     // alert("Note: file not being saved. Please select a folder.");
+    console.warn("Note: file not being saved. Please select a folder.")
   }
+
+  const parsed = parse(raw);
+  output.innerText = parsed;
 }
 
 async function main() {
