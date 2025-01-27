@@ -5,6 +5,6 @@ many: open_pages mapto webpages
 single: active_page mapto open_pages
 
 order: history structures webpages
-single: visited_today cover webpages along history
+single: visited_today covers webpages along history
 
-visited_today->webpages
+visited_today<-webpages
