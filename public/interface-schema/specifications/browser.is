@@ -1,0 +1,10 @@
+% Simplest browser: basic syntax
+many: webpages
+digraph: links structures webpages
+many: open_pages mapto webpages
+single: active_page mapto open_pages
+
+order: history structures webpages
+single: visited_today cover webpages along history
+
+visited_today->webpages

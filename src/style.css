@@ -35,37 +35,6 @@ html {
   margin: 0 auto;
   padding: 1.5em;
   font-family: var(--sans-serif-font);
-  /* background: #f6f5f0; */
-}
-
-/* @media (min-width: 768px) {
-  html {
-    max-width: 42em;
-  }
-} */
-
-h1 {
-  font-size: 2em;
-  font-weight: 400;
-}
-
-h1,
-h2,
-h3,
-h4 {
-  margin: 2.5rem 0 1.5rem 0;
-  line-height: 1.25;
-  color: #000000;
-  font-family: var(--header-font);
-}
-
-a {
-  text-decoration: none;
-}
-a:hover,
-a:focus,
-a:active {
-  text-decoration: underline;
 }
 
 .editor-container {
@@ -100,7 +69,6 @@ a:active {
 .cm-editor {
   height: 100%;
   background: white;
-
 }
 
 .query-result-container {

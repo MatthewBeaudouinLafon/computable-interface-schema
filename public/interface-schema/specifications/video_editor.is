@@ -1,0 +1,31 @@
+% Video editor: with patterns
+pattern video:
+	many: images
+	linear: timeline structures images
+	
+	single: audio: audio
+	timeline constrains audio->timeline
+	
+	string: title
+
+pattern edit_timeline:
+	% single: linear: timeline % better name would be nice
+	many: number: timestamps
+	linear: edit_timeline constrains timestamps.order
+	
+	many: video: videos cover timestamps along edit_timeline
+	videos.timeline mapto edit_timeline % not a constraint, since video might be reversed, spedup, etc.
+	
+	many: tracks group videos % only one video per track
+	order: track_order structures tracks
+
+	gui.view: view represents timestamps with edit_timeline as gui.hstack
+	view represents videos with edit_timeline as gui.hstack
+	view represents tracks, videos with track_order as gui.vstack
+
+many: video: videos
+single: edit_timeline: main_timeline
+main_timeline.videos mapto videos % subsets
+
+view: files_view represents videos with videos.title.alphabet_order as gui.wrapped_grid
+view: timeline_view represents main_timeline % uses the pattern's view component
