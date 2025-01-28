@@ -91,7 +91,7 @@ export type Expression =
     }
   | {
       _type: "BinaryExpression";
-      op: "." | "->";
+      op: "." | "<-";
       left: Expression;
       right: Expression;
     };

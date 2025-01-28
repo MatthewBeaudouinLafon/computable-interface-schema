@@ -1,20 +1,21 @@
 import SWIPL from "swipl-wasm";
-import YAML from 'yaml';
+import YAML from "yaml";
 import { create_editor_alt, Editor } from "./editor/editor";
 import { parse } from "./parser/parser";
 import { State } from "./State";
 import "./style.css";
+import { transpile } from "./transpiler/transpiler";
 import { create_el } from "./utilities/utilities";
 
 const file_picker_button = create_el(
   "button",
   "file-picker-button",
-  document.body,
+  document.body
 );
 file_picker_button.innerText = "Choose save folder";
 
 const editors_container = create_el("div", "editors-container", document.body);
-const SPEC_PATHS = ["video_editor.is"];
+const SPEC_PATHS = ["browser.is"];
 
 let spec_editors: Editor[], swipl: SWIPL.SWIPLModule, output: HTMLElement;
 
@@ -24,9 +25,9 @@ async function setup() {
     SPEC_PATHS.map(async (spec) =>
       create_editor_alt(
         spec,
-        await (await fetch(`./interface-schema/specifications/${spec}`)).text(),
-      ),
-    ),
+        await (await fetch(`./interface-schema/specifications/${spec}`)).text()
+      )
+    )
   );
 
   spec_editors.forEach((editor) => editors_container.append(editor.parent));
@@ -41,13 +42,14 @@ async function setup() {
     editor.editor_view.dom.addEventListener("change", (_) => {
       if (typingTimer != null) clearTimeout(typingTimer);
       typingTimer = setTimeout(() => update(editor), 1000); // Should this be synchronous?
-    }),
+    })
   );
 
-  output = create_el('div', 'editor-output', document.body, { innerText: "Output"})
+  output = create_el("div", "editor-output", document.body, {
+    innerText: "Output",
+  });
 
-  spec_editors.map(editor => update(editor))
-  
+  spec_editors.map((editor) => update(editor));
 }
 
 async function update(from: Editor) {
@@ -57,7 +59,7 @@ async function update(from: Editor) {
   if (State.file_system_handle != null) {
     const file_handle = await State.file_system_handle.getFileHandle(
       from.path,
-      { create: true },
+      { create: true }
     );
 
     // Create a FileSystemWritableFileStream to write to.
@@ -68,11 +70,16 @@ async function update(from: Editor) {
     await writable.close();
   } else {
     // alert("Note: file not being saved. Please select a folder.");
-    console.warn("Note: file not being saved. Please select a folder.")
+    console.warn("Note: file not being saved. Please select a folder.");
   }
 
   const parsed = parse(raw);
-  output.innerText = YAML.stringify(parsed);
+
+  if (parsed._type === "Error") {
+    output.innerText = YAML.stringify(parsed);
+  } else {
+    output.innerText = transpile(parsed);
+  }
 }
 
 async function main() {

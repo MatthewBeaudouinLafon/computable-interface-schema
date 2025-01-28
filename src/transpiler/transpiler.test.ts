@@ -71,3 +71,10 @@ test("[transpiler] cover", async () => {
 
   expect(transpile(parse(input))).toEqual(output);
 });
+
+test("[transpiler] arrow", async () => {
+  const input = "webpages<-visited_today";
+  const output = `webpages`;
+
+  expect(transpile(parse(input))).toEqual(output);
+});

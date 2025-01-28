@@ -1,5 +1,5 @@
-import { assert } from "vitest";
 import { Node } from "../parser/parser_types";
+import { assert } from "../utilities/utilities";
 
 export function transpile(ast: Node | string): string {
   if (typeof ast === "string") return ast;
@@ -53,6 +53,10 @@ export function transpile(ast: Node | string): string {
     return `apply_cover(${transpile(ast.left)}, ${transpile(
       ast.middle
     )}, ${transpile(ast.right)})`;
+  } else if (ast._type === "BinaryExpression") {
+    if (ast.op === "<-") {
+      return `${transpile(ast.left)}`;
+    }
   } else {
     console.log(ast._type);
   }
