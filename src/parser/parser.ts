@@ -24,7 +24,7 @@ IS {
   with_expr = expr (" with " expr)?
 
   def  (definition statement)
-    = (expr": ") + ident
+    = (expr pattern_args? ": ")+ ident
    
   expr
     = expr ("." | "<-") expr -- binary
@@ -53,10 +53,26 @@ semantics.addOperation("parse", {
   statement(s) {
     return s.children[0].parse();
   },
-  def(decorators, _, name) {
+  def(decorators, args, _, name) {
+    const p_args = args.children.map((a) => {
+      return a.children.at(0)?.parse() ?? undefined;
+    });
+
+    const p_decorators: any[] = decorators.children.map((d) => d.sourceString);
+
+    for (let i = 0; i < p_args.length; i++) {
+      if (p_args[i] !== undefined) {
+        p_decorators[i] = {
+          _type: "PatternCall",
+          name: { _type: "Identifier", name: p_decorators[i] },
+          args: p_args[i],
+        };
+      }
+    }
+
     return {
       _type: "DefinitionStatement",
-      decorators: decorators.children.map((d) => d.sourceString),
+      decorators: p_decorators,
       name: name.parse(),
     };
   },
@@ -154,5 +170,6 @@ export function parse(code: string): Node {
   }
 
   const parsed = semantics(grammar.match(code)).parse();
+  console.log("Parsed AST", parsed);
   return parsed;
 }

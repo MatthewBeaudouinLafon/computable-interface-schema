@@ -115,3 +115,57 @@ test("pattern declaration", async () => {
 
   expect(parse(raw)).toEqual(ast);
 });
+
+test("pattern instance and params", async () => {
+  const raw = `pattern ptn_name(param):
+  shared: single: shared_set
+end
+  
+many: ptn_name(five): instance_name
+`;
+  const ast: Node = {
+    _type: "Program",
+    statements: [
+      {
+        _type: "PatternStatement",
+        name: {
+          _type: "Identifier",
+          name: "ptn_name",
+        },
+        args: [
+          {
+            _type: "Identifier",
+            name: "param",
+          },
+        ],
+        statements: [
+          {
+            _type: "DefinitionStatement",
+            decorators: ["shared", "single"],
+            name: {
+              _type: "Identifier",
+              name: "shared_set",
+            },
+          },
+        ],
+      },
+      {
+        _type: "DefinitionStatement",
+        decorators: [
+          "many",
+          {
+            _type: "PatternCall",
+            name: { _type: "Identifier", name: "ptn_name" },
+            args: [{ _type: "Identifier", name: "five" }],
+          },
+        ],
+        name: {
+          _type: "Identifier",
+          name: "instance_name",
+        },
+      },
+    ],
+  };
+
+  expect(parse(raw)).toEqual(ast);
+});

@@ -4,14 +4,14 @@ import { transpile } from "./transpiler";
 
 test("[transpiler] basic declaration", async () => {
   const input = "many: webpages";
-  const output = "objects(many, webpages)";
+  const output = "set(many, webpages)";
 
   expect(transpile(parse(input))).toEqual(output);
 });
 
 test("[transpiler] multiple decorators", async () => {
   const input = "single: number: opacity";
-  const output = `objects(single, opacity)` + `\ninstance(number, opacity)`;
+  const output = `set(single, opacity)` + `\ninstance(number, opacity)`;
 
   expect(transpile(parse(input))).toEqual(output);
 });
@@ -78,3 +78,36 @@ test("[transpiler] arrow", async () => {
 
   expect(transpile(parse(input))).toEqual(output);
 });
+
+test("[transpiler] pattern instance and params", async () => {
+  const input = `pattern ptn_name(param):
+  shared: single: shared_set
+end
+  
+many: ptn_name(five): instance_name
+`;
+
+  const output = `set(many, instance_name)
+apply_instance(ptn_name, instance_name)
+set(single, __ptn_name__shared_set)
+apply_mapto(instance_name, __ptn_name__shared_set)`;
+
+  expect(transpile(parse(input))).toEqual(output);
+});
+
+// test("[transpiler] arrow", async () => {
+//   const input = `pattern ptn_name(param):
+//   shared: single: shared_set
+//   shared: linear: shared_struct structures shared_set
+
+//   many: attribute_set
+
+//   tree: attribute_struct structures attribute_set
+// end
+
+// many: ptn_name: instance_name
+// `;
+//   const output = `webpages`;
+
+//   expect(transpile(parse(input))).toEqual(output);
+// });
