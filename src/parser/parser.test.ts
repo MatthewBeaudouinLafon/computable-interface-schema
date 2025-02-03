@@ -9,7 +9,12 @@ test("basic declaration", async () => {
     statements: [
       {
         _type: "DefinitionStatement",
-        decorators: ["text"],
+        decorators: [
+          {
+            _type: "Identifier",
+            name: "text",
+          },
+        ],
         name: { _type: "Identifier", name: "prompt" },
       },
     ],
@@ -26,7 +31,16 @@ test("declaration with multiple decorators", async () => {
     statements: [
       {
         _type: "DefinitionStatement",
-        decorators: ["text", "many"],
+        decorators: [
+          {
+            _type: "Identifier",
+            name: "text",
+          },
+          {
+            _type: "Identifier",
+            name: "many",
+          },
+        ],
         name: { _type: "Identifier", name: "prompts" },
       },
     ],
@@ -42,12 +56,22 @@ test("multiple declaration", async () => {
     statements: [
       {
         _type: "DefinitionStatement",
-        decorators: ["text"],
+        decorators: [
+          {
+            _type: "Identifier",
+            name: "text",
+          },
+        ],
         name: { _type: "Identifier", name: "prompt" },
       },
       {
         _type: "DefinitionStatement",
-        decorators: ["text"],
+        decorators: [
+          {
+            _type: "Identifier",
+            name: "text",
+          },
+        ],
         name: { _type: "Identifier", name: "response" },
       },
     ],
@@ -56,25 +80,17 @@ test("multiple declaration", async () => {
   expect(parse(raw)).toEqual(ast);
 });
 
-/*
-
-pattern text extends text:
-	many: text: concepts mapto many words
-	digraph: mindmap structures concepts
-  
-  */
-test("pattern declaration", async () => {
-  const raw =
-    `pattern text extends text:` +
-    `\n\tmany: text: concepts mapto many words` +
-    `\n\tdigraph: mindmap structures concepts` +
-    `\nend`;
+test("Class declaration", async () => {
+  const raw = `class text extends text:
+  many: text: concepts mapto many words
+  digraph: mindmap structures concepts
+end`;
 
   const ast: Node = {
     _type: "Program",
     statements: [
       {
-        _type: "PatternStatement",
+        _type: "ClassDeclaration",
         name: {
           _type: "Identifier",
           name: "text",
@@ -85,7 +101,16 @@ test("pattern declaration", async () => {
             _type: "BinaryRelation",
             left: {
               _type: "DefinitionStatement",
-              decorators: ["many", "text"],
+              decorators: [
+                {
+                  _type: "Identifier",
+                  name: "many",
+                },
+                {
+                  _type: "Identifier",
+                  name: "text",
+                },
+              ],
               name: { _type: "Identifier", name: "concepts" },
             },
             relation: "mapto many",
@@ -98,7 +123,12 @@ test("pattern declaration", async () => {
             _type: "BinaryRelation",
             left: {
               _type: "DefinitionStatement",
-              decorators: ["digraph"],
+              decorators: [
+                {
+                  _type: "Identifier",
+                  name: "digraph",
+                },
+              ],
               name: { _type: "Identifier", name: "mindmap" },
             },
             relation: "structures",
@@ -116,8 +146,8 @@ test("pattern declaration", async () => {
   expect(parse(raw)).toEqual(ast);
 });
 
-test("pattern instance and params", async () => {
-  const raw = `pattern ptn_name(param):
+test("Class 1", async () => {
+  const raw = `class ptn_name(param):
   shared: single: shared_set
 end
   
@@ -127,7 +157,7 @@ many: ptn_name(five): instance_name
     _type: "Program",
     statements: [
       {
-        _type: "PatternStatement",
+        _type: "ClassDeclaration",
         name: {
           _type: "Identifier",
           name: "ptn_name",
@@ -141,7 +171,16 @@ many: ptn_name(five): instance_name
         statements: [
           {
             _type: "DefinitionStatement",
-            decorators: ["shared", "single"],
+            decorators: [
+              {
+                _type: "Identifier",
+                name: "shared",
+              },
+              {
+                _type: "Identifier",
+                name: "single",
+              },
+            ],
             name: {
               _type: "Identifier",
               name: "shared_set",
@@ -152,9 +191,12 @@ many: ptn_name(five): instance_name
       {
         _type: "DefinitionStatement",
         decorators: [
-          "many",
           {
-            _type: "PatternCall",
+            _type: "Identifier",
+            name: "many",
+          },
+          {
+            _type: "ClassCall",
             name: { _type: "Identifier", name: "ptn_name" },
             args: [{ _type: "Identifier", name: "five" }],
           },

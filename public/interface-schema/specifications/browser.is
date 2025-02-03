@@ -1,10 +1,9 @@
 % Simplest browser: basic syntax
-many: webpages
-digraph: links structures webpages
-many: open_pages mapto webpages
-single: active_page mapto open_pages
+pattern ptn_name(param1, param2):
+  shared: single: shared_set
+  shared: linear: shared_struct structures shared_set
+  many: attribute_set
+  tree: attribute_struct structures attribute_set
+end
 
-order: history structures webpages
-single: visited_today covers webpages along history
-
-webpages<-visited_today
+many: ptn_name(five): instance_name
