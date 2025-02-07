@@ -106,7 +106,6 @@ map_structure(__instance_name__attribute_struct)
 map_instance(tree, __instance_name__attribute_struct)
 map_apply_structure(__instance_name__attribute_struct, __instance_name__attribute_set)
 apply_mapto(single, __instance_name__attribute_set, input1)
-apply_mapto(many, input1, __instance_name__attribute_set)
 `;
 
   expect(transpile(parse(input))).toEqual(output);

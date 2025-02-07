@@ -3,6 +3,11 @@ import { assert } from "../utilities/utilities";
 
 export type TranspilerContext = {
   classes: (Node & { _type: "ClassDeclaration" })[];
+  scope: {
+    class: Node & { _type: "ClassDeclaration" };
+    instance: Node & { _type: "Identifier" };
+    renames: Record<string, string>;
+  }[];
   structures: string[];
 };
 
@@ -27,7 +32,7 @@ export function transpile(ast: Node): string {
     case "Identifier":
       return transpile_identifier(ast);
     case "ClassCall":
-      throw new Error("ClassCall directly passed in to transpile");
+      return transpile_class_call(ast);
     case "ClassDeclaration":
       return transpile_class_declaration(ast);
     case "RepresentsRelation":
@@ -38,7 +43,7 @@ export function transpile(ast: Node): string {
 }
 
 function transpile_program(ast: Node & { _type: "Program" }) {
-  context = { classes: [], structures: ["order", "linear", "tree"] };
+  context = { classes: [], structures: ["order", "linear", "tree"], scope: [] };
   return ast.statements
     .map((s) => transpile(s))
     .filter((s) => s !== "")
@@ -54,22 +59,20 @@ function transpile_class_declaration(
   return "";
 }
 
-function transpile_class_instance(
-  ast: Node & { _type: "ClassDeclaration" },
-  instance_name: string
-) {
-  const class_name = transpile(ast.name);
+function transpile_class_call(ast: Node & { _type: "ClassCall" }) {
+  const scope = context.scope.at(-1)!;
+  const instance_name = transpile(scope.instance);
 
+  const class_name = transpile(scope.class.name);
   const instance = `instance(${class_name}, ${instance_name})`;
 
-  const renames: Record<string, string> = {};
+  scope.renames = {};
 
-  const statements = ast.statements
-    .flatMap((_s) => {
-      // Don't want to actually rename the declarations,
-      // in case the class is re-used.
-      let s = structuredClone(_s);
+  let post = "";
+  let pre = "";
 
+  const statements = scope.class.statements
+    .map((s) => {
       let declarations = find_recursive_all(
         s,
         (n) => n._type === "DefinitionStatement"
@@ -80,52 +83,9 @@ function transpile_class_instance(
           (d) => d._type !== "ClassCall" && transpile(d) === "shared"
         );
 
-        renames[d.name.name] = is_shared
+        scope.renames[d.name.name] = is_shared
           ? `__${class_name}__${d.name.name}`
           : `__${instance_name}__${d.name.name}`;
-
-        // Rename all identifiers
-        let identifiers = find_recursive_all(
-          s,
-          (id) => id._type === "Identifier" && id.name in renames
-        ) as (Node & { _type: "Identifier" })[];
-
-        identifiers.forEach((id) => (id.name = renames[id.name]));
-      });
-
-      let post = "";
-      let pre = "";
-
-      declarations.forEach((d) => {
-        const is_shared = d.decorators.some(
-          (d) => d._type !== "ClassCall" && transpile(d) === "shared"
-        );
-
-        const is_many = d.decorators.some(
-          (d) => d._type !== "ClassCall" && transpile(d) === "many"
-        );
-
-        const is_structure = d.decorators.some(
-          (d) => d._type !== "ClassCall" && context.structures.includes(d.name)
-        );
-
-        let statement = "";
-
-        if (is_many) {
-          statement = `mapto(many, ${instance_name}, ${transpile(d.name)})`;
-        }
-
-        if (!is_shared) {
-          statement = `map_${statement}`;
-        }
-
-        if (statement !== "") {
-          post += "\n" + statement;
-        }
-
-        if (is_structure && !is_shared) {
-          pre += `set(many, ${transpile(d.name)})\n`;
-        }
       });
 
       return pre + transpile(s) + post;
@@ -140,6 +100,20 @@ function transpile_definition(ast: Node & { _type: "DefinitionStatement" }) {
 
   const var_name = transpile(ast.name);
 
+  const scope = context.scope.at(-1);
+
+  const many = ast.decorators.find(
+    (d) => d._type !== "ClassCall" && d.name === "many"
+  );
+
+  const single = ast.decorators.find(
+    (d) => d._type !== "ClassCall" && d.name === "single"
+  );
+
+  const shared = ast.decorators.find(
+    (d) => d._type !== "ClassCall" && d.name === "shared"
+  );
+
   const decorators = ast.decorators
     .filter((d) => d._type === "ClassCall" || transpile(d) !== "shared")
     .flatMap((d) => {
@@ -150,27 +124,66 @@ function transpile_definition(ast: Node & { _type: "DefinitionStatement" }) {
         );
 
         if (d_class !== undefined) {
-          return transpile_class_instance(d_class, var_name);
+          const _d_class = structuredClone(d_class);
+
+          context.scope.push({
+            class: _d_class,
+            instance: ast.name,
+            renames: {},
+          });
+          const instance = transpile(d);
+          context.scope.pop();
+
+          return instance;
         }
 
         throw new Error("Could not resolve decorator");
       }
 
-      if (d.name === "single") {
-        return `set(single, ${var_name})`;
-      } else if (d.name === "many") {
-        return `set(many, ${var_name})`;
-      } else if (d.name === "structure") {
-        return `structure(${var_name})`;
-      } else if (context.structures.includes(d.name)) {
-        return [`structure(${var_name})`, `instance(${d.name}, ${var_name})`];
-      } else {
-        return `instance(${d.name}, ${var_name})`;
-      }
-    })
-    .join("\n");
+      let s: string[] = [];
 
-  return decorators;
+      if (d.name === "single") {
+        s.push(`set(single, ${var_name})`);
+      } else if (d.name === "many") {
+        s.push(`set(many, ${var_name})`);
+      } else if (d.name === "structure") {
+        s.push(`structure(${var_name})`);
+      } else if (context.structures.includes(d.name)) {
+        s.push(
+          scope && !shared
+            ? `map_structure(${var_name})`
+            : `structure(${var_name})`
+        );
+        s.push(
+          scope && !shared
+            ? `map_instance(${d.name}, ${var_name})`
+            : `instance(${d.name}, ${var_name})`
+        );
+      } else {
+        s.push(`instance(${d.name}, ${var_name})`);
+      }
+
+      return s.join("\n");
+    });
+
+  let post: string[] = [];
+  let pre: string[] = [];
+
+  if (scope !== undefined) {
+    const structure_instance = ast.decorators.find(
+      (d) => d._type !== "ClassCall" && context.structures.includes(d.name)
+    );
+
+    if (many !== undefined) {
+      post.push(`map_mapto(many, ${transpile(scope.instance)}, ${var_name})`);
+    }
+
+    if (shared === undefined && structure_instance !== undefined) {
+      pre.push(`set(many, ${var_name})`);
+    }
+  }
+
+  return [...pre, ...decorators, ...post].join("\n");
 }
 
 function transpile_expression(ast: Node & { _type: "ExpressionStatement" }) {
@@ -178,10 +191,20 @@ function transpile_expression(ast: Node & { _type: "ExpressionStatement" }) {
 }
 
 function transpile_identifier(ast: Node & { _type: "Identifier" }) {
-  return ast.name;
+  const renames = context.scope.at(-1)?.renames ?? {};
+  return ast.name in renames ? renames[ast.name] : ast.name;
 }
 
 function transpile_binary_relation(ast: Node & { _type: "BinaryRelation" }) {
+  const scope = context.scope.at(-1);
+
+  const shared =
+    ast.left._type === "DefinitionStatement"
+      ? ast.left.decorators.find(
+          (d) => d._type !== "ClassCall" && d.name === "shared"
+        )
+      : undefined;
+
   let pre =
     ast.left._type === "DefinitionStatement" ? transpile(ast.left) + "\n" : "";
 
@@ -199,6 +222,10 @@ function transpile_binary_relation(ast: Node & { _type: "BinaryRelation" }) {
       : ast.relation === "structures"
       ? "apply_structure("
       : "[No prefix]";
+
+  if (scope && !shared && ast.left._type === "DefinitionStatement") {
+    prefix = `map_${prefix}`;
+  }
 
   return `${pre}${prefix}${transpile(left)}, ${transpile(ast.right)})`;
 }
