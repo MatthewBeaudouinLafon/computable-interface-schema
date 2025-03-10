@@ -18,17 +18,18 @@ def increment_count(term_count, prefix, term):
   assert(type(term) == str)
   if prefix != '':
     term = prefix + '.' + term
+  mprint('  incrementing: ' + term)
   term_count[term] = 1 + term_count.get(term, 0)
 
 # TODO: generalize traversal? ie pass a function as parameter
-def preprocess_set(set, components_data, term_count, name_prefix='', term_prefix='', compo_name=''):
+def preprocess_set(in_set, components_data, term_count, name_prefix='', term_prefix='', compo_name=''):
   # NOTE: Use this if you want a set's existence to be counted
   # set_name = ''
   # if set_name:= set.get('name', False):
   #   increment_count(term_count, name_prefix, set_name)
-  set_name = set.get('name', '')
+  set_name = in_set.get('name', '')
 
-  for relation, target in set.items():
+  for relation, target in in_set.items():
     if relation == 'instance':
       # Find the right component
       component = {}
@@ -39,7 +40,14 @@ def preprocess_set(set, components_data, term_count, name_prefix='', term_prefix
       
       # Process it
       for composet in component.get('sets', []):
-        preprocess_set(composet, components_data, term_count, name_prefix=set_name, term_prefix=set_name, compo_name=set_name)
+        # NOTE: ngl I kind of hacked this until it worked to have nested instances. 
+        # so that works now, but I can't say I have a robust sense of how it should work.
+        # Or if it will play nicely eg. with contents.
+        new_compo_name = set_name
+        if compo_name != '':
+          # Don't overwrite compo_name if you're nesting instances (I think?)
+          new_compo_name = compo_name + '.' + set_name
+        preprocess_set(composet, components_data, term_count, name_prefix=new_compo_name, term_prefix=new_compo_name, compo_name=new_compo_name)
 
     elif relation == 'compomap':
       assert(type(target) == str)
@@ -69,13 +77,14 @@ def preprocess_set(set, components_data, term_count, name_prefix='', term_prefix
         if type(subset) == str:
           pass  # doesn't relate to anything (and probably won't be in the next version)
         else:
-          preprocess_set(subset, components_data, term_count, name_prefix=set_name, term_prefix=compo_name, compo_name=compo_name)
-    
+          preprocess_set(subset, components_data, term_count, 
+                         name_prefix=set_name, term_prefix=compo_name, compo_name=compo_name)
+
     elif relation[0] == '.':
       # Record that the complex RHS has been used. Note that the prefix is not
       # applies to everything inside.
-      increment_count(term_count, term_prefix, set_name + relation)
-      preprocess_set(target, components_data, term_count, compo_name=compo_name)
+      increment_count(term_count, compo_name, set_name + relation)
+      preprocess_set(target, components_data, term_count, term_prefix=term_prefix, compo_name=compo_name)
       
 
     elif relation in ['name', 'count']:
@@ -115,8 +124,8 @@ def preprocess(data):
 
 
 if __name__ == "__main__":
-  # PATH = 'calendar-vis.yaml'
-  PATH = 'video-editor-vis.yaml'
+  PATH = 'calendar-vis.yaml'
+  # PATH = 'video-editor-vis.yaml'
 
   with open(PATH, 'r') as file:
     data = yaml.safe_load(file)

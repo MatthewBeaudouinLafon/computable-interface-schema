@@ -10,8 +10,10 @@ from preprocessor import preprocess
 
 MAKE_LEGEND = False
 MAKE_DIAGRAM = True
+INCLUDE_UNUSED = False
 # PATH = 'calendar-vis.yaml'
-PATH = 'video-editor-vis.yaml'
+# PATH = 'video-editor-vis.yaml'
+PATH = 'messages-vis.yaml'
 
 with open(PATH, 'r') as file:
   data = yaml.safe_load(file)
@@ -70,7 +72,7 @@ def process_set(set, name_prefix='', term_prefix='', compo_name='', override_nam
     name = set['name']
   
   # Prepare to prepend to strings
-  if term_prefix != '':
+  if term_prefix != '' and term_prefix[-1] != '.': # HACK: avoid double dots
     term_prefix = term_prefix + '.'
 
 
@@ -79,7 +81,7 @@ def process_set(set, name_prefix='', term_prefix='', compo_name='', override_nam
   # missing.
   for relation, target in set.items():
     if (relation == 'name'):
-      if name in term_count.keys():
+      if name in term_count.keys() or INCLUDE_UNUSED:
         print(name)
   
     elif (relation == 'instance'):
@@ -107,7 +109,7 @@ def process_set(set, name_prefix='', term_prefix='', compo_name='', override_nam
     elif relation == 'compomap':
       make_line(name, 'compomap', target)
     
-    elif (relation == 'structures'):
+    elif (relation in ['structures', 'structures2']):
       make_line(name, 'structures', term_prefix + target)
       
     elif (relation in ['group', 'groups']):
@@ -126,12 +128,12 @@ def process_set(set, name_prefix='', term_prefix='', compo_name='', override_nam
       for subset in set[relation]:
         if (type(subset) == str):
           # if it's just a string, print it if gets used
-          if f'{name}.{subset}' in term_count.keys():
+          if f'{name}.{subset}' in term_count.keys() or INCLUDE_UNUSED:
             print(f'{name}.{subset}')
         else:
           # do the subset name if it's a new set
           subset_name = subset['name']
-          if f'{name}.{subset_name}' in term_count.keys():
+          if f'{name}.{subset_name}' in term_count.keys() or INCLUDE_UNUSED:
             print(f'{name}.{subset_name}')
           process_set(subset, name_prefix=name, term_prefix=compo_name, compo_name=compo_name) # TODO: what is the correct prefix here?
       print('end')
@@ -140,7 +142,8 @@ def process_set(set, name_prefix='', term_prefix='', compo_name='', override_nam
 
     elif (relation[0] == '.'):
       # TODO: need to think this through?
-      process_set(set[relation], override_name=f'{name}{relation}', compo_name=compo_name)
+      print('%% DEBUG: override name: ' + f'{name}{relation}')
+      process_set(set[relation], override_name=f'{name}{relation}', term_prefix=term_prefix, compo_name=compo_name)
     
     elif ('->' in relation or '.' in relation):
       # NOTE: this comes after `relation[0] == '.'`, so it matches any other
