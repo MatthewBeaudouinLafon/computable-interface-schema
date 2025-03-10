@@ -12,9 +12,9 @@ MAKE_LEGEND = False
 MAKE_DIAGRAM = True
 INCLUDE_UNUSED = False
 # PATH = 'calendar-vis.yaml'
-# PATH = 'video-editor-vis.yaml'
+PATH = 'video-editor-vis.yaml'
 # PATH = 'messages-vis.yaml'
-PATH = 'web-browser-vis.yaml'
+# PATH = 'web-browser-vis.yaml'
 
 with open(PATH, 'r') as file:
   data = yaml.safe_load(file)
@@ -60,6 +60,19 @@ def make_line(lhs, arrow_type, rhs):
   rhs = format_side(rhs)
 
   print(' '.join([lhs, arrow, rhs]))
+
+def is_downstream_term_used(term_count, parent_term):
+  # TODO: Ideally we don't want to show an instance's component conents unless
+  # it's used in the top level stuff. We can use this function to see if the
+  # instance is used in the spec. Right now it's not quite enough to deal with
+  # nested instances.
+  # Maybe part of the solution is to only print relations if they're surfaced
+  # by the pre processor.
+  for term in term_count.keys():
+    if parent_term in term:
+      return True
+
+  return False
 
 def process_set(set, name_prefix='', term_prefix='', compo_name='', override_name=''):
   # Get the right name for the left-hand side

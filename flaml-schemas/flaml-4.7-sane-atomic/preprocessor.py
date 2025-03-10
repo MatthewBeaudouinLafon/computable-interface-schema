@@ -124,8 +124,8 @@ def preprocess(data):
 
 
 if __name__ == "__main__":
-  PATH = 'calendar-vis.yaml'
-  # PATH = 'video-editor-vis.yaml'
+  # PATH = 'calendar-vis.yaml'
+  PATH = 'video-editor-vis.yaml'
 
   with open(PATH, 'r') as file:
     data = yaml.safe_load(file)
