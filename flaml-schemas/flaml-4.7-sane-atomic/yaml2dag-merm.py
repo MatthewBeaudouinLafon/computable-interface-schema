@@ -13,7 +13,8 @@ MAKE_DIAGRAM = True
 INCLUDE_UNUSED = False
 # PATH = 'calendar-vis.yaml'
 # PATH = 'video-editor-vis.yaml'
-PATH = 'messages-vis.yaml'
+# PATH = 'messages-vis.yaml'
+PATH = 'web-browser-vis.yaml'
 
 with open(PATH, 'r') as file:
   data = yaml.safe_load(file)
