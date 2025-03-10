@@ -1,0 +1,204 @@
+components:
+  - component:
+      name: timeline
+      sets:
+        - set:
+            name: timestamps
+            subsets:
+              - name: now
+                set: timestamp.now
+      structures:
+        - structure:
+            name: time
+            sets:
+              name: timestamps
+              subsets:
+                - name: now
+                  set: timestamp.now
+            type:
+              id: order
+              subsets:
+                - set: first
+                - set: last
+      views:
+        - name: scrubber
+          representation:
+            sets:
+              - name: timestamps
+                subsets:
+                  - name: now
+                    set: timestamp.now
+              - time.now->timestamps
+            struct_as: gui.hstack
+            structure: timeline.time
+            type: gui
+  - component:
+      actions:
+        - moves:
+            - set: timeline.timestamps
+              structure: timeline.time
+              subset: timeline.time.now->timeline.timestamps
+          name: play
+      name: video
+      sets:
+        - set:
+            instance:
+              id: image
+            name: images
+        - set:
+            instance: text
+            name: title
+      structures:
+        - structure:
+            instance:
+              name: timeline
+              sets:
+                - set:
+                    name: timestamps
+                    subsets:
+                      - name: now
+                        set: timestamp.now
+              structures:
+                - structure:
+                    name: time
+                    sets:
+                      name: timestamps
+                      subsets:
+                        - name: now
+                          set: timestamp.now
+                    type:
+                      id: order
+                      subsets:
+                        - set: first
+                        - set: last
+              views:
+                - name: scrubber
+                  representation:
+                    sets:
+                      - name: timestamps
+                        subsets:
+                          - name: now
+                            set: timestamp.now
+                      - time.now->timestamps
+                    struct_as: gui.hstack
+                    structure: timeline.time
+                    type: gui
+            name: timeline
+            set:
+              instance:
+                id: image
+              name: images
+      views:
+        - name: thumbnail
+          representation:
+            set: timeline.time.first->images
+            type: gui
+        - name: viewer
+          representation:
+            set: timeline.time.now->images
+            type: gui
+core.components:
+  - structure:
+      id: order
+      subsets:
+        - set: first
+        - set: last
+  - structure:
+      id: linear
+      subsets:
+        - set: first
+        - set: last
+  - structure:
+      id: group
+  - set:
+      id: image
+  - set:
+      id: text
+covers:
+  - cover:
+      covered_set: editor_timeline.timestamps
+      covered_struct: editor_timeline.time
+      ref: videos.in_editor
+sets:
+  - set:
+      instance: video
+      name: videos
+      subsets:
+        - set:
+            name: in_editor
+            subsets:
+              - name: selected
+  - set:
+      name: tracks
+structures:
+  - structure:
+      instance:
+        name: timeline
+        sets:
+          - set:
+              name: timestamps
+              subsets:
+                - name: now
+                  set: timestamp.now
+        structures:
+          - structure:
+              name: time
+              sets:
+                name: timestamps
+                subsets:
+                  - name: now
+                    set: timestamp.now
+              type:
+                id: order
+                subsets:
+                  - set: first
+                  - set: last
+        views:
+          - name: scrubber
+            representation:
+              sets:
+                - name: timestamps
+                  subsets:
+                    - name: now
+                      set: timestamp.now
+                - time.now->timestamps
+              struct_as: gui.hstack
+              structure: timeline.time
+              type: gui
+      name: editor_timeline
+  - structure:
+      instance:
+        id: order
+        subsets:
+          - set: first
+          - set: last
+      name: track_order
+      set:
+        name: tracks
+  - structure:
+      instance:
+        id: group
+      ref:
+        name: tracks
+      set: videos.in_editor
+views:
+  - name: editor_view
+    representation:
+      ref: editor_timeline.scrubber
+      sets:
+        - instance: video
+          name: videos
+          subsets:
+            - set:
+                name: in_editor
+                subsets:
+                  - name: selected
+        - name: tracks
+      type: gui
+  - name: media_pool_view
+    representation:
+      sets: videos
+      sets_as: videos.thumbnail
+      struct_as: gui.wrapped_hstack
+      structure: videos.name.alphabetical
+      type: gui

@@ -1,0 +1,71 @@
+component: &timeline
+  - set: &timestamps 
+  - set: &now 
+    subsets: *timestamps
+
+  - structure: &time 
+    derives: *order
+    onto: *timestamps
+
+  - view: &scrubber
+    derives: *gui
+    input: [ *timestamps, *now ]
+    structure: *time
+    structure_as: *gui.hstack
+
+
+component: &video
+  - set: &images 
+    instance: *image
+  - set: &title 
+    instance: *text
+
+  - structure: &video_timeline 
+    derives: *timeline.time
+    onto: *images
+
+  - view: &thumbnail
+    derives: *gui
+    input: *timeline.time.first->images
+  - view: &viewer
+    derives: *gui
+    input: *timeline.now->images
+
+  - action: &play
+    moves:
+      - subset: *timeline.time.now->timeline.timestamps
+        set: *timeline.timestamps
+        along: *timeline.time
+
+
+component: &editor
+  - set: &videos
+    instance: *video
+  - set: &videos_in_editor
+    subsets: *videos
+  - set: &tracks
+
+  - structure: &editor_timeline
+    derives: *timeline.time
+  - structure: &track_order
+    derives: *order
+    onto: *tracks
+  - structure: &track_as_group
+    derives: *group
+    onto: *videos_in_editor
+    group_by: *tracks
+
+  - cover:
+    set: *editor_timeline.timestamps
+    structure: *editor_timeline.time
+
+  - view: &editor_view
+    derives: *gui
+    ref: *editor_timeline.scrubber
+    input: [ *videos, *tracks ]
+  - view: &media_pool_view
+    derives: *gui
+    input: *videos
+    input_as: *videos.thumbnail
+    structure: *videos.name.alphabetical
+    structure_as: *gui.wrapped_hstack

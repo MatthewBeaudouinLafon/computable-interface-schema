@@ -1,0 +1,191 @@
+# core library
+components:
+- order:
+    sets:
+      - .structure: 
+      - .first:
+        count: single
+        map:
+        - to: *.structure
+      - .last:
+        count: single
+        map:
+        - to: *.structure
+
+- linear:
+    sets:
+      - .structure:
+      - .first:
+          count: single
+          map:
+          - to: *.structure # a bit sketch
+      - .last:
+          count: single
+          map:
+          - to: *.structure
+
+- twodim:
+    sets:
+    - .structure
+
+- graphics:
+    sets:
+      - .points:
+      - .screen:
+          instance: *twodim
+            structure:
+              structures: .points
+
+      - .regions:
+          map:
+          - to: points
+            count: many
+            along: screen
+      - .rects:
+          map:
+          - to: .regions
+      - .vline:
+          map:
+          - to: .regions
+      - .hline:
+          map:
+          - to: .regions
+  
+      - .vstack:
+          map:
+          - to: screen
+      - .hstack:
+          map:
+          - to: screen
+    # etc...
+
+...
+components:
+- image:
+    # todo
+- timeline:
+    sets:
+    - .scrubber_view:
+        instance: graphics
+    - .timestamps:
+      map:
+        - to: scrubber_view*graphics.vline
+    - .now:
+        count: single
+        map:
+        - to: *.timestamps
+        - to: scrubber_view*graphics.icon
+    - .time:
+        instance: *linear
+          struct:
+            map:
+            - to: scrubber_view*graphics.hstack
+            structures:
+              - target: *.timestamps
+
+- video:
+    sets:
+    # views
+    - .thumbnail_view:
+        instance: *graphics
+    - .current_frame_view:
+        instance: *graphics
+
+    # conceptual model
+    - .title:
+        instance: *text
+        count: single
+    - .images:
+        instance: *image
+    - .timeline:
+        instance: *timeline
+          .time*linear.structure:
+            structures:
+            - *.images
+          .now:
+            map:
+            - to: .current_frame_view*graphics.regions
+              through: *.now->.images # tbd...
+          .first:
+            map:
+            - to: .thumbnail_view*graphics.regions
+              through: *.first->.images
+
+sets:
+#  Views
+- .media_pool_view:
+    instance: graphics
+- .editor_view:
+    instance: graphics
+
+# Conceptual Model
+- .editor:
+    instance: *timeline
+      .time*timestamps:
+        map:
+        - to: *.editor_view*graphics.vline
+      .time*struct:
+        map:
+        - to: *.editor_view*graphics.hstack
+- .videos:
+    instance: *video
+      thumnail_view*graphics.regions:
+        map:
+        - to: *.media_pool_view*graphics.regions
+      title*text.alphabetical*order.struct:
+        map:
+        - to: *.media_pool_view*graphics.wrapped_grid
+        structures:
+          - .videos # implied I guess?
+      images:
+        map:
+        - to: *.editor*timeline.timestamps # not actually implied by the cover below
+    map:
+    - to: *.editor*timeline.timestamps
+      count: many
+      along: *.editor*timeline.time*linear.structure
+
+- .videos_in_editor:
+    map:
+    - to: videos
+    - to: *.editor_view*graphics.regions
+      through: *videos_in_editor->videos # something feels wrong here
+
+- .tracks:
+    count: many
+    map:
+    - to: *.videos_in_editor->videos
+      count: many
+    - to: *.editor_view*graphics.rect
+    - to: *.editor_view*graphics.group # for videos
+
+- .track_order:
+    instance: *order
+      .structure:
+        structures: *.tracks
+        map:
+        - to: *.editor_view*graphics.vstack # for tracks (and videos I guess)
+
+
+Notes:
+- Talking about start of linear structure is a bit sketch
+  because I'm pointing to an arrow, not its start. Really
+  it should map to whatever set the linear thing structures.
+- It's getting hard to talk about compound subsets
+  on the left side of a mapto relationship.
+  You can reach into components, but you can't quite
+  do things like selected->videos mapto xyz
+- wait so since everything is an instance of something, you
+  always have to go deep to describe anything?
+  eg. for structures.
+- It definitely doesn't have the advantage of 1.2 where I know
+  where to put things...
+  - like, man I miss just putting stuff into "structures"
+- views are a bit unhinged, but somewhat elegant...
+  - currently hstack and vstack are non-trivially different
+    in that you wouldn't make a different metaphorical mapping
+  - might be mitigated if they both point to a stack, which 
+    then points to screen.....
+  - tracks and timeline still don't really compose properly into a view
+- Some relations are super indirect, like how applying a structure
+  to a view has implications for the objects within.

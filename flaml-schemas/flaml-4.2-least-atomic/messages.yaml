@@ -1,0 +1,82 @@
+core.components:
+  - structure: &order
+      id: order
+      subsets:
+        - set: first
+        - set: last
+  - structure: &linear
+      id: linear
+      subsets:
+        - set: first
+        - set: last
+
+#...
+
+sets:
+  - set: &timestamps
+      name: timestamps
+      count: many # implied by default
+  - set: &authors
+      name: authors
+  - set: &messages
+      name: messages
+      mapto: *authors
+  - set: &conversations
+      name: conversations
+      mapto_many: *messages
+      subset:
+        - name: selected
+          count: single
+
+structures:
+  - structure: &msg_order
+      name: msg_order
+      instance: *order
+      sets:
+        - *messages
+  - structure: &time
+      name: time
+      instance: *linear
+      sets:
+        - *timestamps
+      constrains:
+        - *msg_order
+# views:
+#   - view: &chat_view
+#       name: chat_view
+#       representation: gui
+#         set: *messages
+#         set_as: gui.text_box
+#         structure: *msg_order
+#         struct_as: gui.vstack
+#     # how to talk about left/right align based on authorship?
+#   - view: &list_conversations
+#       name: list_conversations
+#       representation: gui
+#         set: *conversations
+#         set_as: gui.text_box
+#         structure: *msg_order
+#         struct_as: gui.vstack
+
+# actions:
+# 	- action: &send_message
+# 		edits:
+# 			- *messages
+# 				# append in msg_order structure
+# 		inputs:
+# 			- touch.tap
+# 				when: # hit-test button
+# 			- keyboard.enter
+# 	- action: &select_conversation
+# 		edits:
+# 			- name: conversations
+# 				subset: selected
+# 		input: touch.tap
+# 			when: # hit-test conversation area
+# 	- name: next_conversation
+# 		moves:
+# 			- name: conversations
+# 				subset: selected
+# 				structure: msg_order
+# 		input: (keyboard.tab | keyboard.tab)
+# 			structure: msg_order # maybe extraneous

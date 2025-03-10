@@ -1,0 +1,64 @@
+components:
+- timeline:
+    sets:
+    - .scrubber_view:
+        instance: graphics
+    - .timestamps:
+      map:
+        - to: scrubber_view*graphics.vline
+    - .now:
+        count: single
+        map:
+        - to: *.timestamps
+        - to: scrubber_view*graphics.icon
+    - .time:
+        instance: *linear
+          struct:
+            map:
+            - to: scrubber_view*graphics.hstack
+            structures:
+              - target: *.timestamps
+- event:
+    sets:
+    - name:
+        intstance: *text
+    - 
+
+
+
+sets:
+# Views
+- week_view:
+  instance: *graphics
+- day_view:
+  instance: *graphics
+- month_view:
+  instance: *graphics
+- agenda_view:
+  instance: *graphics
+
+# Conceptual
+- timestamps:
+- time: # NOTE: choosing not to make this a component just to see
+  instance: linear
+  structures:
+  - timestamps
+- now:
+  count: single
+  map:
+  - to: timestamps
+
+- events:
+    instance: event
+    map:
+    - to: timestamps
+      count: many
+      along: time*linear.struct
+
+- days:
+   map:
+    - to: timestamps
+      count: many
+      along: time*linear.struct
+
+# todo: finish

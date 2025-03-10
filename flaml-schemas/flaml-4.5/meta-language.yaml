@@ -1,0 +1,67 @@
+# This version build on 1.3 by trying to minimize primitives, without requiring
+# a strong mental model of what's going on. 
+
+group:
+	- entity: &anchor
+		property: value | reference
+		mapto:
+			- item1
+			- item2: condition
+
+value: str, (enum), reference
+
+...
+components:
+  - component: &component_name
+    name: component_name
+    # stuff below in here for each component
+
+views:
+  - view: &view_name
+    name: view_name
+    # could do mapfrom as syntax sugar for mapto in other places
+
+sets:
+  - set: &set_name 
+    name: set_name
+    count: single | many
+    instance: *component
+    shared: false (default) | true # for components
+    content:
+      - str  # primitive
+      - set: *ref
+    mapto:
+      # normal mapto
+      # mapto many
+
+
+      - set: *set # normal mapto/mapto_many/subset
+      - view:
+          which: *view_name
+          what: gui.repr_obj
+
+structures:
+  - struct: &struct_name
+    name: *struct_name
+    instance: *structure_component
+    shared: false (default) | true # for components
+    mapto:
+      - set: *set       # applies to set
+      - structure: *structure # constrain/mapto structure
+      # - *action  # applies to actions
+      - view:
+          which: *view_name
+          what: gui.repr_struct
+      # - move:
+      #     action: *action_name
+      #     subset: *subset_name
+      #     set: *set_name
+
+# Still a mess...
+# actions:
+#   - action: &action_name
+#     name: action_name
+#     generator: *action_set  # eg. (left, right)* -> navigate left and right
+#     mapto:
+#       - input action # binds to
+#       - 

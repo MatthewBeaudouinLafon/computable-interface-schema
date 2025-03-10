@@ -1,0 +1,61 @@
+# The goals this version is to minimize the number of primitives. This mostly
+# means calling everything a "mapto" function, relying on content types to imply
+# the meaning.
+
+group:
+	- entity: &anchor
+		property: value | reference
+		mapto:
+			- item1
+			- item2: condition
+
+value: str, (enum), reference
+
+...
+components:
+  - component: &component_name
+    name: component_name
+    # stuff below in here for each component
+
+views:
+  - view: &view_name
+    name: view_name
+
+sets:
+  - set: &set_name 
+    name: set_name
+    count: single | many
+    instance: *component
+    content:
+      - str  # primitive
+      - set: *ref
+    mapto:
+      - set: *set # normal mapto/mapto_many/subset
+      - view:
+          which: *view_name
+          what: gui.repr_obj
+
+structures:
+  - struct: &struct_name
+    name: *struct_name
+    instance: *structure_component
+    mapto:
+      - set: *set       # applies to set
+      - structure: *structure # constrain/mapto structure
+      # - *action  # applies to actions
+      - view:
+          which: *view_name
+          what: gui.repr_struct
+      # - move:
+      #     action: *action_name
+      #     subset: *subset_name
+      #     set: *set_name
+
+# Still a mess...
+# actions:
+#   - action: &action_name
+#     name: action_name
+#     generator: *action_set  # eg. (left, right)* -> navigate left and right
+#     mapto:
+#       - input action # binds to
+#       - 

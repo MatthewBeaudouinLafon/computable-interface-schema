@@ -1,0 +1,76 @@
+group:
+	- entity: &anchor
+		property: value | reference
+		root-item relation:
+			- item1
+			- item2
+    root-item relation: single item
+		binary relation:
+			source-ref: target-ref
+
+value: str, (enum), reference
+...
+
+aspects: 
+	- components: 
+    properties:
+      name: str
+    aspects:
+      - aspects except component
+
+	- set:
+      properties:
+        name: str
+        count: single | many
+        instance: reference
+      root-item relation:
+        subsets:
+          - set: # define new set
+          - reference
+        mapto: reference
+        mapto_many: reference
+      binary relation:
+        # N/A
+
+	- structures: 
+      properties:
+        name: str
+        type: reference
+      root-item relation:
+        sets: reference
+        constrains: reference
+        mapto: reference
+      binary relation:
+        # N/A
+      
+	- covers:
+      properties:
+        name: str
+      root-item relation:
+        # N/A
+      binary relation:
+        set-reference: set-reference
+  
+	- views:
+      properties:
+        name: str
+        type: gui | screen reader # for now
+      binary relations:
+        sets:
+          set reference: representation set reference
+        structure:
+          structure reference: representation struct reference
+        
+	- actions:
+      properties:
+        name: str 
+      root-item relation:
+        inputs: core input library references
+      binary relations:
+        edits:
+          # actual relation is implied, but there could be multiple
+          relation source: relation target 
+        moves:
+          subset reference: superset reference # structure? it's ternary baby
+        insert: 
+          set reference: structure reference # superset implied?

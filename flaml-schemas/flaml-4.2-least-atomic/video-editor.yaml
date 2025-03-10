@@ -1,0 +1,143 @@
+core.components:
+  - structure: &order
+      id: order
+      subsets:
+        - set: first
+        - set: last
+  - structure: &linear
+      id: linear
+      subsets:
+        - set: first
+        - set: last
+  - structure: &group
+      id: group
+  - set: &image
+      id: image
+  - set: &text
+      id: text
+
+components:
+  - component: &timeline
+      name: timeline
+      sets:
+        - set: &timestamps
+            name: timestamps
+            subsets:
+              - set: timestamp.now
+                name: now
+      structures:
+        - structure: &time
+            name: time
+            type: *order
+            sets: *timestamps
+      views:
+        - name: scrubber
+          representation:
+            type: gui
+            sets:
+              - *timestamps
+              - time.now->timestamps # highlight playhead
+            structure: timeline.time
+            struct_as: gui.hstack
+  - component: &video
+      name: video
+      sets:
+        - set: &images
+            name: images
+            instance: *image
+        - set: &title
+            name: title
+            instance: text
+      structures:
+        - structure: &video_timeline
+            name: timeline
+            instance: *timeline
+            set: *images
+      views:
+        - name: thumbnail
+          representation:
+            type: gui
+            set: timeline.time.first->images
+        - name: viewer
+          representation:
+            type: gui
+            set: timeline.time.now->images
+      actions:
+        - name: play
+          moves:
+            - set: timeline.timestamps
+              subset: timeline.time.now->timeline.timestamps
+              structure: timeline.time
+sets:
+  - set: &videos
+      name: videos
+      instance: video
+      subsets:
+        - set: &in_editor
+            name: in_editor
+            subsets:
+              - name: selected
+
+  - set: &tracks
+      name: tracks
+
+structures:
+  - structure: &editor_timeline
+      name: editor_timeline
+      instance: *timeline
+  - structure: &track_order
+      name: track_order
+      instance: *order
+      set: *tracks
+  - structure: &track_as_group
+      ref: *tracks
+      instance: *group
+      set: videos.in_editor
+
+covers:
+  - cover:
+      ref: videos.in_editor
+      covered_set: editor_timeline.timestamps
+      covered_struct: editor_timeline.time
+
+views:
+  - name: editor_view
+    representation:
+      type: gui
+      ref: editor_timeline.scrubber
+      sets:
+        - *videos
+        - *tracks
+    # this view is a big mess, don't know how it all composes
+
+  - name: media_pool_view
+    representation:
+      type: gui
+      sets: videos
+      sets_as: videos.thumbnail
+      structure: videos.name.alphabetical
+      struct_as: gui.wrapped_hstack
+# actions:
+# - name: move_editor_video
+#   moves:
+#     set: videos.in_editor
+#       subset: videos.in_editor.selected
+#     structure: editor_timeline.time
+#   input: mouse.drag # dragging is structured by 2D screen
+#     when: # hit test selection
+#     structures:
+#       - editor_timeline.time # roughly mouse.x
+#       - tracks               # roughly mouse.y
+# - name: drag_from_pool
+#   inserts:
+#     set: videos.in_editor
+#     structures:
+#       - editor_timeline.time
+#       - tracks
+#   input: mouse.drag
+#     when:
+#       - # starts on video in pool
+#       - # ends on timeline view
+#     structures:
+#       - editor_timeline.time
+#       - tracks

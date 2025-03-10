@@ -1,0 +1,96 @@
+### Copy me
+component:
+  - name:
+    sets:
+      - 
+    structures:
+      -
+    covers:
+      -
+    views:
+      -
+    actions:
+      -
+
+sets:
+  - 
+
+structures:
+  -
+
+covers:
+  -
+
+views:
+  -
+
+actions:
+  -
+
+# -------
+
+components:
+  - set: &component_name
+    # stuff
+  - structure: &structure_component
+
+sets:
+  - set: &set_name
+      count: single | many # default to many
+      mapto:
+        - other_set_name
+  - set: &new_instances
+      instance: *component_name # instantiate component
+
+structures:
+  - structure: &struct_name
+      type: *order # | *linear | ...
+        # subsets: # subsets meaningful to the structure
+        #   - name: first 
+        #   - name: root
+      sets: # sets this structure applies to
+        - *set_name
+      constrains: *other_struct
+      mapto: *other_struct
+
+covers:
+  - cover: &cover_name
+    covered_set: *target_set
+    covered_struct: *along_struct
+    
+views:
+  - view: &view_name
+    representation: gui | screen_reader # could have many
+      set: *target_set
+        as: gui.rect
+      structure: *target_struct
+        as: gui.hstack
+    # tbd how to make more complex representations
+
+# tbd...
+actions:
+  - name: # action name
+    structure: *struct_name # | linear etc...
+    edits:
+      # generic relations
+      - name: set_name # change contents of set
+      - name: set_name 
+          mapto: thing # change a mapping
+      - name: struct_name
+          set: thing # change how a structure applies
+      - name: cover_name # change a cover
+    input: keyboard.enter
+      when: # condition somehow
+      structure: # input structure maps to conceptual structure
+  - name: action_name
+    moves:
+      - set: # where it moves
+          subset: # thing that moves
+        structure: # movement structure
+    input: mouse.drag
+      structure: # input structure maps to this structure
+                 # eg. 2d: mouse.drag -> 2d: canvas.node movement
+  - name: action_name
+    insert:
+      set: target_set
+      structure: target_structure # where it's inserted (new)	

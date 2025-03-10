@@ -1,0 +1,131 @@
+# This version builds on the atomic version but refactors some of the relations
+# to reduce conflict. Also promotes views/inputs just a bit: not quite first
+# class, but also not an afterthought.
+
+# connection with the world (representation and input devices)
+interfaces:
+  - gui 
+  - mouse
+  - keyboard
+
+sets:
+  - name: set_name
+    instance: component_ref
+
+    # say what's inside the set
+    count: many (default) | single
+    contents:
+      - primitive
+      - reference
+      - name: new_subset_name
+        # rest of subset/substruct spec (defined in place)
+
+    # relations
+    mapsto: target-set-or-struct
+    groups:
+      subject: target-set # mapto many (set)
+      along: target-structure # cover
+    structures:
+      target-set # structures (set)
+      # ^ what if you don't provide a structure?
+
+    source->target: # complex LHS
+      # add relations here
+
+    compomap: other-item-of-same-class # better name depending on component name
+
+component: # other names: class, part, unit, module
+  - name: component_name
+    sets:
+      - name: set_name
+        shared: false (default) | true
+        # rest of object spec
+
+notes:
+- maybe mapping component to component results in mapping their constituents
+  eg. I can map timeline to other timeline, and trust that the structures map
+  to each other, timestamps map to each other, etc... 
+- ^ this would be useful for graphics/representations, but it's another concept
+  to add and understand. So either it's hidden in mapto, or it's a different
+  relation.
+
+
+
+
+# make the colons in relations align
+mapsto: *target-set-or-struct
+groups:
+  what: *target-set             # mapto many (set)
+  with: *target-structure       # cover
+shapes: *target-set             # structures (set)
+
+# could do a nice views pattern
+component:
+  name: yep
+  sets:
+    - name: views
+      contents:
+        - name: sidepanel # views.sidepanel
+          instance: audio
+          compomap: screen-reader
+        - name: toolbar # views.sidepanel
+          instance: audio
+          compomap: screen-reader
+      # different section because it's not mutually exclusive with the subsets 
+      # in the previous section
+      contents: 
+        - name: active
+    - name: nav_views
+      instance: tree
+      mapsto: views
+      # views.active moves 
+...
+# Actions are also sets...
+sets:
+- name: nav_tabs
+  # actions are combinations of left and right
+  generator: # kind of like contents
+  - name: prev
+    input: mouse.left
+  - name: next
+    output: mouse.right
+  # actions can be represented easily
+  edits:
+  - current: tabs
+    along: tab_order
+
+  mapsto: tab_order
+
+...
+
+#  trying some stuff with actions
+sets:
+  - name: set_name
+    instance: component_ref
+
+    # say what's inside the set
+    count: many (default) | single
+    contents:
+      - primitive
+      - reference
+      - name: new_subset_name
+        # rest of subset/substruct spec (defined in place)
+
+    # relations
+    mapsto: target-set-or-struct
+    groups:
+      subject: target-set # mapto many (set)
+      along: target-structure # cover
+    structures:
+      target-set # structures (set)
+      # ^ what if you don't provide a structure?
+
+    source->target: # complex LHS
+      # add relations here
+
+    compomap: other-item-of-same-class # better name depending on component name
+
+    edits:
+    - relation lhs: relation rhs
+      along: nav structure # mostly if relation above is subset?
+    input: input-device-reference

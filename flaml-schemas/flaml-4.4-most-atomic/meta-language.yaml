@@ -1,0 +1,183 @@
+# Even less primitives than 1.3 by combining sets and structures
+
+group:
+	- entity:
+		property: value | reference
+		root-relation:
+			- item1
+			- item2: condition
+
+value: str, (enum), *reference 
+# *reference is nice for syntax highlighting
+# pre-parse should remove all reference
+
+...
+components:
+- component_name:
+    # stuff below in here for each component
+
+# TODO: add actions, and each relation can write "edited by"
+# NOTE: views are component instances of the graphics components!
+sets:
+- set_name:
+    instance: *component  # describes structure shape, single/many
+      .component_element:
+        # extend component in context
+        map: #etc.
+      .component_element*element_instance:
+        # extend deeper component in context
+        map: #etc.
+
+    # content-rules:
+    # - single, total order, tree
+    count: many (default) | single
+
+    contents:  # actually sick for combining structures eg. screen reader stuff
+    - str  # primitive
+    - *ref
+
+    map:
+    - to: *set    # normal mapto/mapto_many/subset
+      count: single | many # for groups
+        along: *struct # for covers (if it's many)
+    - to: *struct # constrain target structure (which might be meaningless...)
+    - to: gui.repr_obj | gui.repr_struct # peer into component
+      view: *view_name # could be conditional, but that's sketch
+    
+    structures:
+    - *set # structures set
+    # structure here doesn't _really_ make sense since this produces an
+    # edge-dual/line graph (so maybe for nav actions...)
+
+# Still a mess...
+# actions:
+#   - action: &action_name
+#     name: action_name
+#     generator: *action_set  # eg. (left, right)* -> navigate left and right
+#     mapto:
+#       - input action # binds to
+#       - 
+
+...
+
+# core library
+components:
+- order:
+    sets:
+    - .structure
+    - .first
+        instance: *single
+        mapto:
+        - *structure
+    - .last
+        instance: *single
+        mapto:
+        - *structure
+- twodim:
+    sets:
+    - .structure
+
+- graphics:
+    sets:
+      - .points:
+      - .screen:
+          instance: *twodim
+            structure:
+              structures: .points
+      - .regions:
+      - .rects:
+          map:
+          - to: .regions
+      - .vline:
+          map:
+          - to: .regions
+      - .hline:
+          map:
+          - to: .regions
+  
+      - .structs:
+          structures:
+            - .regions
+      - .vstack:
+          map:
+          - to: structs
+      - .hstack:
+          map:
+          - to: structs
+    # etc...
+
+...
+# Now with anchors...
+
+group:
+	- entity: &anchor
+		property: value | reference
+		mapto:
+			- item1
+			- item2: condition
+
+value: str, (enum), reference
+
+...
+components:
+- component: &component_name
+    name: component_name
+    # stuff below in here for each component
+
+views:
+- view: &view_name
+    name: view_name
+
+sets:
+- set: &set_name 
+    name: set_name
+    instance: *component  # describes structure shape, single/many
+
+    content:  # actually sick for combining structures eg. screen reader stuff
+    - str  # primitive
+    - *ref
+
+    mapto:
+    - target: *set    # normal mapto/mapto_many/subset
+    - target: *struct # constrain target structure (which might be meaningless...)
+    - target: *view_name
+      specifically: gui.repr_obj | gui.repr_struct
+    
+    structures:
+    - *set # structures set
+    # structure here doesn't _really_ make sense since this produces an
+    # edge-dual/line graph (so maybe for nav actions...)
+# Still a mess...
+# actions:
+#   - action: &action_name
+#     name: action_name
+#     generator: *action_set  # eg. (left, right)* -> navigate left and right
+#     mapto:
+#       - input action # binds to
+#       - 
+
+...
+
+# core library
+components:
+- component: &single
+    name: single
+- component: &many
+    name: single
+
+
+- component: &order
+    name: order
+    sets:
+    - set: &order_structure
+        name: order_structure
+    - set: &order_first
+        name: first
+        instance: *single
+        mapto:
+        - *order_structure
+    - set: &order_last
+        name: last
+        instance: *single
+        mapto:
+        - *order_structure

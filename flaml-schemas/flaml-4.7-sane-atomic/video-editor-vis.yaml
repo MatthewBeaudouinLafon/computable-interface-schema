@@ -1,0 +1,90 @@
+interfaces:
+  - name: gui
+    instance: graphics
+
+components:
+  - name: graphics
+    sets:
+      - name: hline
+      - name: vline
+      - name: vstack
+      - name: hstack
+      - name: grouping
+      - name: regions
+      - name: icon
+  - name: timeline
+    sets:
+      - name: scrubber_view
+        instance: graphics
+        count: single
+        compomap: gui
+
+      - name: timestamps
+        mapto: scrubber_view.vline # represent timestamps
+        contents:
+          - name: now # now I can say timestamps.now
+            count: single
+            mapto: scrubber_view.icon # represent now as icon (forwarded to gui)
+          - name: first
+            count: single
+          - name: last
+            count: single
+          - other # this means there's other stuff than above
+
+      - name: time
+        instance: linear
+        structures: timestamps
+        mapto: scrubber_view.hstack # use horizontal structure
+  - name: video
+    sets:
+      - name: thumbnail_view
+        instance: graphics
+        compomap: gui
+      - name: current_frame_view
+        instance: graphics
+        compomap: gui
+
+      - name: images
+        instance: image
+      - name: timeline
+        instance: timeline
+        .timestamps:
+          mapto: images
+        .first->images:
+          mapto: thumbnail_view.regions
+        .now->images:
+          mapto: current_frame_view.regions
+
+sets:
+  - name: views
+    contents:
+      - name: media_pool
+        instance: graphics
+        compomap: gui
+      - name: editor
+        instance: graphics
+        compomap: gui
+
+  - name: nl-editor # namespacing of maybe results in confusing name?
+    instance: timeline
+    .timestamps:
+      mapto: views.editor.vline
+    .timestamps.now: # playhead
+      mapto: views.editor.vline # highlighted somehow
+    .time:
+      mapto: views.editor.hstack
+  - name: videos
+    instance: video
+    mapto: views.media_pool.regions
+    contents:
+      - name: in_editor
+        mapto: views.editor.regions
+        group:
+          subject: nl-editor.timestamps
+          along: nl-editor.time
+        # .video.timeline: # does this make group obsolete/redundant?
+        #   compomap: nl-editor # in-editor video timelines map to the editor's timeline
+      - other
+  - name: tracks
+    group: videos.in_editor
+    mapto: views.editor.grouping # that's a representational structure
