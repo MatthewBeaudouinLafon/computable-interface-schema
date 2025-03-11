@@ -1,0 +1,228 @@
+interfaces:
+  - gui
+
+components:
+  - name: text-block
+    sets:
+      - name: view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: content.view
+      - name: styles
+        shared: true
+        contents:
+          - name: body
+          - name: h1
+          - name: h2
+          - name: h3
+          - name: h4
+          - name: bullet
+          - name: numbered
+          - name: callout
+          - name: code
+          - name: quote
+
+      - name: content
+        type: text
+      - name: style
+        count: single
+        mapto: styles
+
+  - name: image-block
+    type: image
+
+  - name: person
+    sets:
+      - name: name
+
+  - name: reply
+    sets:
+      - name: content
+        count: single
+        type: text
+      - name: author
+        type: person
+
+  - name: comment
+    sets:
+      - name: view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: replies
+      - name: expanded-view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: replies
+        .hstack:
+          mapfrom: thread
+
+      - name: replies
+        type: reply
+      - name: thread
+        type: order
+        structures: replies
+
+  - name: page
+    sets:
+      # Views
+      - name: thumbnail-view
+        type: graphics
+        compomap: gui
+        # don't bother talking about hstack
+        .regions:
+          mapfrom:
+            - name.view
+            - icon.view
+
+      - name: document-view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: blocks.view
+        .hstack:
+          mapfrom: doc-order
+
+      - name: comments-view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom:
+            - comments.view # NOTE: maybe this should be the inactive comments.
+            - comments.active.expanded-view
+        .haligned:
+          mapfrom: doc-order # NOTE: this is kind of a hack to gesture at the spacing.
+
+      # Conceptual Model
+      - name: name
+        type: text
+      - name: icon
+        type: image
+      - name: blocks
+        contains:
+          - name: text
+            type: text-block
+          - name: image
+            type: image-block
+          - name: selected # highlighted blue eg. for copy pasting
+          - name: active # being edited
+            count: single
+          - name: page-ref
+            type: page
+      - name: doc-order
+        type: order
+        structures: blocks
+      - name: permitted-users
+        type: person
+      - name: comments
+        type: comment
+        comments.replies.author:
+          mapto: permitted-users
+        contains:
+          - name: active
+          - name: block
+            mapto: blocks
+          - name: text
+            group:
+              subject: blocks.text.content.letters
+              along: blocks.text.content.order
+
+sets:
+  # Views
+  - name: page-view
+    type: graphics
+    compomap: gui
+    count: single
+    .regions:
+      mapfrom: pages.active.view
+
+  - name: breadcrumbs
+    type: graphics
+    compomap: gui
+    count: single
+    .regions:
+      mapfrom: page.active->page-paths->pages # set of pages that link to root
+    .hstack:
+      mapfrom: sidebar-hierarchy
+  - name: sidebar
+    type: graphics
+    compomap: gui
+
+    .region:
+      mapfrom: pages.name.view
+    .hstack:
+      mapfrom: sidebar_order
+
+  # combining views
+  - name: doc-view-order # kind of meaningless structure on its own
+    type: order
+    structures: doc-views
+  - name: doc-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom:
+        - page-view
+        - breadcrumbs
+    .vstack:
+      mapfrom: doc-view-order
+  - name: webview-order
+    type: order
+  - name: view
+    type: graphics
+    compomap: gui
+
+    .regions:
+      mapfrom:
+        - doc-view
+        - sidebar
+    .hstack:
+      mapfrom: webview-order
+
+  # Conceptual Model
+  - name: users
+    type: person
+
+  - name: pages
+    type: page
+    mapto: page-paths
+    contains:
+      - name: top-level
+      - name: active
+        count: single
+
+    .permitted-users:
+      mapto: users
+
+  - name: links
+    type: digraph
+    structures: pages # this depends on the links you have at the top of a page
+  - name: sidebar-hierarchy
+    type: tree
+    structures: pages
+    mapto: links
+  - name: page-paths
+    group:
+      subject: pages
+      along: sidebar-hierarchy
+  - name: sidebar-order
+    type: order
+    structures: pages.top-level
+
+notes:
+  - architecting the components is kind of tricky. Like, how do I optionally have state? I guess I can just have different
+    types of blocks
+  - mapfrom means you could leave the provenance of hstack open ended with a variable.
+    Barring that, it's feels like "oh yeah, where does that come from?"
+  - a bit unfortunate that the semantics for the commutative square of representation aren't actually realized in this notation.
+    But that wouldn't help with metaphorical mapping anyway.
+  - when I'm embedding a component's view in another view, what should I map it to? regions is the safe bet, but meh
+  - how do I talk about comments floating in the right place? This feels like a problem of representing substraty things again...
+  - if I have non-mutually-exclusive subsets in contains, how do I look at the intersection of two sets?
+    - maybe `page.active->page.top-level` = active top level page
+    - `pages.active.top-level` technically this is still valid? since `pages.active` is just a set of pages. That implies you can do pages.active.active.active...
+  - still a bit awkward to have structures named and instantiated just to be used once. Is there a similar move to `contains` that I can do?
+  - combining views is a particularly awkward mess... maybe that could be fixed with a better gui abstraction
+    - notably we probably don't get a lot out of seeing how the views are put together. That's not a mind melting metaphor, and it's more easily captured with a screenshot

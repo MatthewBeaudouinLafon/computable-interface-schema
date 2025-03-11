@@ -1,0 +1,59 @@
+# This version is mostly similar to 4.7, with some keyword changes.
+
+# connection with the world (representation and input devices)
+interfaces:
+  - gui 
+  - mouse
+  - keyboard
+
+sets:
+  - name: set_name
+    type: component_ref
+
+    # say what's inside the set
+    count: many (default) | single
+
+    # subsets, not necessarily mutually exclusive
+    # access with set_name.subset_name
+    contains:
+      - name: new_subset_name
+          # rest of subset/substruct spec (defined in place)
+      - reference # TODO: is this actually used?
+
+    # relations
+    # access with lhs->rhs
+    mapsto: target-set-or-struct
+    mapsto:
+    - target-set-or-struct1
+    - target-set-or-struct2
+    groups: target-set
+    groups:
+      subject: target-set # mapto many (set)
+      along: target-structure # cover
+    groups:
+      - subject: target-set # mapto many (set)
+        along: target-structure # cover
+      
+    structures: target-set # structures (set)
+    structures:
+      - target-set
+      - target-set2
+      # ^ what if you don't provide a structure?
+
+    compomap: other-item-of-same-class # better name depending on component name
+  
+    source->target: # complex LHS
+      # add relations here
+
+    mapfrom: source-set-or-struct
+    mapfrom:
+    - source-set-or-struct1
+    - source-set-or-struct2
+
+
+component: # other names: class, part, unit, module
+  - name: component_name
+    sets:
+      - name: set_name
+        shared: false (default) | true
+        # rest of object spec

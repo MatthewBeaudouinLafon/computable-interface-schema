@@ -1,0 +1,77 @@
+components:
+  - name: graphics
+    sets:
+      - name: hline
+      - name: vline
+      - name: vstack
+      - name: hstack
+  - name: event
+    sets:
+      - name: title
+        type: text
+  - name: timeline
+    sets:
+      - name: timestamps
+      - name: time-line
+        type: linear
+
+interfaces:
+  - name: gui
+    type: graphics
+
+sets:
+  - name: calendar-views
+    # type: graphics # saying that all views are gui graphics?
+    # compomap: gui # I'm 80% convinced it works
+    contains:
+      - name: day
+        type: graphics
+        compomap: gui
+      - name: week
+        type: graphics
+        compomap: gui
+      - name: active # used to navigate between views (pending actions spec)
+        count: single
+      - other # use this to say that not everything is active
+
+  - name: time
+    type: timeline
+
+    .timestamps:
+      mapto: calendar-views.day.hline
+    .time-line:
+      mapto:
+        - calendar-views.day.vstack
+        - calendar-views.week.hstack
+
+  - name: events
+    type: event
+    groups:
+      subject: time.timestamps
+      along: time.time-line
+
+  - name: days
+    groups:
+      subject: time.timestamps
+      along: time.time-line
+    contains:
+      - other
+      - name: today
+        # how to say that time.now is in today?
+        # mapfrom: time.now # maybe
+        # when: 'time.now in today->timestamps' # more accurate
+        ->events:
+          mapto: calendar-views.day.rects
+          when: "events->timestamps in today.timestamps"
+
+  - name: weeks
+    groups:
+      subject: days
+      along: time.time-line
+    contains:
+      - name: current
+        ->days->calendar-views.day:
+          # put all of the days representations into the week representation
+          # not as elegant as in other notations
+          mapto: calendar-views.week.regions
+        # when: day.today in weeks.current->days # same as before

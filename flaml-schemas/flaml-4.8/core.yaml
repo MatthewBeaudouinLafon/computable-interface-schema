@@ -1,0 +1,123 @@
+# Core library of components
+components:
+  # Structures
+  # TODO: how do I make these applicable structures without having to go in?
+  # TODO: how do I talk about eg. 'first', 'last', etc.
+  - name: order
+  - name: linear
+  - name: grid
+  - name: twodim
+  - name: tree
+  - name: digraph
+  - name: grouping # how does this interact with native groups?
+
+  # Basics
+  - name: number
+    sets:
+      - name: all
+        shared: true
+      - name: order
+        shared: true
+        structures: all
+      - name:
+
+  # GUI basics
+  - name: graphics
+    sets:
+      - name: pixels
+
+      # Representational Structures
+      - name: screen
+        structures: pixels
+      - name: zorder
+        type: order
+      - name: vstack
+        type: order
+        mapto: screen
+      - name: hstack
+        type: order
+        mapto: screen
+      - name: grouping
+        type: grouping
+        mapto: screen
+
+      # Representational Objects
+      - name: regions
+        groups:
+          subject: pixels
+          along: screen
+      - name: hline
+        mapto: regions
+      - name: vline
+        mapto: regions
+      - name: icon
+        mapto: regions
+      - name: rect
+        mapto: regions
+
+  - name: gui
+    type: graphics
+
+  - name: alphabet
+    sets:
+      - name: letters
+      - name: alphabetical-order
+        type: order
+        structures: letters
+  - name: text
+    sets:
+      - name: view
+        type: graphics
+      - name: letters
+        group: alphabet # as in mapto-many but bleh
+        contents:
+          - name: first
+      - name: order
+        type: order
+        structures: letters
+      - name: words
+        group:
+          subject: letters
+          along: order
+  - name: audio
+    sets:
+      - name: samples
+        type: number
+      - name: time
+        type: timeline
+        .time:
+          structures: samples
+
+  # TODO: how do these even get used...
+  - name: mouse
+  - name: keyboard
+
+  # Conceptual
+  - name: timeline
+    sets:
+      - name: scrubber_view
+        type: graphics
+        count: single
+        compomap: gui
+
+      - name: timestamps
+        mapto: scrubber_view.vline # represent timestamps
+        contains:
+          - name: now # now I can say timestamps.now
+            count: single
+            mapto: scrubber_view.icon # represent now as icon (forwarded to gui)
+          - name: first
+            count: single
+          - name: last
+            count: single
+
+      - name: time
+        instance: linear
+        structures: timestamps
+        mapto: scrubber_view.hstack # use horizontal structure
+
+notes:
+  - missing mapto-many for text mapto-many alphabet
+  - .`number` is awkward because I want to use it as a single thing, but I have to reach into it to get 'the number'"
+    - maybe I can have a "promoted" field that behaves like "shared". So when you use the component,
+    you're actually referring to that thing

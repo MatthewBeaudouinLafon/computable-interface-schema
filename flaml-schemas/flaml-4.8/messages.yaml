@@ -1,0 +1,59 @@
+interfaces:
+  - name: gui
+    type: graphics
+  - name: mouse
+  - name: keyboard
+
+components:
+  - name: graphics
+    sets:
+      - name: hline
+      - name: vline
+      - name: vstack
+      - name: hstack
+      - name: grouping
+      - name: regions
+      - name: icon
+
+sets:
+  # make the views
+  - name: chat-view
+    type: graphics
+    compomap: gui
+  - name: convo-view
+    type: graphics
+    compomap: gui
+
+  - name: authors
+    contains:
+      - name: user
+      - other
+    mapto: chat-view.grouping # for left-right aligned messages (somehow...)
+
+  - name: messages
+    mapto: authors
+    # authors can also group messages,
+    # but this is more convenient for -> notation
+
+  - name: conversations
+    contains:
+      - name: selected
+        ->messages:
+          mapto: chat-view.regions
+    group: messages
+    mapto: convo-view.regions
+
+  - name: time
+    type: timeline
+    structures:
+      - messages
+      - conversations
+    contains:
+      - name: message-order
+        type: order
+        structures: messages # implied since top level also structures
+    mapto:
+      - chat-view.vstack
+      - convo-view.vstack
+    # tricky to explain how it depends on the last message in convo
+    # (but not impossible?)

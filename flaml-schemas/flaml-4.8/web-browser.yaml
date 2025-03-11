@@ -1,0 +1,75 @@
+interfaces:
+  - name: gui
+    type: graphics
+  - name: mouse
+  - name: keyboard
+
+component:
+  - name: nav-order
+    type: linear
+    generator: # kind of like contains, but produces every combination of subset
+      - name: prev
+      - name: next
+
+sets:
+  - name: main-view # combine and structure views
+    type: graphics # any reason not to be both an order and graphics? don't think so
+    compomap: gui
+  - name: views # organize the views into one set for namespacing
+    contains:
+      - name: webview
+        type: graphics
+        compomap: gui
+        mapto: main-view.regions
+      - name: tabs
+        type: graphics
+        compomap: gui
+        mapto: main-view.regions
+  - name: view-struct # needed to say that they're vertically stacked.
+    type: order # which means all represented structures must be conceptually meaningful.
+    structures: views # I don't think ideal in cases like this (required detail).
+    mapto: main-view.vstack
+
+  - name: webpages
+    contains:
+      - other
+      - name: open # webpages.open
+        contains:
+          - name: active # webpages.open.active (nesting subsets)
+            # I should technically make webpages a component, but this is sufficient
+            # if details don't matter (nice that it's possible)
+            mapto: views.webview.regions
+          - other
+
+  - name: tabs
+    contains:
+      - name: active
+        mapto: webpages.open.active
+      - other
+    mapto:
+      - webpages.open
+      - views.tabs.textbox
+
+  - name: tab-order
+    type: order
+    structures: tabs
+    contains:
+      - name: groups # tab-groups are always aligned with tab-order, so they're a
+      - other # "structure subset" (like msg-order and time)
+    mapto: views.tabs.hstack
+
+  - name: nav-tabs
+    type: nav-order
+    nav-order.prev:
+      input: keyboard.ctrl-shift-tab
+    nav-order.next:
+      input: keyboard.ctrl-tab
+    edits:
+      - tabs.active: tabs # moves
+        along: tabs-order
+
+  - name: select-tab
+    edits:
+      - tabs.active: tabs
+    input: mouse.click
+    when: "gui.cursor.position in tabs->view.tabs->gui.regions"

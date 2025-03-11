@@ -1,0 +1,107 @@
+interfaces:
+  - time # kind of an interface with the real world??
+  - gui
+  - audio-out
+
+components:
+  # NOTE: there's an opportunity here to separate people from artists, but that's not what YT music does. But Equipboard does do that.
+  - name: artist
+    sets:
+      - name: name
+        type: text
+        count: single
+  - name: album
+    sets:
+      - name: name
+        type: text
+      - name: cover
+        type: image
+      - name: release-date
+        mapto: time.timestamps # implies it's structured by time, though it's kind of against the spirit of structure-first
+  - name: playlist
+    sets:
+      - name: name
+        type: text
+      - name: songs
+      - name: order
+        type: order
+        structures: songs
+  - name: song
+    sets:
+      - name: title
+        type: text
+      - name: audio
+        type: audio
+      - name: lyrics
+        type: text
+
+      - name: row-view
+
+sets:
+  - name: artists
+    type: artist
+  - name: albums
+    type: album
+  - name: songs
+    type: song
+    mapto:
+      - artists
+      - albums
+      - playlists.radio
+    contains:
+      name: playing
+  - name: playlists
+    type: playlist
+
+    .songs:
+      groups: songs # NOTE: overlapping groups, can also technically "group many"
+
+    contains:
+      - name: user
+        contains:
+          - name: thumbs-up
+      - name: generated
+        contains:
+          - name: radio
+      - name: active
+
+  # Views
+  - name: playing-song
+    type: audio
+    compomap: audio-out
+
+  - name: collapsed-playlist-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: song.playing.row-view
+  - name: currently-playing-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom:
+        - song.playing.title.view
+        - song.playing->albums.cover.view
+        - song.playing.timeline.scrubber-view
+        # plus a bunch of controls
+  - name: lyrics-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom:
+        - song.playing.lyrics.view
+  - name: up-next-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom:
+        - playlists.active.songs->songs
+    .hstack:
+      mapfrom:
+        - playlists.active.order
+
+notes:
+  - is `time` (as in big-time) an interface with the world? Doesn't feel great.
+  - dang sometimes I do want to say that time is a property. But not if I want to use the structure I guess.
+  - how do I do ML magic structure for "Related"?
+  - missing buttons :(
