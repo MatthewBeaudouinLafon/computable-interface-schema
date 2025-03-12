@@ -57,3 +57,6 @@ component: # other names: class, part, unit, module
       - name: set_name
         shared: false (default) | true
         # rest of object spec
+    extensions:
+      - .compo_set:
+          new_relations

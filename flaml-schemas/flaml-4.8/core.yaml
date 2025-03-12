@@ -116,6 +116,26 @@ components:
         structures: timestamps
         mapto: scrubber_view.hstack # use horizontal structure
 
+  - name: canvas
+    instance: graphics
+    sets:
+      - name: objects
+        mapto: regions
+
+      - name: view
+        instance: graphics
+        compomap: gui
+
+        .pixels:
+          mapfrom: pixels
+        .screen:
+          mapfrom: screen
+        .regions:
+          mapfrom: objects
+    extensions:
+      - .z-order:
+          structures: objects
+
 notes:
   - missing mapto-many for text mapto-many alphabet
   - .`number` is awkward because I want to use it as a single thing, but I have to reach into it to get 'the number'"
