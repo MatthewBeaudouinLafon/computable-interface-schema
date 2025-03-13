@@ -1,24 +1,148 @@
 components:
+  - name: canvas-object
+    sets:
+      - name: name
+        type: text
+      - name: row-view
+        type: graphics
+        compomap: gui
+      - name: properties
+        contains:
+          - name: opacity
+          - name: color
+          # etc.
+      - name: prop-order
+        type: order
+        structures: properties
+
   - name: page
     sets:
+      - name: title
+        type: text
+      - name: modes
+        contains:
+          - name: design
+          - name: prototype
+          - name: active
+      - name: active
       - name: canvas
         instance: canvas
         sets:
-          - layers:
+          - name: layer-order
             instance: order
-            structures:
-              - objects
-        extensions:
+          - name: layers
+            instance: tree
+            structures: objects
+            mapto: layer-order # constrains
           - .objects:
+              type: canvas-object
               contains:
                 - name: shapes
                 - name: frames
                   groups:
                     subject: .objects
-                    mapto: layers # constraining layers? meh
+                    along: layers # constraining layers? meh
+                - name: images
+                - name: text-box
+                  type: text
+                - name: selected
+                - name: active-in-prototype
+          - name: triggers
+            contains:
+              - name: on-click
+              - name: on-drag
+              - name: while-hovering
+              - name: after-delay
+              # etcs...
+          - name: prototyping-network
+            type: digraph
+            structures: .objects.frames
+            mapto: triggers
+          - name: marquee
+            group:
+              subject: pixels
+              along: screen
+          - name: prototype-arrows-view
+            type: graphics
+            compomap: gui
+            .node-wire:
+              mapfrom:
+                - .objects
+                - prototyping-network # will go to arrows
+            .node-wire-struct:
+              mapfrom: prototyping-network # arrows map to graphical structure
+
+      # Views
+      - name: view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: canvas.view
+
+      - name: row-view
+        type: graphics
+        compomap: gui
+        .regions:
+          mapfrom: title.view
 
 sets:
-  -
+  - name: pages
+    type: page
+    contains:
+      - name: active
+  - name: page-order
+    type: order
+    structures: pages
+
+  # Views
+  - name: content-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom:
+        - pages.active.view
+        - subject: pages.active
+          when: pages.active.mode.active is pages.active.mode.prototype
+
+  - name: play-prototype-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: pages.active.canvas.objects.active-in-prototype.view
+
+  - name: pages-panel
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: page.row-view
+    .vstack:
+      mapfrom: page-order
+
+  - name: layers-panel
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: pages.active.objects->pages.active.obj-names.view
+    .vstack:
+      mapfrom: pages.active.layer-order
+
+  - name: properties-panel
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: page.active.canvas.objects.selected.properties
+    .vstack: # this is simplifying things, closer to what Illustrate does
+      mapfrom: page.active.canvas.objects.selected.prop-order
 
 notes:
-  - still unclear how to talk about groups constraining linear things
+  - still unclear how to talk about groups constraining linear things (frames and layers)
+  - when I have A constrains B structures C, where do I say that A/B structures C? Does it matter?
+  - flattening "contains" blocks means that semantically different things end up in the same place eg. selecting vs types of objects
+  - can subset objects have a different/additional type compared to the parent? A bit uncomfortable, but why not?
+  - if you have different types of objects, how do you define them? Here I have the base as a component, then subsets
+    with different properties (using "contains"). I could also have derivative components
+  - I feel like '.' is overloaded between component access and 'contains' blocks. Maybe it's fine? Maybe I need a different symbol?
+  - properties panel layout is a bit over-simplified, but I don't think the details are worth the effort.
+  - keyword 'when' is great for conditional views
+  - still not always 100% clear how to package things eg. interaction properties in the prototype network
+  - treating the prototype network as a set of arrows is great for labeling arrows

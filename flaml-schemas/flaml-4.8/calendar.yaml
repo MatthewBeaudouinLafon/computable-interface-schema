@@ -21,8 +21,8 @@ interfaces:
 
 sets:
   - name: calendar-views
-    # type: graphics # saying that all views are gui graphics?
-    # compomap: gui # I'm 80% convinced it works
+    type: graphics # saying that all views are gui graphics?
+    compomap: gui # I'm 80% convinced it works
     contains:
       - name: day
         type: graphics
