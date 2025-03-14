@@ -1,0 +1,147 @@
+interfaces:
+  - time
+
+components:
+  - name: file
+    sets:
+      - name: name
+        count: single
+        type: text
+      - name: date-created
+        count: single
+        mapto: time.timestamps
+      - name: date-modified
+        count: single
+        mapto: time.timestamps
+  - name: folder
+    sets:
+      - name: name
+        count: single
+        type: text
+
+sets:
+  - name: files
+    count: single
+
+  - name: kind #
+    group: files
+
+  - name: file-hierarchy
+    type: hierarchy
+    structures: items
+
+    .containers:
+      mapto: folders
+
+  - name: path
+    group:
+      subject: folders
+      along: folder-hierarchy
+
+  - name: items
+    contains:
+      - files
+      - folders
+
+    mapto: path
+
+  - name: folders
+    type: folder
+    contains:
+      - name: top-level
+        contains:
+          - name: recent
+            count: single
+          - name: applications
+            count: single
+          - name: desktop
+            count: single
+          - name: documents
+            count: single
+          - name: downloads
+            count: single
+          - name: active
+            count: single
+
+    group:
+      subject: items
+      along: file-hierarchy
+
+  - name: tags
+    contains:
+      - name: red
+        count: single
+      - name: orange
+        count: single
+      # etc...
+
+    group: items
+
+  - name: side-bar-items
+    contains:
+      - folders.top-level
+      - tags
+
+  - name: side-bar-order
+    type: order
+
+  - name: side-bar-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: side-bar-items
+    .vstack:
+      mapfrom: side-bar-order
+
+  - name: sort-orders
+    contains:
+      - name: alphabetical
+        type: order
+        structures: folders.active->items
+        mapfrom: items.name.alphabetical # constaint
+      - name: creation-date
+        type: order
+        structures: folders.active->items
+        mapfrom: items.creation-date.time
+      - name: modified-date
+        type: order
+        structures: folders.active->items
+        mapfrom: items.modified-date.time
+      - name: kind-order
+        type: order
+        structures: items.modified-date.time
+        mapfrom: kind # constrained by grouping
+      - name: active
+
+  - name: grid-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: folders.active->items
+    .wrapped-hstack:
+      mapfrom: sort-order.active
+
+  - name: list-view
+    type: graphics
+    compomap: gui
+    .regions:
+      mapfrom: folders.active->items
+    .vstack:
+      mapfrom: sort-order.active
+
+  # Uh, not sure how to describe the columns view without some kind of function, or parametrized component
+  # - folder.active->path.items
+
+notes:
+  - still awkward to talk about time...
+  - hierarchies with folders are still awkward to describe (like frames in Figma). How can make that more consistent?
+  - I guess this notation is also contributing a strategy to talk about structure as first-class, because it's not obvious
+  - I'm often using 'contains' to illustrate what's in a set with concrete values eg. for tags & folders.top-level
+  - tags made me run into the 'B mapto A' vs 'A groups B' ambiguity. You can also express that by making a component and giving it things, like I do with folders (whose component-files then connect with top-level files)
+    - B mapto A kind of looses semantics
+    - A groups B implies a structure, and being able to say A.selected->B
+    - A has B in component means that it makes sense in isolation. If it doesn't, then don't do that. But single prop in component can be flipped to group.
+  - starting to feel like components need to be able to do things to the items in the sets of its instances
+    - text component tells its instances are structured alphabetically
+  - mapfrom is useful to define what a structure is constrained by in place, which is nice
+  - count; single is weird, because sometimes it's useful to say (eg. for selection), but sometimes it's true and it's not useful to say (eg. for most views)

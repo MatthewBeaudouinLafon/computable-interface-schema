@@ -1,0 +1,13 @@
+sets:
+  - name: space
+    type: 3dspace
+
+    .objects:
+      contains:
+        - name: user-hands
+        - name: selected
+  - name: video-feed
+    type: image
+
+notes:
+  - oof, this says basically nothing, especially without interaction

@@ -8,8 +8,10 @@ components:
   - name: grid
   - name: twodim
   - name: tree
+  - name: hierarchy # todo: 'containers'/'nodes' subset
   - name: digraph
   - name: grouping # how does this interact with native groups?
+  - name: threedim
 
   # Basics
   - name: number
@@ -136,6 +138,20 @@ components:
       - .z-order:
           structures: objects
 
+  - name: 3dspace
+    sets:
+      - name: points
+      - name: space
+        type: threedim
+        structures: points
+      - name: objects
+        group:
+          subject: points
+          along: space
+      - name: intersecting-objects
+        group:
+          subject: objects
+          along: space
 notes:
   - missing mapto-many for text mapto-many alphabet
   - .`number` is awkward because I want to use it as a single thing, but I have to reach into it to get 'the number'"
