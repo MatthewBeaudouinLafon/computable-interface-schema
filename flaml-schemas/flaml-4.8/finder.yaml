@@ -21,10 +21,16 @@ components:
 
 sets:
   - name: files
-    count: single
 
   - name: kind #
     group: files
+
+  - name: items
+    contains:
+      - files
+      - folders
+
+    mapto: paths
 
   - name: file-hierarchy
     type: hierarchy
@@ -33,24 +39,17 @@ sets:
     .containers:
       mapto: folders
 
-  - name: path
+  - name: paths
     group:
       subject: folders
       along: folder-hierarchy
-
-  - name: items
-    contains:
-      - files
-      - folders
-
-    mapto: path
 
   - name: folders
     type: folder
     contains:
       - name: top-level
         contains:
-          - name: recent
+          - name: recent # isn't this different?
             count: single
           - name: applications
             count: single
@@ -130,7 +129,7 @@ sets:
       mapfrom: sort-order.active
 
   # Uh, not sure how to describe the columns view without some kind of function, or parametrized component
-  # - folder.active->path.items
+  # - folder.active->paths.items
 
 notes:
   - still awkward to talk about time...

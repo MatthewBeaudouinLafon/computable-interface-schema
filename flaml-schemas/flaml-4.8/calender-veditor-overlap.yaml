@@ -1,0 +1,132 @@
+# relevant core
+components:
+  # Structures
+  # TODO: how do I make these applicable structures without having to go in?
+  # TODO: how do I talk about eg. 'first', 'last', etc.
+  - name: order
+  - name: linear
+  - name: grid
+  - name: twodim
+  - name: tree
+  - name: hierarchy # todo: 'containers'/'nodes' subset
+  - name: digraph
+  - name: grouping # how does this interact with native groups?
+  - name: threedim
+
+  # GUI basics
+  - name: graphics
+    sets:
+      - name: pixels
+
+      # Representational Structures
+      - name: screen
+        structures: pixels
+      - name: zorder
+        type: order
+      - name: vstack
+        type: order
+        mapto: screen
+      - name: hstack
+        type: order
+        mapto: screen
+      - name: grouping
+        type: grouping
+        mapto: screen
+
+      # Representational Objects
+      - name: regions
+        groups:
+          subject: pixels
+          along: screen
+      - name: hline
+        mapto: regions # note that all of the derivative objects mapto regions
+      - name: vline # so the algorithm should be able to identify that (transitive property of mapto)
+        mapto: regions
+      - name: icon
+        mapto: regions
+      - name: rect
+        mapto: regions
+  - name: timeline
+    sets:
+      - name: scrubber_view
+        type: graphics
+        count: single
+        compomap: gui
+
+      - name: timestamps
+        mapto: scrubber_view.vline # represent timestamps
+        contains:
+          - name: now # now I can say timestamps.now
+            count: single
+            mapto: scrubber_view.icon # represent now as icon (forwarded to gui)
+          - name: first
+            count: single
+          - name: last
+            count: single
+
+      - name: time
+        type: linear
+        structures: timestamps
+        mapto: scrubber_view.hstack # use horizontal structure
+
+---
+# actual overlaps
+overlaps:
+  # this is a suboptimal mapping because the views don't line up
+  - components:
+      # list of components that emerged to be useful?
+    sets:
+      - id: 0 # generated ids, but not meaningfully numbers
+        name: [media-pool, day-view]
+        type: [graphics, graphics] # because it's in core, we can call it out explicitly
+        compomap: [gui, gui]
+      - id: 1
+        name: [editor-view, week-view]
+        type: [graphics, graphics] # because it's in core, we can call it out explicitly
+        compomap: [gui, gui]
+      - id: 2
+        name: [nl-editor, time]
+        type: [timeline, timeline]
+      - id: 2.timestamps # .extensions are new sets here.
+        name: [nl-editor.timestamps, time.timestamps]
+        # does NOT match mapto, since they don't both go to the same item
+        # but we know that they both try to override timestamps
+      - id: 2.time
+        name: [nl-editor.time, time.time]
+        mapto: 1.hstack # kind of weird/surprising that this matches but it sure does
+      - id: 3
+        name: [videos.in_editor, events]
+        group:
+          subject: 2.timestamps
+          along: 2.time
+      # I don't think that tracks matches to either days/weeks, because group =/= group-along
+
+  # this version better maps the representations to each other
+  - components:
+      # list of components that emerged to be useful?
+    sets:
+      - id: 0 # generated ids, but not meaningfully numbers
+        name: [editor-view, day-view]
+        type: [graphics, graphics] # because it's in core, we can call it out explicitly
+        compomap: [gui, gui]
+      - id: 1
+        name: [media-pool, week-view]
+        type: [graphics, graphics] # because it's in core, we can call it out explicitly
+        compomap: [gui, gui]
+      - id: 2
+        name: [nl-editor, time]
+        type: [timeline, timeline]
+      - id: 2.timestamps # .extensions are new sets here.
+        name: [nl-editor.timestamps, time.timestamps]
+        mapto: 0.regions
+        # this works because graphics.vline and graphics.hline both mapto regions
+        # so the algorithm needs to handle transitive property of mapto.
+      - id: 2.time
+        name: [nl-editor.time, time.time]
+        mapto: 0.time # good, the representation for 0 has both content and structure
+      - id: 3
+        name: [videos.in_editor, events]
+        group:
+          subject: 2.timestamps
+          along: 2.time
+      # I don't think that tracks matches to either days/weeks, because group =/= group-along

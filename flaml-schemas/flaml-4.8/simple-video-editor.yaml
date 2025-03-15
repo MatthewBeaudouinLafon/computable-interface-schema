@@ -55,30 +55,29 @@ components:
           mapto: current_frame_view.regions
 
 sets:
-  - name: views
-    contains:
-      - name: media_pool
-        type: graphics
-        compomap: gui
-      - name: editor
-        type: graphics
-        compomap: gui
+  - name: media-pool-view
+    type: graphics
+    compomap: gui
+
+  - name: editor-view
+    type: graphics
+    compomap: gui
 
   - name: nl-editor # namespacing of maybe results in confusing name?
     type: timeline
     .timestamps:
-      mapto: views.editor.vline
+      mapto: editor-view.vline
     .timestamps.now: # playhead
-      mapto: views.editor.vline # highlighted somehow
+      mapto: editor-view.vline # highlighted somehow
     .time:
-      mapto: views.editor.hstack
+      mapto: editor-view.hstack
 
   - name: videos
     type: video
-    mapto: views.media_pool.regions
+    mapto: media-pool-view.regions
     contains:
       - name: in_editor
-        mapto: views.editor.regions
+        mapto: editor-view.regions
         group:
           subject: nl-editor.timestamps
           along: nl-editor.time
@@ -86,4 +85,4 @@ sets:
         #   compomap: nl-editor # in-editor video timelines map to the editor's timeline
   - name: tracks
     group: videos.in_editor
-    mapto: views.editor.grouping # that's a representational structure
+    mapto: editor-view.grouping # that's a representational structure

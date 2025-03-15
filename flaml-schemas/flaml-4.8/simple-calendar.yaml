@@ -1,0 +1,70 @@
+components:
+  - name: graphics
+    sets:
+      - name: hline
+      - name: vline
+      - name: vstack
+      - name: hstack
+  - name: event
+    sets:
+      - name: title
+        type: text
+  - name: timeline
+    sets:
+      - name: timestamps
+      - name: time
+        type: linear
+
+interfaces:
+  - name: gui
+    type: graphics
+
+sets:
+  - name: day-view
+    type: graphics
+    compomap: gui
+
+  - name: week-view
+    type: graphics
+    compomap: gui
+
+  - name: time
+    type: timeline
+
+    .timestamps:
+      mapto: day-view.hline
+    .time:
+      mapto:
+        - day-view.vstack
+        - week-view.hstack
+
+  - name: events
+    type: event
+    groups:
+      subject: time.timestamps
+      along: time.time
+
+  - name: days
+    groups:
+      subject: time.timestamps
+      along: time.time
+    contains:
+      - name: today
+        # how to say that time.now is in today?
+        # mapfrom: time.now # maybe
+        # when: 'time.now in today->timestamps' # more accurate
+        ->events:
+          mapto: day-view.rects
+          when: "events->timestamps in today.timestamps"
+
+  - name: weeks
+    groups:
+      subject: days
+      along: time.time
+    contains:
+      - name: current
+        ->days->day-view:
+          # put all of the days representations into the week representation
+          # not as elegant as in other notations
+          mapto: calendar-views.week.regions
+        # when: day.today in weeks.current->days # same as before

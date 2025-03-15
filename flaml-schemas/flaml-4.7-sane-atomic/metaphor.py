@@ -4,23 +4,32 @@ overlaps = [] # list of list of matching items
 sinister = open('sinister.yaml')
 dextera = open('dextera.yaml')
 
-class Reasons(Enum):
-  INSTANCE = 0
-  RELATION = 1
+# overlap = {
+#     'sets': [
+#         {
+#             'id': int,
+#             'name': (sinister_name, dexter_name),
+#             'type': comp
+#             'mapto': id
+#             'contains':  # need to think about how to match. Maybe interpret them as mapfrom?
+#               - id
+#         }
+#     ]
+# }
 
-class match:
 
 
-  def __init__(self, sinister, dextera, reasons):
-    self.sinister = sinister['name']
-    self.dextera = dextera['name']
 
 
-def compare_sets()
 
-running_match = []
-for s_set in sinister.sets:
-  for d_set in dextera.sets:
-    for s_set_rel in s_set.relations:
-      for d_set_rel in d_set.relations:
-        if d_set_rel == s_set_rel:
+
+
+# 1. Preprocess yaml
+#    - mapfrom -> mapto in the right location
+#    - contains -> mapto superset
+
+
+# 2. Find overlaps
+
+
+# 3. Suggest transfers

@@ -10,6 +10,7 @@ files = [
   'notion.yaml',
   'yt-music.yaml',
   'figma.yaml',
+  'finder.yaml',
 ]
 
 report_template = {
@@ -140,6 +141,12 @@ if __name__ == "__main__":
     summary[file]['num_lines'] = num_lines - summary[file]['num_notes']
     
     summary[file]['report'] = make_spec_report(data)
+
+  print('** Lines of code')
+  for file in files:
+    loc = summary[file]['num_lines']
+    print(f'{file[:-5]}: {loc}')
+  print()
 
   for metric in report_template.keys():
     print('** ' + metric)
