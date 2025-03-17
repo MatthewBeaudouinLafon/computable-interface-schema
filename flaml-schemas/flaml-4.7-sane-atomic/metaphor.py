@@ -31,5 +31,7 @@ dextera = open('dextera.yaml')
 
 # 2. Find overlaps
 
+def generate_overlap
+
 
 # 3. Suggest transfers

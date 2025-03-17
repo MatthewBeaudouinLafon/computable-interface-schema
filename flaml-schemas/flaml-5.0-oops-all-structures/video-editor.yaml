@@ -1,0 +1,72 @@
+object-types:
+  - name: video
+    objects: [(text) name, (image) images]
+    structures:
+      - name: timeline
+        type: segment
+        affects: [timestamps, images, playhead] # avoid mapto with common structure
+
+    representations:
+      - name: current-frame
+        type: gui
+        objects:
+          regions: playhead->images # relying on implied mapto
+      - name: first-frame
+        type: gui
+        objects:
+          regions: playhead->first
+      - name: scrubber-view
+        type: gui
+        objects:
+          vline: timestamps
+        structures:
+          hstack: timeline
+
+    behavior:
+      - name: play
+        moves:
+          object: playhead
+          along: timeline
+---
+objects:
+  # - video: videos  # type: name
+  - name: videos
+    type: video
+
+structures:
+  - name: editor-timeline
+    type: segment # bounded linear
+    affects: [timestamps, playhead] # touches, entangles, forms, shapes, organizes
+    covered-by: videos.in-editor # inline subset definition (other separators)
+  - name: alphabetical
+    type: segment
+    affects: videos # missing "using name" but who cares
+
+representations:
+  - name: editor-view
+    type: gui
+    objects:
+      - vline: [timestamps, playhead] # playhead is style differently
+    structures:
+      - hstack: editor-timeline
+  - name: player-view
+    type: gui
+    objects:
+      - rect: playhead->videos.in-editor.images
+  - name: media-pool
+    type: gui
+    structures:
+      - hstack-wrapped: alphabetical
+    objects:
+      - regions: videos.first-frame
+
+behavior:
+  - name: [add-video, move-video] # they all do the same thing at this level of abstraction
+    moves:
+      object: videos.in-editor.selected # another subset defined in place
+      along: editor-timeline
+    input: mouse.drag # there's potential for altair-express-style structure matching
+  - name: play
+    moves:
+      object: playhead
+      along: editor-timeline

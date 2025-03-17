@@ -1,0 +1,28 @@
+structure-types:
+  - name: segment
+    objects: [first, last] # segment.first etc.
+  - name: grid
+    derivatives:
+      - name: x-axis
+        type: order
+      - name: y-axis
+        type: order
+
+representation-types:
+  - name: gui
+    structures:
+      - name: screen
+        affects: points
+        covered-by: regions
+    # objects: [regions, vline, hline, rect, text] # etc... Do I need to say that 'regions' is the basic?
+    objects: [regions, regions.vline, regions.hline, regions.rect, regions.text] # use . to declare subset in place (probably need different symbol)
+
+behavior-types:
+  - name: mouse
+    behaviors: [click, down, up, move, drag] # events (huh, analogous to objects)
+    structures:
+      - name: mousepad # weirdly hard to name this
+        type: twodim
+        structures: [move, drag]
+  - name: keyboard
+    behaviors: [key, q, w, e, r, t, y, cmd+q, cmd+w, cmd+e, cmd+r, cmd+t, cmd+y] # etc. (definitely a cleaner way to do this)

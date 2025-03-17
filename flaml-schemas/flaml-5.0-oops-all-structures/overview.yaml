@@ -1,0 +1,38 @@
+# 4.x put too much emphasis on information architecture, which is obnoxious, not super insightful, and not very novel.
+# The goal with 5.x is to focus on the semantics of "structure" on its own, keeping information architecture as necessary support only
+# The good thing about 4.x is that it was somewhat procedural - so you could progressively build the spec by thinking about things one by one.
+# You would also discover the underlying structures along the way. We want to keep that feeling.
+# 5.x has also gotta be more concise
+
+# maybe structures and objects become a bipartite graph (cc https://yuejiang-nj.github.io/Publications/2024CHI_Graph4GUI/project_page/paper.pdf)
+
+# list objects if they have types
+objects: [(type) name, etc]
+
+structures:
+  - name: struct-name
+    type: type-name # this makes you inherit a bunch of stuff
+    affects: [objects1, object2.subset-name] # applies to xyz (keyword tbd, need a good verb). `.` serves as subset
+    mapto: [struct1, struct2] # we could but don't disambiguate with `constrains`
+    covered-by: [cover-objects]
+    derivatives:
+      - name: secondary-structure # eg. x-axis in a grid
+        type: struct-type
+
+representations:
+  - name: repr-name
+    type: gui # or screen-reader or other
+    objects:
+      - representational-obj: declared-object
+    structures:
+      - representaitonal-struct: declared-struct
+
+behavior:
+  - name: action-name # optional I guess
+    edits:
+      - struct-name # ie. changes the organization
+      - set-name # ie. adds/removes/edits
+    moves:
+      object: obj-name
+      structure: structure-to-move-along
+      input: keyboard.whatever
