@@ -27,17 +27,17 @@ object-types:
         moves:
           object: playhead
           along: timeline
----
-objects:
-  # - video: videos  # type: name
-  - name: videos
-    type: video
+
+objects: [(video) videos, videos.in-editor]
 
 structures:
   - name: editor-timeline
     type: segment # bounded linear
     affects: [timestamps, playhead] # touches, entangles, forms, shapes, organizes
     covered-by: videos.in-editor # inline subset definition (other separators)
+  - name: tracks
+    type: group
+    affects: videos.in-editor
   - name: alphabetical
     type: segment
     affects: videos # missing "using name" but who cares
@@ -47,12 +47,15 @@ representations:
     type: gui
     objects:
       - vline: [timestamps, playhead] # playhead is style differently
+      - rect: videos.in-editor
+      - region: tracks
     structures:
       - hstack: editor-timeline
+      - grouping: tracks
   - name: player-view
     type: gui
     objects:
-      - rect: playhead->videos.in-editor.images
+      - rect: playhead->videos.in-editor/images
   - name: media-pool
     type: gui
     structures:
@@ -65,7 +68,7 @@ behavior:
     moves:
       object: videos.in-editor.selected # another subset defined in place
       along: editor-timeline
-    input: mouse.drag # there's potential for altair-express-style structure matching
+    input: mouse/drag # there's potential for altair-express-style structure matching
   - name: play
     moves:
       object: playhead

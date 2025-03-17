@@ -1,0 +1,56 @@
+structures:
+  - name: time
+    type: linear
+    affects: timestamps
+    covered-by: [days, weeks, events]
+
+    derivatives:
+      - name: week-order
+        type: order
+        affects: weeks
+
+representations:
+  - name: day-view
+    type: gui
+    objects:
+      - hline: [days.selected->timestamps, timestamps.now]
+      - rect: days.selected->events # events during the selected day
+    structures:
+      - vstack: time
+  - name: week-view
+    type: gui
+    objects:
+      # - rect: weeks.selected->days  # a bit hazey how this composes with day-view, since it's not a function
+      - region: day-view # how do I parametrize this? should take a set of days...
+    structures:
+      - hstack: time
+  - name: week-nav-buttons
+    type: gui
+    objects:
+      - icon: nav-week # not quite there yet, but the button represents an action
+
+behavior:
+  - name: add-week
+    input:
+      - name: click
+        when: mouse/cursor in day-view # missing that position influences where the new event goes
+    edits: events
+  - name: move-event
+    moves:
+      object: events.selected
+      along: time->days/view
+    input: mouse.drag.y # still missing the vega-express mapping goodness
+
+  - name: nav-week
+    moves:
+      - object: week.selected
+      - along: week-order
+    input:
+      - (keyboard.j, keyboard.k) # two keys generate a set of actions to navigate linear things
+      - name: mouse/click
+        when: mouse/cursor in week-nav-button
+
+notes:
+  - How do I parametrize the day-view function to reuse it? should take a set of days..
+    - maybe day-view has a "parameter" field, then I can call it with `day-view(week.current->days)`
+  - dragging events; altair-express mapping of input action structure to conceptual structure to graphical structure... all feels very close

@@ -1,6 +1,6 @@
-structure-types:
+structure-types: # these are reusable structures.
   - name: segment
-    objects: [first, last] # segment.first etc.
+    objects: [first, last] # segment.first etc. useful for tree roots, etc.
   - name: grid
     derivatives:
       - name: x-axis
@@ -8,7 +8,7 @@ structure-types:
       - name: y-axis
         type: order
 
-representation-types:
+representation-types: # used for representation interfaces
   - name: gui
     structures:
       - name: screen
@@ -17,7 +17,7 @@ representation-types:
     # objects: [regions, vline, hline, rect, text] # etc... Do I need to say that 'regions' is the basic?
     objects: [regions, regions.vline, regions.hline, regions.rect, regions.text] # use . to declare subset in place (probably need different symbol)
 
-behavior-types:
+behavior-types: # used for interaction interfaces
   - name: mouse
     behaviors: [click, down, up, move, drag] # events (huh, analogous to objects)
     structures:
@@ -26,3 +26,56 @@ behavior-types:
         structures: [move, drag]
   - name: keyboard
     behaviors: [key, q, w, e, r, t, y, cmd+q, cmd+w, cmd+e, cmd+r, cmd+t, cmd+y] # etc. (definitely a cleaner way to do this)
+
+objects: [(type) obj-name, obj-name.subset, other-obj] # optionally list objects, mostly useful to state their type
+# objects can also be declared in place in the rest of the spec
+# here's the syntax for their inline use:
+# - obj-name/type-prop # access property in component
+# - obj-name.subset    # refers to subset
+# - obj->other-obj     # compose mapping. Mappings are implied by common structures, covers, etc.
+
+structures:
+  - name: struct-name
+    type: struct-type
+    affects: [structured-obj, obj.subset, obj/component-thing] # list structured objects. Objects can be declared in place.
+    covered-by: [covering objects] # objects that cover the structure
+
+    /first: obj-first-maps-to # the structure-type's first element maps to a conceptual object
+  - name: group-name
+    type: group # note that groups also serve as objects.
+
+representations:
+  - name: view-name
+    type: gui # | screen-reader
+    objects:
+      - repr-obj: obj-name # object maps to repr-obj
+      - repr-obj: other-obj # many things
+    structures:
+      - repr-struct: struct-name
+      - repr-struct: other-struct # the "rendered" somehow needs to reconcile combined structures in a view
+  - name: other-view
+    type: gui
+    objects:
+      - rect: thing
+    structures:
+      - hstack:
+          name: in-place-definition # name is optional here?
+          type: linear
+
+behavior:
+  - name: action-name
+    edits:
+      - obj-name # edits content of object set
+      - struct-name # changes structure eg. re-order tabs
+    input:
+      - name: keyboard.key # reference input
+        when: set-name in other-set # condition on action
+
+  - name: other-action
+    moves:
+      object: moved-object # usually a subset
+      along: struct-name # the structure that is moved along
+    input:
+      (input1, input2)
+      # combine as set generator (actions available at every state),
+      # which results in a structured set of actions (details tbd)
