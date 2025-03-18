@@ -1,0 +1,38 @@
+structures:
+  - name: time
+    type: linear
+    derivatives:
+      - name: msg-order
+        type: order
+        affects: messages
+  - name: conversations
+    type: group
+    affects: messages
+  - name: authors
+    type: group
+    affects: messages
+
+representations:
+  - name: chat-view
+    type: gui
+    objects:
+      - textbox: conversations.selected->messages # selected defined in place
+    structures:
+      - vstack: msg-order
+      - group: conversations # combining structure in a representation is still a bit mysterious
+  - name: convo-view
+    type: gui
+    objects:
+      - region: conversations # group can be used as an object
+    structures:
+      - vstack: msg-order # details elided
+
+behavior:
+  - name: change-convo
+    edits: conversations.selected # this action gives "selected" its meaning
+    input: tap
+  - name: next-convo
+    moves:
+      object: conversations.selected
+      along:
+    input: keyboard.tab

@@ -1,0 +1,94 @@
+# Very minor version change for this, but basically 5.1 tries to improve on 5.0's type semantics
+
+# A type/class is a microcosm – doesn't interact with anything outside of itself until it gets instantiated.
+object-types:
+  - name: type-name
+    objects: [relevant-objs]
+    structures:
+      - struct-def-here
+    representations:
+      - repr-def-here
+    behavior:
+      - behavior-def-here
+
+structure-types:
+  - name: type-name
+    objects: [relevant-objs]
+    structures:
+      # This is used for "derivative stuctures" eg. grid/x-axis, or tree/depth-first-traversal.
+      # TODO: do I need to differentiate the relationship between grid/x-axis and tree/dft? I guess there's the constraint
+      - struct-def-here
+
+    representations:
+      - repr-def-here
+    behavior:
+      - behavior-def-here
+
+# for interfaces
+representation-types:
+  - name: gui
+    # these will be the LHS for the object/structure syntax in the instance
+    objects:
+      - points
+      - regions
+      - lines->regions
+      - vlines->lines
+      - rects->regions
+    structures:
+      - name: screen
+        type: twodim
+        affects: points
+        covered-by: regions
+      - name: stack
+        type: order
+        mapto: screen
+      - name: hstack
+        type: order
+        mapto: stack
+      - name: canvas
+        type: twodim
+        mapto: screen
+
+behavior-types: # TODO...
+  - name: mouse
+    actions: [click, down, up, move, drag] # events (huh, analogous to objects)
+    structures:
+      - name: mousepad # weirdly hard to name this
+        type: twodim
+        structures: [move, drag]
+  - name: keyboard
+
+# list objects...
+objects:
+  - (type) name # if they have a type
+  - lhs->rhs # if there are mappings that you want to declare
+# Probably do it inline, in practice
+# objects: [(type) name, lhs->rhs]
+
+structures:
+  - name: struct-name
+    type: type-name # this makes you inherit a bunch of stuff
+    affects: [objects1, object2.subset-name, instance/type-property] # applies to xyz (keyword tbd, need a good verb). `.` serves as subset
+    mapto: [struct1, struct2] # we could but don't disambiguate with `constrains`.
+    covered-by: [cover-objects]
+    derivatives:
+      - name: secondary-structure # eg. x-axis in a grid
+        type: struct-type
+
+representations:
+  - name: repr-name
+    type: gui # or screen-reader or other
+    objects:
+      - representational-obj: declared-object
+    structures:
+      - representaitonal-struct: declared-struct
+
+behavior:
+  - name: action-name # optional I guess
+    edits:
+      - struct-name # ie. changes the organization
+      - set-name # ie. adds/removes/edits
+    moves:
+      object: obj-name
+      structure: structure-to-move-along
+      input: keyboard.whatever

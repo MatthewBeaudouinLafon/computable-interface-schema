@@ -1,0 +1,67 @@
+structure-types: # these are reusable structures.
+  - name: linear
+  - name: twodim
+    structures:
+      - name: x-axis
+        type: linear
+      - name: y-axis
+        type: linear
+
+  - name: order
+    mapto: linear
+  - name: segment
+    mapto: linear
+    objects: [first, last] # segment.first etc. useful for tree roots, etc.
+
+  - name: grid
+    mapto: twodim # not 100% sure about this
+    structures:
+      - name: x-axis
+        type: order
+        mapto: twodim/x-axis
+      - name: y-axis
+        type: order
+        mapto: twodim/y-axis
+  - name: tree
+    objects: [root, leaves]
+    structures:
+      - name: depth-first-order
+        type: order
+      - name: breadth-first-order
+        type: order
+
+representation-types: # used for representation interfaces
+  - name: gui
+    # these will be the LHS for the object/structure syntax in the instance
+    objects:
+      - points
+      - regions
+      - lines->regions
+      - vlines->lines
+      - hlines->lines
+      - rects->regions
+      - icons->regions
+    structures:
+      - name: screen
+        type: twodim
+        affects: points
+        covered-by: regions
+      - name: stack
+        type: order
+        mapto: screen
+      - name: hstack
+        type: order
+        mapto: stack
+      - name: canvas
+        type: twodim
+        mapto: screen
+
+behavior-types: # used for interaction interfaces
+  - name: mouse
+    behaviors: [click, down, up, move, drag] # events (huh, analogous to objects)
+    structures:
+      - name: mousepad # weirdly hard to name this
+        type: twodim
+        structures: [move, drag]
+  - name: keyboard
+    behaviors: [key, q, w, e, r, t, y, cmd+q, cmd+w, cmd+e, cmd+r, cmd+t, cmd+y] # etc. (definitely a cleaner way to do this)
