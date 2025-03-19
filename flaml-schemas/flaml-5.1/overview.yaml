@@ -71,9 +71,10 @@ structures:
     affects: [objects1, object2.subset-name, instance/type-property] # applies to xyz (keyword tbd, need a good verb). `.` serves as subset
     mapto: [struct1, struct2] # we could but don't disambiguate with `constrains`.
     covered-by: [cover-objects]
-    derivatives:
+    structures:
       - name: secondary-structure # eg. x-axis in a grid
         type: struct-type
+  - struct-name/secondary-structure
 
 representations:
   - name: repr-name
@@ -81,7 +82,7 @@ representations:
     objects:
       - representational-obj: declared-object
     structures:
-      - representaitonal-struct: declared-struct
+      - representational-struct: declared-struct
 
 behavior:
   - name: action-name # optional I guess
