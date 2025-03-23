@@ -1,0 +1,87 @@
+# These are a few manually made "good" overlaps
+# the "pair" fields indicates the names of matching of nodes
+# I'm ignoring the behavior stuff now
+
+overlaps:
+  # Starting with the ideal overlap (by cheating and thinking of the UIs)
+  - structures:
+      - pair: (time, editor-timeline)
+        type: linear # Because segment type mapto linear type
+        affects:
+          - pair: (timestamps, timestamps) # happens to be the first pairing, nice
+        covered-by:
+          - pair: (events, videos.in-editor)
+    representations:
+      - pair: (day-view, editor-view)
+        type: gui
+        objects:
+          - lines: # because vline->line & hline->line
+              - pair: (days.selected->timestamps, timestamps)
+              - pair: (timestamps.now, playhead) # interesting that a subset is matched to a top level set, which is actually fine
+          - rects:
+              - pair: (days.selected->events, videos.in-editor)
+                # note the lack of regions for tracks
+        structures:
+          - stack: # because vstack->stack & hstack->stack
+              - pair: (time, editor-timeline)
+                # again, grouping: tracks is intentionally not matching
+      # Semantically, none of the other representations match so ideally the algorithm doesn't match them either
+
+  # A near miss from editing the overlap above (edited node annoted with: *node*)
+  - structures:
+      - pair: (time, editor-timeline)
+        type: linear # Because segment type mapto linear type
+        affects:
+          - pair: (timestamps, timestamps)
+        covered-by:
+          - pair: (*days*, videos.in-editor) # how does changing this pairing influence the rest?
+    representations:
+      - pair: (day-view, editor-view)
+        type: gui
+        objects:
+          - lines:
+              - pair: (days.selected->timestamps, timestamps)
+              - pair: (timestamps.now, playhead)
+          # - rects: # I think this no longer works
+          # - pair: (days.selected->events, videos.in-editor)
+          # note the lack of regions for tracks
+        structures:
+          - stack: # because vstack->stack & hstack->stack
+              - pair: (time, editor-timeline)
+                # again, grouping: tracks is intentionally not matching
+
+  # an absurd overlap by doing a worse match on conceptual structures.
+  - structures:
+      - pair: (time, alphabetical) # Because order type -> linear type
+        affects:
+          - pair: (timestamps, videos) # obviously bad semantically
+        # covered-by can't match because alphabet isn't covered
+    representations:
+      - pair: (day-view, editor-view)
+        type: gui
+        objects:
+          - lines:e
+              - pair: (days.selected->timestamps, timestamps)
+              - pair: (timestamps.now, playhead) # interesting that a subset is matched to a top level set, which is actually fine
+          - rects:
+              - pair: (days.selected->events, videos.in-editor)
+                # note the lack of regions for tracks
+          # presentations can still match anything to representational objects
+          # (and in some way that's not very interesting)
+        structures:
+          - none
+          # - stack:
+          #     - pair: (time, editor-timeline)
+          # Now this doesn't match because the (time, editor-timeline) pairing is no longer consistent.
+
+notes:
+  - what I hadn't really considered is that the overlap has to be an internally
+    consistent specification. So I need to check that if something is represented
+    with a structure, it's actually structured like that.
+    So I need a function that validates specs. What's in that?
+    Even better, given an in-progress overlap, prune nodes that can't be matched.
+  - In general, we only want to match objects when it's incidental to some kind
+    of structure or representation. But matching repr objects to objects is not
+    very constrained/insightufl, so we could just ditch that.
+  - Type unification is enabling a lot of mappings (which is good because it
+    relieves pressure on specifying things the right way)
