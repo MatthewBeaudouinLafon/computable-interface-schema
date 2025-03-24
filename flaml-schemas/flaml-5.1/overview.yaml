@@ -62,6 +62,7 @@ behavior-types: # TODO...
 objects:
   - (type) name # if they have a type
   - lhs->rhs # if there are mappings that you want to declare
+  - component/property
 # Probably do it inline, in practice
 # objects: [(type) name, lhs->rhs]
 
