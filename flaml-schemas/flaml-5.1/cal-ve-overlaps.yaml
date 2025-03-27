@@ -60,7 +60,7 @@ overlaps:
       - pair: (day-view, editor-view)
         type: gui
         objects:
-          - lines:e
+          - lines:
               - pair: (days.selected->timestamps, timestamps)
               - pair: (timestamps.now, playhead) # interesting that a subset is matched to a top level set, which is actually fine
           - rects:
