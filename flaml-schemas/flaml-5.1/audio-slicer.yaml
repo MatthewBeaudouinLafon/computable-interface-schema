@@ -1,0 +1,123 @@
+name: standard-slice
+
+object-types:
+  - name: playhead
+    objects: [(bool) playing]
+    behavior:
+      - name: play
+        edits: playing
+      - name: pause
+        edits: playing
+
+objects:
+  - (playhead) playheads
+  - slices->samples
+  - slice-structs = slice-grid | transient-slice | manual-slice
+  - active-struct->audio-structs
+
+structures:
+  - name: audio-time
+    type: linear
+    affects: samples
+  - name: slice-structures
+    type: order
+    mapto: audio-time
+    affects: [slices, button-pad]
+    structures:
+      - name: slice-grid
+        # somehow depends on grid-size
+      - name: transient-slice
+        # somehow depends on sensitivity
+      - name: manual-slice
+  - name: active-struct
+    # not sure how this all works
+    mapto: slice-structures.structures # is this anything??
+    affects: slices
+
+behavior:
+  - name: play-audio
+    triggers: [playheads.selected/play, play-audio] # kind of loops on itself
+    edits: playheads->samples
+    input: button-pad # somehow first maps to first, etc
+  - name: pause-audio
+    triggers: playheads.selected/pause
+  - name: change-slice-mode
+    edits: active-struct->slice-structures
+  - name: nudge-slice
+    structure: linear
+    moves:
+      target: slices.selected->samples
+      along: audio-time
+  - name: change-grid
+    edits: grid-size
+  - name: change-sensitiviy
+    edits: sensitivity
+
+notes:
+  - a bit awkward to do sets of structures you pick from, but not too bad
+
+---
+name: faster-slice
+
+object-types:
+  - name: playhead
+    objects: [(bool) playing]
+    behavior:
+      - name: play
+        edits: playing
+      - name: pause
+        edits: playing
+
+objects:
+  - (playhead) playheads
+  - slices->proto-slices->slices
+  - slice-structs = slice-grid | transient-slice | manual-slice
+  - active-struct->audio-structs
+
+structures:
+  - name: audio-time
+    type: linear
+    affects: samples
+  - name: slice-structures
+    type: order
+    mapto: audio-time
+    affects: [proto-slices, slices, button-pad]
+    structures:
+      - name: slice-grid
+        # somehow depends on grid-size
+      - name: transient-slice
+        # somehow depends on sensitivity
+      - name: manual-slice
+  - name: active-struct
+    # not sure how this all works
+    mapto: slice-structures.structures # is this anything??
+    affects: proto-slices
+
+behavior:
+  - name: play-audio
+    triggers: [playheads.selected/play, play-audio] # kind of loops on itself
+    edits: [playheads->samples, slices.selected]
+    input: button-pad # somehow first maps to first, etc
+  - name: pause-audio
+    triggers: playheads.selected/pause
+  - name: change-slice-mode
+    edits: active-struct->slice-structures
+  - name: nudge-slice
+    structure: linear
+    moves:
+      target: slices.selected->samples
+      along: audio-time
+  - name: change-grid
+    edits: grid-size
+  - name: change-sensitiviy
+    edits: sensitivity
+
+  - name: nav-slices
+    moves:
+      target: proto-slices.selected
+      along: active-struct
+  - name: commit-slice
+    edits: [slices, slices->proto-slices]
+
+notes:
+  - nice to declare a chain of object maptos in one line
