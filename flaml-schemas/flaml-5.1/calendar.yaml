@@ -13,7 +13,8 @@ representations: # presentations?
   - name: day-view
     type: gui
     objects:
-      - hlines: [days.selected->timestamps, timestamps.now]
+      - hlines: [timestamps, timestamps.now]
+      # - hlines: [days.selected->timestamps, timestamps.now]
       - rects: days.selected->events # events during the selected day
     structures:
       - vstack: time
