@@ -1,0 +1,125 @@
+name: notion
+
+object-types:
+  - name: text-block
+    objects: [(text) writing, pages, content = writing | page]
+    structures:
+      - name: writing/order # exploiting the text type's structure
+        covered-by: [comment-highlight, selection]
+      - name: content-order
+        type: order
+        affects: content
+    representations:
+      - name: view
+        objects:
+          text: content
+
+  - name: person
+    objects: (text) name
+
+  - name: comment
+    objects: (text) content
+    representations:
+      - name: view
+        objects:
+          text: content
+
+  - name: comment-thread
+    objects: (comment) comments
+    structures:
+      - name: order
+        type: order
+        mapto: core/time
+        affects: comments
+    representation:
+      - name: view
+        objects:
+          - regions: comments/view
+        structures:
+          - vstack: order
+
+  - name: page
+    objects:
+      - (text) title
+      - (text-block) text-blocks
+      - (image) img-blocks
+      - blocks = text-block | img-block # can add other types of blocks
+      - (comment-thread) comments
+      - text-blocks/comment-highlight->comments
+      - image-blocks.commented->comments
+    structures:
+      - name: block-order
+        type: order
+        affects: blocks
+    representations:
+      - name: content-view
+        type: gui
+        objects:
+          text: blocks/view
+        structures:
+          vstack: block-order
+      - name: comment-view
+        objects:
+          region: comments/view
+        structures:
+          spaced-vstack: comment-order # This seems weird? Another issue of combining representations
+      - name: title-view
+        objects:
+          text: title
+
+objects:
+  - (page) pages
+  - pages.active
+  - pages/text-blocks/pages->pages # link the 'dummy' variable in text blocks to instantiated pages
+  - (person) users
+  - pages->path-to-root
+
+structures:
+  - name: page-hierarchy
+    type: hierarchy
+    affects: pages
+    covered-by: path-to-root
+  - name: users # same as the objects declared above
+    type: group
+    affects: pages/comments/comments # comments are authored by people
+  - name: sidebar-order
+    type: order
+    affects: pages.top-level
+
+
+representations:
+  - name: sidebar
+    objects:
+      - regions: pages.top-level/title-view
+    structures:
+      - vstack: sidebar-order
+  - name: breadcrumbs-view
+    objects:
+      regions: pages.active->path-to-root
+    structures:
+      hstack: hierarchy/depth-first-search # let's just say that that's an order structure in core
+  - name: page-view
+    type: gui
+    objects:
+      - region: [content-view, comments-view]
+    structures:
+      - panel-layout: _ # arbitrary layout (eg. not user editable)
+
+    structures:
+      hstack: page/sidebar | page/document-content | page/document-comments
+
+notes:
+  - I tried to write this spec by working backwards from the representations
+    - a bit tricky because I do need to refer to the model event though it doesn't exist yet eg. 'I guess I'll have pages.current->blocks'
+    - it'd be cool to have a list of "dangling" relations eg. structures used in a representation that don't exist yet. That way you can keep track of
+    what's missing
+    - as I write a lot of page.current->blocks and such, I get a pressure to abstract page into a component. Then I just need to replace `->` with `/`
+  - indenting representations for hierarchy is interesting
+    - I do keep adding in the wrpong place and getting lost, so I removed it
+  - the `page` component suggests that maybe we still need a bunch of object relations... but I guess merging the declaration with the use is a good way
+    to limit the amount of novel notation.
+  - still slightly struggling to talk about links (to other pages) as related to the hierarchical structure. Seems like a general awkwardness around talking
+    abour properties when they reify structure (kind of how mapping to timestamps induces a temporal structure)
+    - the solution is to make a "dummy" object in the component, then link it a the top level (where they're both instantiated). It's a bit awkward.
+    - comment authors have a similar move; comments aren't associated with authors until users are instantiated
+  - (meta) it's actually pretty cool to leave a note in the middle of the spec, so the parser should seek those out
