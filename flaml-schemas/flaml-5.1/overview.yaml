@@ -90,6 +90,10 @@ behavior:
     edits:
       - struct-name # ie. changes the organization
       - set-name # ie. adds/removes/edits
+      - source->target # changes mapping
+      - set.subset # changes subset relation
+      - struct covered-by set # changes cover # TODO: this is kind of gross
+      # maybe: set[struct]?
     moves:
       object: obj-name
       structure: structure-to-move-along

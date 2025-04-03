@@ -13,6 +13,17 @@ object-types:
       - name: view
         objects:
           text: content
+    behavior:
+      - name: edit-content
+        edits: writing
+      - name: select-text
+        edits: writing/order covered-by selection # meh syntax for changing cover
+      - name: selection-to-comment-highlight
+        edits: 
+          # Basically: add new comment, which defines comment-highlight.new
+          # assign the selection cover to the writing cover. 
+          - comment-highlights = comment-highlights + comment-highlights.new
+          - writing/order covered-by comment-highlight.new = writing/order covered-by selection
 
   - name: person
     objects: (text) name
@@ -37,6 +48,9 @@ object-types:
           - regions: comments/view
         structures:
           - vstack: order
+    behavior:
+      - name: append-comment
+        edits: comments
 
   - name: page
     objects:
@@ -66,6 +80,16 @@ object-types:
       - name: title-view
         objects:
           text: title
+    behavior:
+      # - name: create-comment # super generic version
+      #   edits: comments
+      - name: activate-block
+        input: mouse.click # when in the block
+        edits: [blocks.active, text-block.active, image-block.active] # active means interactable
+      - name: select-block
+        edits: [blocks.selected, text-block.selected, image-block.selected] # selected means you can apply actions to it
+      - name: create-text-comment
+        triggers: text-blocks.active/selection-to-comment-highlight
 
 objects:
   - (page) pages
@@ -85,7 +109,6 @@ structures:
   - name: sidebar-order
     type: order
     affects: pages.top-level
-
 
 representations:
   - name: sidebar
@@ -108,6 +131,17 @@ representations:
     structures:
       hstack: page/sidebar | page/document-content | page/document-comments
 
+behavior:
+  - name: change-page
+    inputs:
+      # click link on the page
+      - mouse.click when mouse.cursor in pages.active/text-blocks/links
+      # click page in the sidebar
+      - mouse.click when mouse.cursor in pages.top-level/title-view->sidebar
+      # click page in the breadcrumbs
+      - mouse.click when mouse.cursor in pages.active->path-to-root->breadcrumbs
+    edits: pages.active
+
 notes:
   - I tried to write this spec by working backwards from the representations
     - a bit tricky because I do need to refer to the model event though it doesn't exist yet eg. 'I guess I'll have pages.current->blocks'
@@ -123,3 +157,7 @@ notes:
     - the solution is to make a "dummy" object in the component, then link it a the top level (where they're both instantiated). It's a bit awkward.
     - comment authors have a similar move; comments aren't associated with authors until users are instantiated
   - (meta) it's actually pretty cool to leave a note in the middle of the spec, so the parser should seek those out
+  - describing edits in detail is ... rough. I'm definitely missing a conceptual model to do this well. 
+    - in particular, saying how a text selection becomes a comment-highlight, which creates a comment, which you need to write text into... it's a mess.
+    - where does the behavior go? I first wrote stuff at the top level, only to realize it was only accessing stuff in an item.
+  - one downside to the representation syntax is that it hides the obj->repr-obj relation, which means it's not obvious that you can exploit `obj->repr-obj` eg. for hit-testing
