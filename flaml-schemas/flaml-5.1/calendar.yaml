@@ -1,3 +1,5 @@
+objects: [timestamps]
+
 structures:
   - name: time
     type: linear

@@ -61,6 +61,7 @@ behavior-types: # TODO...
 # list objects...
 objects:
   - (type) name # if they have a type
+  - set.subset
   - lhs->rhs # if there are mappings that you want to declare
   - component/property
 # Probably do it inline, in practice

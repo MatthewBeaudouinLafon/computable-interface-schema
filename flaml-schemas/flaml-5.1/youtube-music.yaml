@@ -1,0 +1,70 @@
+name: youtube-music # for iOS
+import:
+  - core: [gui, mouse, audio, text, image]
+
+object-types:
+  - name: song
+    objects: [(audio) audio, (text) name]
+    representations:
+      - name: row-view
+        objects:
+          - text: name/view
+          # NOTE: I can't actually have the album or artist here, since that relation is declared outside. That's bad.
+
+  - name: playlist
+    objects: [song-pointers, song-points.current]
+    structures:
+      - name: order
+        affects: song-pointers
+    # can't have the representation here since that would involve referring to out of scope songs. Bad diffuseness I think.
+    behavior:
+      - name: next-song
+        # input: ??? # when the song ends?
+        moves:
+          target: song-points.current
+          along: order
+  - name: album
+    objects: [(text) title, (image) cover-image]
+
+objects:
+  - (album) albums
+  - (song) songs
+  - (playlist) playlists
+  - playlists/song-pointers->songs # connect playlist songs to (clunky)
+
+representations:
+  - name: now-playing
+    objects:
+      - image: songs.active->albums/cover-image/view # do I pull the view or nah? depends on whether view/image is an image or a region I guess
+      - text: songs.active/name
+      - songs.active/audio/timeline-view
+      # The rest represent actions, which are objects that can be represented.
+      - icon: [play-pause, prev-song, next-song, shuffle, repeat]
+    # I could vstack these views, but that's not really the point (ie. it doesn't really help with analogies)
+  - name: active-playlist
+    objects:
+      - playlists.active->songs/row-view
+    structures:
+      - vstack: playlists.active/order
+
+behavior:
+  # these actions should arguably
+  - name: play
+    triggers: songs.active/audio/play
+    input: touchscreen.tap when tap-pos in play-pause->now-playing/icon and songs.active/audio/playing = False
+  - name: pause
+    triggers: songs.active/audio/pause
+    input: touchscreen.tap when tap-pos in play-pause->now-playing/icon and songs.active/audio/playing = True
+  - name: next-song
+    triggers: playlist.active/next-song
+    input:
+      - touchscreen.tap when tap-pos in next-song->now-playing/icon
+      # - end of song somehow
+
+notes:
+  - kind of hard to just *start* a spec. Do I make abstractions? Let's start with repr again
+    - This time I'm starting with repr. Start outlining conceptual model in-line. If I make a `/`, then I have to make type
+  - The boundary for components requires that component structure cannot affect something outside of the component
+    in the component definition (eg. playlist order on songs). This makes component definition more diffuse, but avoids parameters.
+    - the solution here is to have the component organize pointers to songs, then declare the mapping to songs outside. It's clunky.
+    - note that the main purpose of a component is to enable repetition through abstraction, so maybe there's a better way to do that.
