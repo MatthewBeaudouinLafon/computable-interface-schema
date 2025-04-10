@@ -37,6 +37,10 @@ html {
   font-family: var(--sans-serif-font);
 }
 
+body {
+  padding-bottom: 20px;
+}
+
 .editor-container {
   margin: 40px 0px;
   display: flex;

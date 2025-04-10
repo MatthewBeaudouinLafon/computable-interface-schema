@@ -43,16 +43,13 @@ export type Statement =
   | {
       _type: "DefinitionStatement";
       decorators: (
-        | "many"
-        | "single"
-        | "structure"
-        | string
-        | (Node & { _type: "PatternCall" })
+        | (Node & { _type: "Identifier" })
+        | (Node & { _type: "ClassCall" })
       )[];
       name: Node & { _type: "Identifier" };
     }
   | {
-      _type: "PatternStatement";
+      _type: "ClassDeclaration";
       name: Expression & { _type: "Identifier" };
       args:
         | (
@@ -69,7 +66,7 @@ export type Node =
   | Statement
   | (
       | {
-          _type: "PatternCall";
+          _type: "ClassCall";
           args: (Expression & { _type: "Identifier" })[];
           name: Expression & { _type: "Identifier" };
         }
@@ -91,7 +88,7 @@ export type Expression =
     }
   | {
       _type: "BinaryExpression";
-      op: "." | "->";
+      op: "." | "<-";
       left: Expression;
       right: Expression;
     };

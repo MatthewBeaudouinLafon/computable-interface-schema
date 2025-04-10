@@ -8,23 +8,23 @@ IS {
     
   statement  (statement)
   = relation -- relation
-    | pattern -- pattern
+    | class -- class
     | def -- definition
     | expr -- expression
     
-  pattern = "pattern " ident pattern_args? (" extends " ident)?":"eol
+  class = "class " ident class_args? (" extends " ident)?":"eol
      ("\t"statement eol)+"end"
      
-  pattern_args = "(" ((def | expr) ", ")* (def | expr) ")"
+  class_args = "(" ((def | expr) ", ")* (def | expr) ")"
      
   relation = ((def | expr) " represents " with_expr) (" as " with_expr)? -- represents
-  | (def | expr) " covers " expr " along " expr -- cover
+  | (def | expr) " cover " expr " along " expr -- cover
             | (def | expr) " " ("mapto many"  | "mapto" | "structures" | "constrains" | "groups") " " expr -- binary
 
   with_expr = expr (" with " expr)?
 
   def  (definition statement)
-    = (expr": ") + ident
+    = (expr class_args? ": ")+ ident
    
   expr
     = expr ("." | "<-") expr -- binary
@@ -53,10 +53,26 @@ semantics.addOperation("parse", {
   statement(s) {
     return s.children[0].parse();
   },
-  def(decorators, _, name) {
+  def(decorators, args, _, name) {
+    const p_args = args.children.map((a) => {
+      return a.children.at(0)?.parse() ?? undefined;
+    });
+
+    const p_decorators: any[] = decorators.children.map((d) => d.parse());
+
+    for (let i = 0; i < p_args.length; i++) {
+      if (p_args[i] !== undefined) {
+        p_decorators[i] = {
+          _type: "ClassCall",
+          name: p_decorators[i],
+          args: p_args[i],
+        };
+      }
+    }
+
     return {
       _type: "DefinitionStatement",
-      decorators: decorators.children.map((d) => d.sourceString),
+      decorators: p_decorators,
       name: name.parse(),
     };
   },
@@ -105,10 +121,10 @@ semantics.addOperation("parse", {
       right: right.parse(),
     };
   },
-  pattern(
-    _pattern,
+  class(
+    _class,
     name,
-    pattern_args,
+    class_args,
     _extends,
     extend_expr,
     _colon,
@@ -119,14 +135,14 @@ semantics.addOperation("parse", {
     _eol2
   ) {
     return {
-      _type: "PatternStatement",
+      _type: "ClassDeclaration",
       name: name.parse(),
-      args: pattern_args.children.at(0)?.parse() ?? undefined,
+      args: class_args.children.at(0)?.parse() ?? undefined,
       statements: statements.children.map((s) => s.parse()),
       extends: extend_expr?.children.at(0)?.parse() ?? undefined,
     };
   },
-  pattern_args(_lbracket, tail, _commas, head, _rbracket) {
+  class_args(_lbracket, tail, _commas, head, _rbracket) {
     return [...tail.children.map((arg) => arg.parse()), head.parse()];
   },
 });
@@ -149,10 +165,18 @@ export function parse(code: string): Node {
   if (!m.succeeded()) {
     return {
       _type: "Error",
-      reason: `[Failed!]\n\nDid you make sure to use backward arrows?\nEnd a pattern with an 'end'?\nUse the plural for covers?\nRemove inline comments?\n\nHere's what the parser has to say about it:\n${m.message}`,
+      reason: `[Failed!]
+
+Did you make sure to use backward arrows?
+End a class with an 'end'?
+Remove inline comments?
+
+Here's what the parser has to say about it:
+${m.message}`,
     };
   }
 
   const parsed = semantics(grammar.match(code)).parse();
+  console.log("Parsed AST", parsed);
   return parsed;
 }
