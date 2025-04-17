@@ -37,13 +37,13 @@ representations:
     objects:
       - image: songs.active->albums/cover-image/view # do I pull the view or nah? depends on whether view/image is an image or a region I guess
       - text: songs.active/name
-      - songs.active/audio/timeline-view
+      - regions: songs.active/audio/timeline-view
       # The rest represent actions, which are objects that can be represented.
       - icon: [play-pause, prev-song, next-song, shuffle, repeat]
     # I could vstack these views, but that's not really the point (ie. it doesn't really help with analogies)
   - name: active-playlist
     objects:
-      - playlists.active->songs/row-view
+      - regions: playlists.active->songs/row-view
     structures:
       - vstack: playlists.active/order
 

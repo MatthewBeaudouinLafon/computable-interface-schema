@@ -118,7 +118,7 @@ representations:
       - vstack: sidebar-order
   - name: breadcrumbs-view
     objects:
-      regions: pages.active->path-to-root
+      - regions: pages.active->path-to-root
     structures:
       hstack: hierarchy/depth-first-search # let's just say that that's an order structure in core
   - name: page-view
