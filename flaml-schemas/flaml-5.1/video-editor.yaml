@@ -28,7 +28,7 @@ object-types:
           object: playhead
           along: timeline
 
-objects: [(video) videos, videos.in-editor]
+objects: [(video) videos, videos.in-editor, playhead->timestamps]
 
 structures:
   - name: editor-timeline
