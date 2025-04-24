@@ -5,6 +5,10 @@ structures:
       - name: msg-order
         type: order
         affects: messages
+
+  - name: convo-order # it's a function of the last message across convos
+    type: order
+    affects: conversations
   - name: conversations
     type: group
     affects: messages
@@ -25,7 +29,7 @@ representations:
     objects:
       - region: conversations # group can be used as an object
     structures:
-      - vstack: msg-order # details elided
+      - vstack: convo-order # details elided
 
 behavior:
   - name: change-convo
@@ -34,5 +38,7 @@ behavior:
   - name: next-convo
     moves:
       object: conversations.selected
-      along:
+      along: convo-order
     input: keyboard.tab
+  - name: send-message
+    edits: conversations.selected->messages
