@@ -40,9 +40,9 @@ behavior:
     edits: events
   - name: move-event
     moves:
-      object: events.selected
-      in: events
-      along: time # time->days-view/vstack
+      - object: events.selected
+        in: events
+        along: time # time->days-view/vstack
     input: mouse.drag.y # still missing the vega-express mapping goodness
 
   - name: nav-week

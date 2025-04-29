@@ -46,7 +46,7 @@ behavior:
   - name: nudge-slice
     structure: linear
     moves:
-      target: slices.selected->samples
+      object: slices.selected->samples
       along: audio-time
   - name: change-grid
     edits: grid-size
