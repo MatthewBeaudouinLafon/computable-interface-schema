@@ -6,10 +6,10 @@ structures:
     affects: timestamps
     covered-by: [days, weeks, events] # keyword needs work
 
-    structures: # call it derivative? Inherited?
-      - name: week-order
-        type: order
-        affects: weeks
+    # structures: # call it derivative? Inherited?
+  - name: week-order
+    type: order
+    affects: weeks
 
 representations: # presentations?
   - name: day-view
