@@ -19,6 +19,9 @@ from dataclasses import dataclass
 from typing import List, Tuple, Set
 from copy import copy, deepcopy
 
+# NOTE: Test with 
+# pytest flaml-schemas/flaml-5.1/tests.py
+
 # ---- Helpers
 # Return a list even if it's a single thing, so you can always loop through it
 def listable(content):
