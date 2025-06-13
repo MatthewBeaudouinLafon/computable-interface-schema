@@ -7,9 +7,9 @@ structures:
     covered-by: [days, weeks, events] # keyword needs work
 
     # structures: # call it derivative? Inherited?
-  - name: week-order
+  - name: day-order
     type: order
-    affects: weeks
+    affects: days
 
 representations: # presentations?
   - name: day-view
@@ -26,7 +26,7 @@ representations: # presentations?
       # - rect: weeks.selected->days  # a bit hazey how this composes with day-view, since it's not a function
       - regions: day-view # how do I parametrize this? should take a set of days...
     structures:
-      - hstack: time
+      - hstack: days
   - name: week-nav-buttons
     type: gui
     objects:
