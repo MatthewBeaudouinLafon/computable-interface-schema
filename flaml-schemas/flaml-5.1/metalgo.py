@@ -214,6 +214,8 @@ class ObjectRegistry(object):
 # ----- Graph Creation
 
 def make_spec_graphs(spec):
+  # Make an independent graph for each kind of relation. This is useful to do things
+  # like transitive closure.
   graphs = {
     'mapto': nx.DiGraph(),
     'affects': nx.DiGraph(),
