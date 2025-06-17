@@ -495,8 +495,6 @@ provided in the prep_analogy
 def compute_analogy(
     left_graph, right_graph, timeout: int = 10 * 60, verbose=False
 ):
-    # TODO: return something meaningful
-
     geds = nx.optimize_edit_paths(
         left_graph,
         right_graph,
