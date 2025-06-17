@@ -352,11 +352,88 @@ def make_graph(spec_name):
 
   return composed
 
+# ----- Match Representation
+# forward_match = (
+#   # nodes
+#   {
+#     sinister_node: dexter_node
+#   },
+
+#   # edges
+#   {
+#   }
+# )
+
+Analogy = tuple[dict[str, str]]
+
+def new_analogy() -> Analogy:
+  return (
+  # nodes
+  {},
+
+  # edges
+  {}
+  )
+
+def add_analogous_nodes(analogy: Analogy, sinister_node: str | None, dexter_node: str | None):
+  # If either side is deleted, just leave it out of the analogy. This might not
+  # be ideal, because we won't be able to distinguish between deleted nodes and 
+  # nodes that never existed.
+  if sinister_node is None or dexter_node is None:
+    return
+  
+  analogy[0][sinister_node] = dexter_node
+
+def add_analogous_edges(analogy: Analogy, 
+                  sinister_edge: tuple[str, str] | None, 
+                  dexter_edge: tuple[str, str] | None, 
+                  ):
+  # If either side is deleted, just leave it out of the analogy. This might not
+  # be ideal, because we won't be able to distinguish between deleted edges and 
+  # edges that never existed.
+  if sinister_edge is None or dexter_edge is None:
+    return
+
+  # NOTE: this doesn't include the edge type, but we may want to eventually.
+  analogy[1][sinister_edge] = dexter_edge
+
+def flip_analogy(analogy: Analogy) -> Analogy:
+  reverse = new_analogy()
+
+  # nodes
+  for sinister_node, dexter_node in analogy[0].items():
+    add_analogous_nodes(reverse, dexter_node, sinister_node)
+  
+  for sinister, dexter in analogy[1].items():
+    add_analogous_edges(reverse, dexter, sinister)
+
+def get_analogous_node(analogy: Analogy, sinister_node: str):
+  # Returns None if there is no analogous node. This might be because the source,
+  # node doesn't exist, or it is "deleted" in the analogy.
+  return analogy[0].get(sinister_node, None)
+
+def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
+  # Returns None if there is no analogous edge. This might be because the source,
+  # edge doesn't exist, or it is "deleted" in the analogy.
+  return analogy[1].get(sinister_edge, None)
+
+def print_analogy(analogy: Analogy):
+  # TODO: take the graphs as parameters to list the insertions and deletions
+  print('- nodes')
+  for sinister_node, dexter_node in analogy[0].items():
+    print(f'{sinister_node} = {dexter_node}')
+
+  print('\n- edges')
+  for sinister_node, dexter_node in analogy[1].items():
+    lhs = f'{sinister_node[0]} ~ {sinister_node[1]}'
+    rhs = f'{dexter_node[0]} ~ {dexter_node[1]}'
+    print(f'{lhs} = {rhs}')
+  
 
 # ----- Analogy Computation
 
 # NOTE: could make this parametrized, but eh I don't expect to change this much.
-MAX_COST = 100 
+MAX_COST = 100
 
 def node_subst_cost(n1, n2):
   if n1.get('ilk') is None or n2.get('ilk') is None:
@@ -386,7 +463,7 @@ def edge_subst_cost(e1, e2):
 Compute analogy. This can terminate on its own, but it'll stop at the timeout
 provided in the prep_analogy
 """
-def compute_analogy(left_graph, right_graph, timeout: int=10*60):
+def compute_analogy(left_graph, right_graph, timeout: int=10*60, verbose=False):
   # TODO: return something meaningful
 
   geds = nx.optimize_edit_paths(left_graph, right_graph, 
@@ -398,25 +475,40 @@ def compute_analogy(left_graph, right_graph, timeout: int=10*60):
                       #  strictly_decreasing=True,
                        )
 
+  analogy = new_analogy()
   for ged in geds:
+    analogy = new_analogy()
     node_edit_path, edge_edit_path, cost = ged
-    print('\n\n-- cost:', cost)
+
+    if verbose:
+      print('\n\n-- cost:', cost)
     
-    print('- nodes')
     for node_edit in node_edit_path:
       lhs, rhs = node_edit
-      print(f'{lhs} = {rhs}')
+      add_analogous_nodes(analogy, lhs, rhs)
 
-    print('\n- edges')
     for edge_edit in edge_edit_path:
       lhs, rhs = edge_edit
 
+      sinister_edge = None
       if lhs is not None:
+        # NOTE: the last unpacked item is used by the multigraph to keep track
+        # of different edges, so we don't need it.
         edge_lhs, edge_rhs, _ = lhs
         lhs = f'{edge_lhs} ~ {edge_rhs}'
+        sinister_edge = (edge_lhs, edge_rhs)
 
+      dexter_edge = None
       if rhs is not None:
+        # NOTE: the last unpacked item is used by the multigraph to keep track
+        # of different edges, so we don't need it.s
         edge_lhs, edge_rhs, _ = rhs
         rhs = f'{edge_lhs} ~ {edge_rhs}'
+        dexter_edge = (edge_lhs, edge_rhs)
       
-      print(f'{lhs} = {rhs}')
+      add_analogous_edges(analogy, sinister_edge, dexter_edge)
+    
+    if verbose:
+      print_analogy(analogy)
+    
+    return analogy, cost
