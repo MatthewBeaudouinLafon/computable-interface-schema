@@ -1,35 +1,23 @@
 /* TODO: Remove unused fonts */
-@import url('https://fonts.googleapis.com/css2?family=Mate:ital@0;1&family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Mate:ital@0;1&family=Neuton:ital,wght@0,200;0,300;0,400;0,700;0,800;1,400&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap");
 
 :root {
-  --shadow-color: 0deg 0% 54%;
-  --shadow-elevation-low: 0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.36),
-    0.3px 0.5px 0.7px -1.2px hsl(var(--shadow-color) / 0.36),
-    0.8px 1.3px 1.7px -2.5px hsl(var(--shadow-color) / 0.36);
-  --shadow-elevation-medium: 0.1px 0.1px 0.2px hsl(var(--shadow-color) / 0.22),
-    0.4px 0.5px 0.8px -0.7px hsl(var(--shadow-color) / 0.24),
-    0.8px 1.1px 1.6px -1.4px hsl(var(--shadow-color) / 0.26),
-    1.9px 2.5px 3.7px -2.1px hsl(var(--shadow-color) / 0.28);
-  --shadow-elevation-high: 0.2px 0.3px 0.4px hsl(var(--shadow-color) / 0.4),
-    1.4px 2.2px 2.9px -0.4px hsl(var(--shadow-color) / 0.4),
-    2.7px 4.3px 5.7px -0.8px hsl(var(--shadow-color) / 0.4),
-    4.7px 7.5px 10px -1.2px hsl(var(--shadow-color) / 0.4),
-    8px 12.8px 17px -1.7px hsl(var(--shadow-color) / 0.4),
-    13.2px 21.1px 28px -2.1px hsl(var(--shadow-color) / 0.4),
-    20.8px 33.3px 44.2px -2.5px hsl(var(--shadow-color) / 0.4);
-  --node-transition: 0.2s cubic-bezier(0.86, 0, 0.07, 1);
-
-  --monospace-font: 'Ubuntu Sans Mono';
-  --header-font: 'Neuton';
-  --sans-serif-font: 'Source Sans 3';
-  --serif-font: 'Source Serif 4';
-  --pane-height: 800px;
+  --monospace-font: "Ubuntu Sans Mono";
+  --header-font: "Neuton";
+  --sans-serif-font: "Source Sans 3";
+  --serif-font: "Source Serif 4";
 }
 
-/* Some of the styles are adapted from https://niklasfasching.de/posts/just-enough-css/ */
+*,
+*:before,
+*:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
 html {
-  overflow-y: scroll;
   height: 100%;
   word-wrap: break-word;
   margin: 0 auto;
@@ -39,34 +27,29 @@ html {
 
 body {
   padding-bottom: 20px;
+  display: flex;
 }
 
 .editor-container {
-  margin: 40px 0px;
+  margin: 40px;
   display: flex;
   position: relative;
-  flex-grow: 1;
-}
-
-.editor-container > .cm-editor {
-  /* resize: vertical; */
-  overflow: auto;
-}
-
-.editor-container.query-editor  {
+  display: flex;
   flex-direction: column;
 }
 
-.editor-container.query-editor > .cm-editor {
-  height: 50px;
+.editor-container > .cm-editor {
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, 0.185);
+  width: fit-content;
+  width: 800px;
+  height: 800px;
+  resize: both;
 }
 
 .editor-heading {
   opacity: 0.5;
   margin-bottom: 10px;
-  position: absolute;
-  top: -25px;
-  left: 16px;
   z-index: 5;
 }
 
@@ -75,76 +58,7 @@ body {
   background: white;
 }
 
-.query-result-container {
-  display: flex;
-  font-family: var(--monospace-font);
-  
-  width: fit-content;
-  margin-bottom: 15px;
-  align-items: center;
-}
-
-.query-result {
-  display: flex;
-}
-
-.editor-output {
-  margin-top: 15px;
-  flex-wrap: wrap;
-  position: relative;
-  padding-left: 15px;
-  white-space: pre;
-  color: rgba(0,0,0,0.8);
-  font-family: var(--monospace-font);
-}
-
-.editor-output::before {
-  content: '';
-  height: 100%;
-  width: 2px;
-  border-right: 1px solid rgba(0, 0, 0, 0.2);
-  position: absolute;
-  top: 0px;
-  left: 3px;
-}
-
-.query-result-entry {
-  color: black;
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
-  padding: 1px 2px;
-}
-
-
-.diagram-output {
-  padding: 40px;
-}
-
-/* Overriding Codemirror Syntax Highlighting Theme */
-
-.ͼm {
-  color: #708090 !important;
-}
-
-.ͼc {
-  color: #272727 !important;
-}
-
-.ͼi {
-  color: #dd4a68 !important;
-}
-
-.cm-custom-highlight > .ͼc {
-  color: #135FC2 !important;
-}
-
-.cm-line {
-  color:#747474;
-}
-
-
-.editors-container {
-  display: flex;
+.editor-container > .mermaid {
+  border: 1px solid rgba(0, 0, 0, 0.185);
+  padding: 20px;
 }

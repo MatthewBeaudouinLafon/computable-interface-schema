@@ -1,9 +1,0 @@
-% Simplest browser: basic syntax
-pattern ptn_name(param1, param2):
-  shared: single: shared_set
-  shared: linear: shared_struct structures shared_set
-  many: attribute_set
-  tree: attribute_struct structures attribute_set
-end
-
-many: ptn_name(five): instance_name
