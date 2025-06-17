@@ -376,6 +376,8 @@ def make_graph(spec):
 
 #   # edges
 #   {
+#     (sinister_source_node, sinister_target_node):  # sinister edge
+#       (dexter_source_node, dexter_target_node)     # dexter edge
 #   }
 # )
 
@@ -441,6 +443,19 @@ def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   return analogy[1].get(sinister_edge, None)
 
 
+def is_node_in_sinister(analogy: Analogy, node_id):
+  return analogy[0].get(node_id, None) is not None
+
+def is_node_in_dexter(analogy: Analogy, node_id):
+  return node_id in analogy[0].values()
+
+def is_edge_in_sinister(analogy: Analogy, edge):
+  return analogy[1].get(edge, None) is not None
+
+def is_edge_in_dexter(analogy: Analogy, edge):
+  return edge in analogy[1].values()
+
+
 def print_analogy(analogy: Analogy):
   # TODO: take the graphs as parameters to list the insertions and deletions
   print("- nodes")
@@ -490,8 +505,6 @@ def edge_subst_cost(e1, e2):
 Compute analogy. This can terminate on its own, but it'll stop at the timeout
 provided in the prep_analogy
 """
-
-
 def compute_analogy(
   left_graph, right_graph, timeout: int = 10 * 60, verbose=False
 ):
@@ -551,27 +564,51 @@ def serialize_analogy(analogy: Analogy):
 
   return json.dumps([nodes, edges])
 
+# ----- Analyze Graph and Analogy
 
-def mermaid_graph(spec):
+def mermaid_graph(spec, analogy: Analogy | None = None, analogy_side="sinister"):
   pad = "  "
+
+  # Choose which side of the analogy to look at
+  is_node_in_analogy = is_node_in_sinister
+  is_edge_in_analogy = is_edge_in_sinister
+  if analogy_side == "dexter":
+    is_node_in_analogy = is_node_in_dexter
+    is_edge_in_analogy = is_edge_in_dexter
+
+
   graph = make_graph(spec)
   id_gen = 0
   id_dict = {}
   ret = "flowchart LR\n"
+
+  # Add style for selected nodes
+  ret += f"{pad}classDef AnalogousNode fill:#fbcef6,stroke:#8353e4;\n\n"
+
   for node_id, attr in graph.nodes.data():
+    # Highlighted nodes are tagged with the classDef
+    node_style = ""
+    if analogy is not None and is_node_in_analogy(analogy, node_id):
+      node_style = ":::AnalogousNode "
+
     ilk = attr.get("ilk", "None")
     repr_obj = attr.get("repr_obj", "None")
     id_dict[node_id] = id_gen
     if ilk == "object":
-      ret += f"{pad}{id_gen}[{node_id}]\n"
+      ret += f"{pad}{id_gen}[{node_id}]{node_style}\n"
     elif ilk == "structure":
-      ret += f"{pad}{id_gen}" + "{" + node_id + "}\n"
+      ret += f"{pad}{id_gen}" + "{" + node_id + "}" + node_style + "\n"
     elif ilk == "action":
-      ret += f"{pad}{id_gen}>{node_id}]\n"
+      ret += f"{pad}{id_gen}>{node_id}]{node_style}\n"
       pass
     else:
-      ret += f"{pad}{id_gen}(({node_id}))\n"
+      ret += f"{pad}{id_gen}(({node_id})){node_style}\n"
     id_gen += 1
+
+  # Keep track of links highlighted links because you have to list them by order
+  # of appearance: https://mermaid.js.org/syntax/flowchart.html#styling-links
+  highlighted_links = []
+  link_count = 0
 
   for src, trg, attr in graph.edges.data():
     assert (
@@ -584,5 +621,14 @@ def mermaid_graph(spec):
     src_id = id_dict.get(src)
     trg_id = id_dict.get(trg)
     ret += f"{pad}{src_id} -->|{rel}| {trg_id}\n"
+
+    # Unlike nodes, links are styled all at once at the end, so we just keep track of them.
+    if is_edge_in_analogy(analogy, (src, trg)):
+      highlighted_links.append(link_count)
+    link_count += 1
+  
+  # Style links
+  highlighted_links_str = ",".join([str(n) for n in highlighted_links])
+  ret += f"{pad}linkStyle {highlighted_links_str} color:purple,stroke:purple,stroke-width:2px;"
 
   return ret
