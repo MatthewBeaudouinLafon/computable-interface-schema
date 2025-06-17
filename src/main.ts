@@ -1,94 +1,73 @@
-import SWIPL from "swipl-wasm";
-import YAML from "yaml";
-import { create_editor_alt, Editor } from "./editor/editor";
-import { parse } from "./parser/parser";
-import { State } from "./State";
+import mermaid from "mermaid";
+import { loadPyodide, version as pyodideVersion } from "pyodide";
+import { create_editor, Editor } from "./editor/editor";
 import "./style.css";
-import { transpile } from "./transpiler/transpiler";
-import { create_el } from "./utilities/utilities";
 
-const file_picker_button = create_el(
-  "button",
-  "file-picker-button",
-  document.body
-);
-file_picker_button.innerText = "Choose save folder";
+const path_a = "calendar.yaml";
+const path_b = "video-editor.yaml";
+const pyodide = await loadPyodide({
+  indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
+});
 
-const editors_container = create_el("div", "editors-container", document.body);
-const SPEC_PATHS = ["browser.is"];
-
-let spec_editors: Editor[], swipl: SWIPL.SWIPLModule, output: HTMLElement;
-
-async function setup() {
-  /* ---------------- Specification editor ---------------- */
-  spec_editors = await Promise.all(
-    SPEC_PATHS.map(async (spec) =>
-      create_editor_alt(
-        spec,
-        await (await fetch(`./interface-schema/specifications/${spec}`)).text()
-      )
-    )
+async function main() {
+  const editor_a = create_editor(
+    path_a,
+    await (await fetch(`./interface-schema/specifications/${path_a}`)).text()
   );
 
-  spec_editors.forEach((editor) => editors_container.append(editor.parent));
+  const editor_b = create_editor(
+    path_b,
+    await (await fetch(`./interface-schema/specifications/${path_b}`)).text()
+  );
 
-  // SWIPL WASM setup
-  swipl = await SWIPL({ arguments: ["-q"] });
+  document.body.append(editor_a.parent);
+  document.body.append(editor_b.parent);
+
+  // Setup pyodide
+  await pyodide.loadPackage("pyyaml");
+  await pyodide.loadPackage("networkx");
+  await pyodide.loadPackage("scipy");
+  const base_meta_algo = await (await fetch(`./metalgo.py`)).text();
+  pyodide.runPython(base_meta_algo);
 
   // Live programming
   let typingTimer: any | null;
-
-  spec_editors.map((editor) =>
+  [editor_a, editor_b].forEach((editor) => {
     editor.editor_view.dom.addEventListener("change", (_) => {
       if (typingTimer != null) clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => update(editor), 1000); // Should this be synchronous?
-    })
+      typingTimer = setTimeout(() => update(editor_a), 1000);
+    });
+  });
+
+  const analogy = pyodide.runPython(
+    `analogy, cost = compute_analogy(make_graph(yaml.safe_load(spec_a)), make_graph(yaml.safe_load(spec_b)));
+serialize_analogy(analogy)`,
+    {
+      locals: pyodide.toPy({
+        spec_a: editor_a.editor_view.state.doc.toString(),
+        spec_b: editor_b.editor_view.state.doc.toString(),
+      }),
+    }
   );
 
-  output = create_el("div", "editor-output", document.body, {
-    innerText: "Output",
-  });
+  console.log(analogy);
 
-  spec_editors.map((editor) => update(editor));
+  [editor_a, editor_b].forEach(update);
 }
 
-async function update(from: Editor) {
-  const raw = from.editor_view.state.doc.toString();
+async function update(editor: Editor) {
+  const mermaid_el = editor.parent.querySelector(".mermaid") as HTMLElement;
 
-  // Sync with file on disk
-  if (State.file_system_handle != null) {
-    const file_handle = await State.file_system_handle.getFileHandle(
-      from.path,
-      { create: true }
-    );
-
-    // Create a FileSystemWritableFileStream to write to.
-    const writable = await file_handle.createWritable();
-
-    // Write the contents of the file to the stream.
-    await writable.write(raw);
-    await writable.close();
-  } else {
-    // alert("Note: file not being saved. Please select a folder.");
-    console.warn("Note: file not being saved. Please select a folder.");
-  }
-
-  const parsed = parse(raw);
-
-  if (parsed._type === "Error") {
-    output.innerText = YAML.stringify(parsed);
-  } else {
-    output.innerText = transpile(parsed);
-  }
-}
-
-async function main() {
-  // Write out the file
-  file_picker_button.addEventListener("click", async () => {
-    State.file_system_handle = await window.showDirectoryPicker();
+  const py_graph = pyodide.runPython(`mermaid_graph(yaml.safe_load(spec))`, {
+    locals: pyodide.toPy({ spec: editor.editor_view.state.doc.toString() }),
   });
 
-  await setup();
+  mermaid_el.innerHTML = py_graph;
+  mermaid_el.removeAttribute("data-processed");
+
+  mermaid.run({
+    nodes: [mermaid_el],
+  });
 }
 
 async function loop() {
