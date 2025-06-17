@@ -12,12 +12,12 @@ const pyodide = await loadPyodide({
 async function main() {
   const editor_a = create_editor(
     path_a,
-    await (await fetch(`./interface-schema/specifications/${path_a}`)).text()
+    await (await fetch(`./interface-schema/specifications/${path_a}`)).text(),
   );
 
   const editor_b = create_editor(
     path_b,
-    await (await fetch(`./interface-schema/specifications/${path_b}`)).text()
+    await (await fetch(`./interface-schema/specifications/${path_b}`)).text(),
   );
 
   document.body.append(editor_a.parent);
@@ -27,7 +27,7 @@ async function main() {
   await pyodide.loadPackage("pyyaml");
   await pyodide.loadPackage("networkx");
   await pyodide.loadPackage("scipy");
-  const base_meta_algo = await (await fetch(`./metalgo.py`)).text();
+  const base_meta_algo = await (await fetch(`./python-lib/metalgo.py`)).text();
   pyodide.runPython(base_meta_algo);
 
   // Live programming
@@ -47,7 +47,7 @@ serialize_analogy(analogy)`,
         spec_a: editor_a.editor_view.state.doc.toString(),
         spec_b: editor_b.editor_view.state.doc.toString(),
       }),
-    }
+    },
   );
 
   console.log(analogy);
