@@ -487,7 +487,7 @@ def node_subst_cost(n1, n2):
   if n1["ilk"] != n2["ilk"]:
     return MAX_COST
   else:
-    return 0
+    return 1
 
 
 def edge_subst_cost(e1, e2):
@@ -496,7 +496,7 @@ def edge_subst_cost(e1, e2):
     return MAX_COST
 
   if e1["rel"] == e2["rel"]:
-    return 0
+    return 1
   else:
     return MAX_COST
 
@@ -506,7 +506,7 @@ Compute analogy. This can terminate on its own, but it'll stop at the timeout
 provided in the prep_analogy
 """
 def compute_analogy(
-  left_graph, right_graph, timeout: int = 10 * 60, verbose=False
+  left_graph, right_graph, timeout: int = 1 * 60, verbose=False
 ):
   geds = nx.optimize_edit_paths(
     left_graph,
@@ -555,7 +555,7 @@ def compute_analogy(
     if verbose:
       print_analogy(analogy)
 
-    return analogy, cost
+  return analogy, cost
 
 
 def serialize_analogy(analogy: Analogy):
@@ -573,13 +573,14 @@ def mermaid_graph(spec, analogy: Analogy | None = None, analogy_side="sinister")
   is_node_in_analogy = is_node_in_sinister
   is_edge_in_analogy = is_edge_in_sinister
   if analogy_side == "dexter":
+    # TODO: this is technically kind of slow because you need to do a linear time
+    # search through values (whereas it's a hashmap lookup for sinister)
     is_node_in_analogy = is_node_in_dexter
     is_edge_in_analogy = is_edge_in_dexter
 
-
   graph = make_graph(spec)
-  id_gen = 0
-  id_dict = {}
+  id_gen = 0    # generated id for each node
+  id_dict = {}  # {graph_node_id: number_id}
   ret = "flowchart LR\n"
 
   # Add style for selected nodes
@@ -630,5 +631,36 @@ def mermaid_graph(spec, analogy: Analogy | None = None, analogy_side="sinister")
   # Style links
   highlighted_links_str = ",".join([str(n) for n in highlighted_links])
   ret += f"{pad}linkStyle {highlighted_links_str} color:purple,stroke:purple,stroke-width:2px;"
+
+  return ret
+
+
+def mermaid_analogy(analogy: Analogy):
+  pad = "  "
+  ret = "flowchart LR\n"
+
+  id_gen = 0    # generated id for each node
+  id_dict = {}  # {graph_node_id: number_id}
+
+  for s_node, d_node in analogy[0].items():
+    # TODO: add ilk to get the right shape
+    node_id = f"{s_node} <> {d_node}"
+    id_dict[node_id] = id_gen
+    ret += f"{pad}{id_gen}[{node_id}]\n"
+
+    id_gen += 1
+
+  for s_edge, d_edge in analogy[1].items():
+    s_src, s_trg = s_edge
+    d_src, d_trg = d_edge
+
+    src = f"{s_src} <> {d_src}"
+    trg = f"{s_trg} <> {d_trg}"
+
+    src_id = id_dict.get(src)
+    trg_id = id_dict.get(trg)
+
+    # TODO: tag with relation
+    ret += f"{pad}{src_id} --> {trg_id}\n"
 
   return ret
