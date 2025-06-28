@@ -1,0 +1,126 @@
+# core library
+
+structures:
+  - time:
+      type: linear
+      affects:
+        timestamps:
+          subsets: [now] # enables timestamps.now
+          # todo: could describe how time progresses as movement
+
+---
+structures:
+  - time:
+      type: linear
+      affects:
+        timestamps:
+          subsets: now # enables timestamps.now
+          content:
+            actions:
+              - progession:
+                  changes:
+                    timestamps.now:
+                      subset: timestamps
+                      along: time
+        # todo: could describe how time progresses as movement
+      covered-by:
+        - months
+        - days
+        - events
+
+views:
+  - month-overview:
+      type: gui
+      marks:
+        # the subset notation makes it awkward to define months in place, if I'm only talking about the current one
+        text: months.current->days
+      encoding:
+        hstack-wrapped: core.time # this implies more that core.time structures days (rather than covers). What's their relation? This works because they don't overlap, which sucks to describe
+  - week-view:
+      type: gui
+      marks:
+        regions:
+          day-view:
+            marks:
+              hline: core.timestamps
+              rectangles: events
+            encodings:
+              vstack: core.time
+      encodings:
+        hstack: core.time
+
+---
+(linear) time:
+  - affects: timestamps
+  - covers: [months, days, events]
+
+views:
+  - (gui) small-month-view:
+      marks:
+        - text: months.active
+      encoding:
+        - hstack-wrapped: time
+  - (gui) week-view:
+      marks:
+        region:
+          (gui) day-view:
+            marks:
+              - hlines: timestamps
+              - rectangles: days.today->events
+            encoding:
+              - vstack: time
+      encodings:
+        vstack: core.time
+
+---
+(linear) time:
+  - affects: timestamps
+  - covers: [months, days, events]
+
+views:
+  - (gui) small-month-view:
+      - text: months.active
+      - hstack-wrapped: time
+  - (gui) week-view:
+      - vstack: time
+      - region:
+          (gui) day-view:
+            - hlines: timestamps
+            - rectangles: days.today->events
+            - vstack: time
+
+---
+# Instead of "constrains" or "derives", we can make an analogy
+# with subsets. So in (type) main.sub-struct, the main structure
+# "constraints" sub-struct. Likewise, struct->other implies a mapping.
+
+(linear) time:
+  affects: timestamps
+  cover: [days, months, weeks, events]
+
+  subset:
+    (order) day-order:
+      affects: days
+
+(gui) week-view:
+  (encoding) gui/vstack: day-order
+  (mark) gui/regions:
+    # should be a set of views, somehow. Parametrized?
+    (gui) day-views:
+      (mark) gui/hlines: timestamps
+      (mark) gui/rectangles: days[*weeks.active->days]->events # loop over days in active week
+      (encoding) gui/vstack: time
+
+(gui) small-month-view:
+  text: months.active
+  hstack-wrapped:
+    (order) time.month-order:
+      affects: months
+
+notes:
+  - when is something a definition vs new term? Maybe add "new" keyword
+  - check in with Prolog version of the syntax
+  - day-views problem
+    - maybe use an action?
+    - paramater-y thing feels like a cop-out, to programmery
+    - lambda variable thing?

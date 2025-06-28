@@ -1,0 +1,41 @@
+# Generic ODI
+(item) items:
+  (gui) overview-thumbnail:
+    regions: items/attributes.in-overview
+  (gui) detail-view:
+    regions: items/attributes.in-detail
+  contains:
+    - attributes
+
+(gui) overview:
+  (mark) _: items/detail-view
+  (encoding) _: (structure) overview-struct
+
+(gui) detail:
+  (mark) regions: items.selected/detail-view
+
+notes:
+  - need to figure out scoping on object definitions. Easiest not to do any scoping.
+
+---
+# Slack channels ODI (ignoring chat UI etc)
+
+(conversation) conversations:
+  (gui) row-view:
+    regions: [conversations/icon, conversations/name]
+    # defining hstack layout is optional and uninteresting
+
+  (gui) convo-view:
+    rectangles:
+      - (gui) header:
+          regions: [conversations/icon, conversations/name]
+      - (gui) chat: conversations/messages
+    regions: conversations/messages
+
+  contains:
+    attributes: # set contains the following items
+      - (image) icon
+      - (text) name
+      - messages # not going into a ton of detail
+      - (order) message-order:
+          affects: conversations/messages

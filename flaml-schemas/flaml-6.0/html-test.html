@@ -1,0 +1,197 @@
+<!-- 
+view
+    type: gui
+    name: view-name
+    marks:
+        model-objs -> gui-objs
+        other-objs -> gui-objs
+        another-view -> gui-objs (probably region)
+    encodings:
+        model-struct -> gui
+        other-struct -> gui  // these compose with *magic*
+
+The semantics suggests a container of stuff, and imposes structure on that stuff.
+If the 
+
+Bluefish does this by making the structure a container, let's try that.
+-->
+
+<!-- first stab at views -->
+<tiny-month-view type="gui" hstack-wrapped="core.time">
+    <text>months.active->days</text>
+    <text>something-else</text>
+</tiny-month-view>
+
+<week-view type="gui" mark="regions" <day-view type="gui" encoding="core.time" marks="">
+    core.timestamps
+    </day-view>
+
+</week-view>
+
+<!-- hmmm what if we actually lean in
+This uses a container metaphor for structures.
+
+Notes:
+- What's the type of the thing that goes inside a <thing></thing>? 
+  In this version it's contextual, which is not ideal... 
+  How does Bluefish do this again?
+- The whole point of this operation is to be able to substitute a reference for
+  a complete block of spec (so you can just move forward). 
+  This requires a certain kind of composition from the syntax.
+  - Dev's functional approach works well for this
+  - the HTML thing is wonky because there are different types of outgoing edges.
+- The container model for objects is pretty slick to talk about component contents.
+  I was kind of headed that direction with yaml 6.0
+-->
+<structure-name type="struct-type" mapto="target-struct">
+    <objects-name>
+        contents here??
+    </objects-name>
+    <cover-name cover="true">
+        <component-instance type="component" parameter="something">
+</structure-name>
+
+<views>
+    <view-name type="gui">
+        <repr-struct mapto="model-struct">
+            <repr-object mapto="model-object">
+        </repr-struct>
+    </view-name>
+    <other-view>
+        <!-- etc... -->
+    </other-view>
+</views>
+
+<!-- tabs example -->
+<views>
+    <tabs-view type="gui">
+        <hstack mapto="tab-order"> # bummer I can't really define tab-order here. Also technically should be mapfrom
+            iirc
+            <tab-views> # visually the different kinds of things all blend together.
+                <hstack>
+                    tab/icon
+                    tab/name
+                </hstack>
+                </tab-view>
+        </hstack>
+    </tabs-view>
+</views>
+
+
+
+<!-- 
+Ok so what's the model here?
+
+object:
+    name: var-name      # no nesting
+    type: obj-type      # could define inline, but that's excessive, especially with "contents"
+
+    contents:
+        - anything      # obviously nesting, or refs
+
+structure:
+    name: var-name      # no nesting
+    type: struct-type   # could define inline
+    
+    affects: object     # could define inline
+    cover:   object     # could define inline
+    
+    mapto: struct       # define struct inline
+    constrains: struct  # define struct inline
+    
+view:
+    name: var-name      # no nesting
+    type: view-type     # could define inline?? eg. for hardware device
+
+    marks:
+        view-objects: object   # no nesting (comes from view-type)
+        model-object: object   # could define inline
+
+    encodings
+        view-struct: struct    # no nesting (comes from view-type)
+        model-struct:struct    # could define inline
+
+action:
+    name: action-name   # no nesting
+
+    changes:
+        relation-source: object  # could define inline
+        relation-target: object  # could define inline
+        relation-type: mapto, cover, etc.  # not 100% about how to do this part.
+
+        move-along: structure    # could define inline
+        
+Differences with Bluefish
+- Bluefish is a scenegraph with a few extra edges, making the nesting + ref thing work pretty well. ISN/Mirabelle is a lot less hierarchical — though if you do a nesting thing you develop a spanning tree.
+- ISN has typed edges, where as Bluefish is mostly about containment.
+- Each bluefish node can be a "potentially empty" view, so syntactically structures and objects have the same type, making easier to nest things.
+-->
+
+
+<struct-name>
+    <Affects>
+        <new-object-name>
+            <Mapto>
+                <target-object />
+            </Mapto>
+        </new-object-name>
+    </Affects>
+</struct-name>
+
+<Views>
+    <tabs-view type="gui">
+        <Marks view-obj="rect">
+            <tabs>
+                <Mapto>
+                    <webpages />
+                </Mapto>
+            </tabs>
+        </Marks>
+    </tabs-view>
+</Views>
+
+<!-- 
+The chunking visually sucks because you get too many indents.
+How can we reduce it?
+
+thing-name:
+    relation:
+        target-name:
+            target-stuff
+
+-->
+
+<!-- 
+(obj-type) obj-name:
+  mapto: obj-type obj-name
+
+  contents:
+    - anything      # obviously nesting, or refs
+
+(struct-type) structure-name:
+  - affects: obj1  # works because it's a list
+  - affects: obj-type obj2
+  - affects: 
+      obj-type new-obj:
+        contents:
+          - stuff
+  - cover: thing
+    
+(view-type) view-name:
+  marks:
+      view-objects: object   # no nesting (comes from view-type)
+      model-object: object   # could define inline
+
+  encodings
+      view-struct: struct    # no nesting (comes from view-type)
+      model-struct:struct    # could define inline
+
+(action) action-name:
+
+  changes:
+      relation-source: object  # could define inline
+      relation-target: object  # could define inline
+      relation-type: mapto, cover, etc.  # not 100% about how to do this part.
+
+      move-along: structure    # could define inline 
+-->

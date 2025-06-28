@@ -1,0 +1,49 @@
+(file) files:
+  contains:
+    - (image) image
+    - (text) name
+    - (gui) thumbnail-view:
+        rectangle: image
+        text: name
+    - (gui) row-view:
+        rectangle: image
+        text: name
+
+(gui) icons-view:
+  - rectangles: files.active/thumbnail-view
+  - hgrid-wrapped:
+      - (order) alphabetical=>files
+
+(action) select:
+  files.selected: <subset> files
+
+(action) delete:
+  - files.selected
+
+# todo: do progammatic view thing here?
+# (gui) list-view:
+#   - rectangles:
+#       (gui) file-column:
+#         - rectangles: files.active/row-view
+#         - hstack: sort-order
+
+shorthand:
+  - object->target-obj # mapto
+  - object.subset # subset
+  - struct=>object # affects
+  - struct[=>]object # cover
+  - struct->target-struct # mapping structures
+
+  # changes:
+  #   source: files.selected
+  #   target: files
+  #   relation: subset
+
+  # subset:
+  #   files.selected: files
+  #   input:
+  #   condition:
+
+notes:
+  - how do I stay out the interaction rabbit hole?
+    - need to figure out what analogies

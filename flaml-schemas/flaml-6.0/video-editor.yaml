@@ -1,0 +1,34 @@
+# start with timeline view
+def (video):
+  contains:
+    - (object) images
+    - (linear) timeline:
+        affects: [images, timestamps] # timestamps here is scoped to video
+
+(linear) timeline:
+  affects: timestamps
+  cover: videos.in-editor
+
+(group) tracks:
+  affects: videos.in-editor
+
+(gui) timeline-view:
+  hstack: timeline
+  vlines:
+    - timestamps
+    - playhead->timestamps
+
+  vstack:
+    - (order) track-order:
+        affects: tracks
+  rectangles: videos.in-editor
+  # regions: tracks  # not sure if this is needed
+
+(gui) player-view:
+  images: playplayhead->videos.in-editor/images
+
+(gui) media-pool-view:
+  rectangles: videos/images.first
+  hstack-wrapped:
+    - (order) alphabetical:
+        affects: videos

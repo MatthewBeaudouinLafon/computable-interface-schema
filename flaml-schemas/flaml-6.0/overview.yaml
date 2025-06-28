@@ -1,0 +1,103 @@
+# This version tries to "denormalize" 5.2, which means:
+# - less boilerplate (eg. name: fields)
+# - make it easier to keep writing where you are, so define new types and such in place
+#   - make it easier to start from the presentation
+
+# An expression is either a definition, or a reference (using the name)
+
+# object definition expression
+obj-name:
+  type: type-expression # reference or definition
+
+  mapto: object-expression # maybe??
+  ->: object-expression
+
+  subset: object-expression # maybe??
+  .: object-expression
+
+  contents:
+    - object-expression | struct-expression | view-expression | action-expression
+  /:
+    - object-expression | struct-expression | view-expression | action-expression
+
+# concise expressions
+# - obj-name.subset
+# - obj-name->target-objects
+# - obj-name/content
+
+# structure definition expression
+struct-name:
+  type: type-expression
+  affects: object-expression
+  covered-by: object-expression
+
+# view definition expression
+views:
+  - view-name:
+      type: view-type
+      marks:
+        - view-object: object-expression | view-expression
+      encodings:
+        - view-struct: structure-expression
+
+actions:
+  - action-name:
+      changes: # not sure if this is necessary
+        object-ref:
+          relation: object-expression # maybe this can be merged with edits then?
+          along: structure-expression
+      input: todo
+      # edits:
+      #   - object-ref:
+      #       relation: object-expression
+      #   # for example
+      #   # - now:
+      #   #     subset: timestamps
+
+---
+- def (type): # structure or object type
+    - contents-expressions
+
+# objects expressions
+- object-name
+- object-name.subset-object->target-object # compound expression
+- (object-type) object-name:
+    mapto: object-expression # Accessed with object-name->object-name
+    subset: object-expression # Accessed with object-name.subset-obj
+    contains:
+      # Any expression. Accessed with object-name/content-name
+      - object-definition-expression | structure-definition-expression
+        view-definition-expression | action-definition-expression
+
+# structure expressions
+- struct-name # accessed as variable
+- (structure-type) struct-name: # structure-definition-expression
+    affects: object-expression # struct-name=>object ?
+    cover: object-expression # struct-name[=>]object-name
+
+    mapto: structure-expression # Accessed with struct-name->target-struct
+    subset: structure-expression # Accessed with struct-name.sub-struct
+
+    contains:
+      # Any expression. Accessed with object-name/content-name
+      - object-definition-expression | structure-definition-expression
+        | view-definition-expression | action-definition-expression
+
+- (structure-type) struct-name.sub-struct: # defined sub-struct directly? not sure if this is useful
+    structure-relations...
+
+# view expressions
+- view-name
+- (view-type) view-name:
+    presentation-object: object-expression # Can have multiple entries for the same presentation object
+    presentation-struct: structure-expression
+
+    contains: # not sure what this would be useful for yet
+      # Any expression. Accessed with object-name/content-name
+      object-definition-expression | structure-definition-expression
+      | view-definition-expression | action-definition-expression
+
+# action expressions
+- action-name
+- (action) action-name:
+    - object-expression | struct-expression: <relation> object-expression | struct-expression
