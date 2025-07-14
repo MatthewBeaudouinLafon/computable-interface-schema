@@ -103,17 +103,17 @@ views:
       affects: days
 
 (gui) week-view:
-  (encoding) gui/vstack: day-order
-  (mark) gui/regions:
+  (mark) gui/rectangles:
     # should be a set of views, somehow. Parametrized?
     (gui) day-views:
       (mark) gui/hlines: timestamps
       (mark) gui/rectangles: days[*weeks.active->days]->events # loop over days in active week
       (encoding) gui/vstack: time
+  (encoding) gui/hstack: day-order
 
 (gui) small-month-view:
-  text: months.active
-  hstack-wrapped:
+  (mark) text: months.active
+  (encoding) hstack-wrapped:
     (order) time.month-order:
       affects: months
 
