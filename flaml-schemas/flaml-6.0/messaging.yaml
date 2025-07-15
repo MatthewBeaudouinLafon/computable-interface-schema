@@ -1,0 +1,95 @@
+# iMessage
+
+(group) conversations:
+  affects: 
+    - (object) messages  # note: maybe I can frame groups as covers?
+    - (object) people    # I initially wanted to do this as a mapto-many situations
+
+(gui) message-view:
+  (marks) text: conversations.current->messages
+  (encoding) vstack: 
+    (linear) message-order:
+        affects: messages
+
+(gui) pinned-conversations-view:
+  (marks) _: conversations.pinned  # can easily mark things I want to elaborate on with _
+  (encoding) hstack-wrapped: message-order
+
+(gui) other-conversations-view: 
+  (marks) _: conversations.not-pinned  # could use logical not here to relate with pinned?
+  (encoding) vstack: message-order
+
+(gui) conversations-view:
+  (marks) regions: pinned-conversations-view
+  (marks) regions: other-conversations-view
+  (encoding) vstack: _
+
+(action) change-conversation:
+  edits: conversations.current <subset> conversations
+
+(action) send-message:
+  edits: conversations.current->messages
+
+(action) pin-conversation:
+  edits:
+    - conversations.pinned
+    - conversations.unpinned # logical not would eliminate this too
+
+...
+# Slack
+
+# let’s do this one as a component that contains messages, which should still analogize
+# to the iMessage spec
+# previous approach:
+# (group) (channel) channels:
+#	  affects: messages, people
+
+def (channel):
+  - (text) name
+  - (text) messages
+  - (object) people
+
+(channel) channels:
+  subset: direct-messages
+
+(gui) message-view:
+  (marks) text: channels.active/messages
+  (encoding) vstack: 
+    (linear) message-order:
+      affects: channels/messages  # applies to messages across all channels (neat!)
+
+(gui) all-channels-view:
+  (encoding) vstack: _
+  (marks) regions: 
+    - (gui) channels-view:
+        (marks) text: channels.not-dm/name # again reaching for “not direct-messages”
+        (encoding) vstack: 
+          (linear) alphabetical:
+            affects: channels
+    - (gui) direct-message-view:
+        (marks) text: channels.direct-messages. # could list people with /people but eh
+        (encoding) vstack: alphabetical
+
+
+...
+# ycombinator hn
+
+def (article):
+  - (tree) threads:
+      affects: /comments
+  - (gui) comments-view:
+      - (marks) text: /comments
+      - (encodings) tree-view: /threads
+  - (gui) article-view:
+      - (marks) text: /name
+      # - (marks) rect: /text-input
+      - (marks) regions: /comments-view
+      - (encoding) vstack: _
+
+(linear) score:
+  affects: 
+    (article) articles
+
+(gui) home-view:
+  (marks) text: articles
+  (encoding) vstack: score
