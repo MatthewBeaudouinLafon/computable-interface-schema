@@ -1,0 +1,64 @@
+#
+
+- def (video):
+    - timestamps
+    - images
+    - (linear) timeline:
+        affects: timestamps, images
+
+- (video) videos
+- videos.in-editor <mutable>:
+    - /timestamps: editor-timestamps
+
+- def (track):
+    - timestamps
+    - videos
+    - (gui) view:
+        - /marks.vlines: timestamps
+        - /marks.vlines: timestamps.playhead
+        - /marks.rectangles: videos
+        - /encoding.hstack:
+            (linear) timeline:
+              affects: timestamps
+              covers: videos <mutable>
+
+- (track) tracks:
+    - /videos = videos.in-editor # maybe this is how you wire outside?
+    - /timestamps = editor-timestamps
+    - /timestamps.playhead = timestamp.playhead # effectively synchronizes playheads? wild
+
+- (gui) timeline-view:
+    - /marks.regions: tracks/view
+    - /encoding.vstack:
+        (linear) track-order:
+          affects: tracks
+
+- (gui) media-pool:
+    - /marks: videos
+    - /encoding.hwrap:
+        (linear) sort-order:
+          affects: videos
+
+# pick a structure
+- sort-orders =:
+    - (linear) alphabetical:
+        affects: videos
+    - (linear) length:
+        affects: videos
+- sort-orders.active
+- (action) change-sort:
+    edits: sort-orders.active -> sort-orders
+
+---
+- videos.in-editor
+- (linear) timeline:
+    affects: timestamps
+    covers: videos.in-editor
+-
+
+---
+def (gui):
+  - /marks:
+      subset: vlines, hlines, rectangles, regions, icons, text, ...
+  - /encodings:
+      subset: vstack, hstack, vwrap, hwrap, grid, ...

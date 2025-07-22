@@ -1,0 +1,94 @@
+# - define (gui):
+#   - /marks:
+#       subset: hline, rectangles,...
+
+- define (day):
+    - (gui) view:
+        - /marks.hlines: self[->]timestamps
+        - /marks.rectangles: self[->]events
+        - /encodings.vstack: time
+
+- (gui) week-view:
+    - /marks.regions: weeks.active->days/view
+    - /marks.hstack:
+        (linear) time:
+          affects: timestamps
+          covers: (day) days, weeks, months, events
+
+- (gui) grid-month-view:
+    - /marks.text: months.active
+    - /encoding.hwrap: time
+
+# - (gui) grid-month-view:
+#     - marks.text: ..months.active
+#     - encoding.hwrap: ..time
+
+##############
+
+- define (gui):
+    - /marks:
+        subset: hline, rectangles,...
+
+- define (day):
+    # - /timestamps: timestamps # wire internal /timestamps to external /timestamps->timestamps. Kind of sketch
+    # - /events: events # technically (day) days/timestamps = timestamps, so there's more than a map going on
+    - (gui) view:
+        - /marks.hlines: self[->]timestamps
+        - /marks.rectangles: self[->]events
+        - /encodings.vstack: time
+
+-
+# - timestamps:
+#     structure: (linear) time
+
+- (gui) week-view:
+    # predefined container
+    - /marks.regions: weeks.active->days/view
+
+    # inline math style
+    - /marks.regions:
+        weeks.active->days/view:
+          where define (day):
+            - (gui) view:
+                - /marks.hlines: self[->]timestamps
+                - /marks.rectangles: self[->]events
+                - /encodings.vstack: time
+
+    # inline ""functional"" style
+    - /marks.regions:
+        weeks.active->:
+          define (day):
+            - (gui) view:
+                - /marks.hlines: self[->]timestamps
+                - /marks.rectangles: self[->]events
+                - /encodings.vstack: time
+
+    # Arvind gate
+    - /marks.regions:
+        weeks.active->:
+          define (day):
+            - stuff
+            - (gui) view:
+                - /marks.hlines: self[->]timestamps
+                - /marks.rectangles: self[->]events
+                - /encodings.vstack: time
+          gate: /view
+
+    # more single line
+    - /marks.regions:
+        weeks.active->(day) days/(gui) view:
+          - /marks.hlines: self[->]timestamps
+          - /marks.rectangles: self[->]events
+          - /encodings.vstack: time
+
+    - /marks.hstack:
+        (linear) time:
+          affects: timestamps
+          covers: (day) days, weeks, months, events
+
+- (gui) grid-month-view:
+    - /marks.text: months.active
+    - /encoding.hwrap: time
+# - (gui) grid-month-view:
+#     - marks.text: ..months.active
+#     - encoding.hwrap: ..time

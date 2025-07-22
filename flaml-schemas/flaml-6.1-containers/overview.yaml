@@ -1,0 +1,97 @@
+# This version leans more into "containers" (previously known as "components")
+# - views are now containers
+# - now use lists for everything that is "listing" something. So not for "affects", but to list the contents of containers
+
+- any-expression: object-expression | struct-expression | view-expression | action-expression
+
+# object expressions
+- obj-name:
+    type: type-expression # reference or definition
+
+    mapto: object-expression # maybe??
+    ->: object-expression
+
+    subset: object-expression # maybe??
+    .: object-expression
+
+    contains:
+      - any-expression
+    /:
+      - any-expression
+
+# concise expressions
+# - obj-name.subset
+# - obj-name->target-objects
+# - obj-name/content
+
+# structure definition expression
+# TODO: what's the deal with structure types? subtypes? Probably not the same as containers
+- (type) struct-name:
+    affects: object-expression
+    covered-by: object-expression
+
+# container expression
+# A container is an item which contains objects, structures, views, etc, recursively.
+# Do think of it as a "container", not as a component or a design pattern. That's (probably) different.
+
+# Define container:
+# reusable container
+- define (container-name):
+    - any-expression
+
+# in-place container
+- object-name:
+  contains:
+    - any-expression
+
+# Instantiate it with:
+- (container-name) instance-name:
+    - /content: something-else # shorthand for something-else mapto instance-name/content
+
+# Access contents with /:
+# instance-name/content-name
+
+# Views are containers with object marks and structure encodings fields.
+- (view-type) view-name:
+    - /marks.mark-type: viewed-object
+    - /encodings.encoding-type: model-structure
+
+# actions
+- action-name
+- (action) action-name:
+    - object-expression | struct-expression: <relation> object-expression | struct-expression
+
+# -------
+# experiments
+- declare (tree):
+  if:
+    - self:
+        affects: X
+    # self: <affects> X
+  then:
+    - X.root
+    - X.leaves
+    - (linear) depth-first-search:
+        affects: X
+
+- declare (tabs-pattern) with contents, content-views, content-name:
+    if:
+      - contents->content-views # works if contents/content-views
+      - contents->content-names
+    then:
+      - tabs->contents
+      - (gui) content-view:
+          - /marks.region: tabs.active->contents->content-views
+      - (gui) tab-views:
+          - /marks.text: tabs->contents->content-names
+          - /encoding.stack:
+              (linear) tab-order:
+                affects: tabs
+      - (action) move-tab:
+          edits:
+            - tab-order
+
+- (tabs-pattern) web-tabs:
+    - contents: webpages.open
+    - content-views: webpages.open/view
+    - content-names: webpages.open/name
