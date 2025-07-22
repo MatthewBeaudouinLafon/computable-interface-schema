@@ -1,0 +1,30 @@
+#
+
+$object_expr:
+  - $grammar: $string # base case
+    $semantics: $name
+
+  - $grammar: ($component_ref) $name
+    $semantics: $todo
+
+  - $grammar: $object_expr1.$object_expr2
+    $semantics: [$object_expr1.$object_expr2, $mapto, $object_expr1]
+
+  - $grammar: $object_expr1->$object_expr2
+    $semantics: [$object_expr1, $mapto, $object_expr2]
+
+  - $grammar: $component/$object_expr
+    $semantics: $todo # I've thought this through before
+
+objects:
+  - $object_expr
+
+structures:
+  - name: $name
+
+    type: $optional $component_ref
+    affects:
+      - $object_expr
+
+$transitive_rules:
+  # todo

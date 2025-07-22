@@ -1,0 +1,52 @@
+object-types:
+  - name: file
+    objects:
+      - file-name:
+          type: core.text
+      - name: thumbnail
+        type: core.image
+
+    representations:
+      - name: thumbnail-view
+        type: gui
+        marks:
+          - regions: thumbnail
+          - regions: file-name
+        encoding:
+          - vstack: time # maybe combine with objects?
+
+# objects:
+#   - (file) files
+# - files.active
+
+structures:
+  - name: date-added
+    type: linear
+    affects: files
+  - name: alphabetical
+    type: linear
+    affects: files
+
+representation:
+  - name: icon-view
+    type: gui
+    objects:
+      - regions: files.active/thumbnail-view
+    structure:
+      - wrapped-hstack: sorts.selected
+
+  - name: list-view
+    type: gui
+
+# Notes from Arvind observing
+notes:
+  - currently mostly externalizing the process with the language; the language isn't actually helping
+  - cursor is jumping around a lot (because I'm starting from the presentation)
+  - conceptual model feels boiler-plate-y
+  - try to denormalize eg. remove "name"
+  - is there a version where you can define everything in the representation?
+    - then refactor as needed
+    - right now it feels like premature formalization
+  - delay when someone needs to name something/do indirection
+  -
+  - only separate when you get leverage eg. presentation objects vs mapping
