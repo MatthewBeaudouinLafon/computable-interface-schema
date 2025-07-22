@@ -1,0 +1,21 @@
+- def-container (day):
+    - (gui) view:
+        - /marks.hline: timestamps
+        - /marks.rectangles: events
+        - /encoding.vstack: time
+
+- (day) days:
+    - /timestamps =: timestamps
+    - /events =: days->events
+    - /time =:
+        (linear) time:
+          affects: timestamps
+          covers: days, weeks, months, events
+
+- (gui) week-view:
+    - /marks.regions: days/view
+    - /encoding.hstack: time
+
+- notes:
+    - seems really easy to forget to connect the contents of a container to the outside, especially if they share a name.
+    - when the container is grouping stuff outside, it's kind of weird. How do you make them agree? days->events doesn't say what I want it to say.

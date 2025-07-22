@@ -1,0 +1,31 @@
+# Google Maps
+- def-container (points-of-interest):
+    - name
+    - (image) photos
+    - info
+
+- (gui) map-view:
+    - /marks.points:
+        locations:
+          subset: (points-of-interest) poi
+    - /encoding.canvas:
+        (twodimensional) world:
+          affects: locations
+          covers: paths
+
+- (gui) info-panel:
+    - /marks: poi.selected/info
+
+- (gui) directions-panel:
+    - /encoding.vstack: _
+    - /marks:
+        - (gui) destination-view:
+            - /marks.text: poi.selected/name
+            - /encoding.vstack:
+                (linear) travel-order:
+                  affects: poi.selected
+        - (gui) route-options-view:
+            - /marks: paths.route-options
+            - /encoding.vstack:
+                (linear) route-score:
+                  affects: paths.route-options

@@ -1,0 +1,92 @@
+# This version tries to add an equivalent to containers for structures, and unify
+# how the contents of a container/structure-type map to the outside.
+
+- any-expression: object-expression | struct-expression | view-expression | action-expression
+
+# object expressions
+- obj-name:
+  type: type-expression # reference or definition
+
+  mapto: object-expression # maybe??
+  ->: object-expression
+
+  subset: object-expression # maybe??
+  .: object-expression
+
+  contains:
+    - any-expression
+  /:
+    - any-expression
+
+# concise expressions
+# - obj-name.subset
+# - obj-name->target-objects
+# - obj-name/content
+
+# container expression
+# A container is an item which contains objects, structures, views, etc, recursively.
+# Think of it as a "container", not as a component or a design pattern. That's different.
+
+# Define container:
+# reusable container
+- def-container (container-name):
+    - any-expression
+
+# Instantiate it with:
+- (container-name) instance-name:
+    - /content =: something-else # equate all content to something outside (eg. track timestamps in video editor)
+    - /content: something-else # shorthand for something-else mapto instance-name/content
+
+# Access contents with /:
+- instance-name/content-name
+
+# Views are containers with object marks and structure encodings fields.
+- (view-type) view-name:
+    - /marks.mark-type: object-expression
+    - /encodings.encoding-type: structure-expression
+
+# structure instantiation expression
+
+- def-struct (struct-type):
+    - is-a: structure-type # types that it can pass as, eg. tree as digraph, linear as tree, etc.
+    - object-expression # object relavent to the structure
+    - struct-expression # structure relavent to the parent structure
+
+- (type) struct-name:
+  affects: object-expression
+  covered-by: object-expression
+  /struct-obj: object-expression # maps object
+  /struct-obj =: object-expression # equates object
+  /struct-struct:
+    affects: object-expression # link
+    cover: object-expression
+
+# actions
+- action-name
+- (action) action-name:
+    - object-expression | struct-expression: <relation> object-expression | struct-expression
+
+# -------
+# experiments
+
+- declare (tabs-pattern) with contents, content-views, content-name:
+    if:
+      - contents->content-views # works if contents/content-views
+      - contents->content-names
+    then:
+      - tabs->contents
+      - (gui) content-view:
+          - /marks.region: tabs.active->contents->content-views
+      - (gui) tab-views:
+          - /marks.text: tabs->contents->content-names
+          - /encoding.stack:
+              (linear) tab-order:
+                affects: tabs
+      - (action) move-tab:
+          edits:
+            - tab-order
+
+- (tabs-pattern) web-tabs:
+    - contents: webpages.open
+    - content-views: webpages.open/view
+    - content-names: webpages.open/name

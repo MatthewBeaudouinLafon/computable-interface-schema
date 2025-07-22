@@ -1,0 +1,55 @@
+# apple messages
+- def-container (conversation):
+    - messages
+    - (group) people:
+        affects: messages
+- (conversation) conversations
+
+- (gui) chat-view:
+    # - /marks.text: conversations.active->messages #  a bit sketch?
+    - /marks.text: conversations/messages
+    - /encoding.vstack:
+        (linear) time:
+          affects: conversations/messages, conversations
+
+- (gui) convo-view:
+    - /marks.text: conversations
+    - /encodings.vstack: time
+
+# todo: pinned view
+
+- notes:
+    - what's the difference between a group structure and a container? I guess it's how you use it
+      If I use it in a view, then it's a struct. If it's in a
+
+---
+# slack
+
+- def-container (channel):
+    - name
+    - messages
+    - (group) people: # weird to mix these, but people definition don't contain messages (really)
+        affects: messages
+
+- (channel) channels
+- channels.dms, channels.!dms
+
+- (linear) time:
+    affects: channels/messages
+
+- (gui) channel-view:
+    - /encoding.vstack: _
+    - /marks:
+        - (gui) named-channel-view:
+            - /marks.text: channels.!dm/name
+            - /encoding.vstack:
+                (linear) alphabetical:
+                  affects: channels
+        - (gui) dm-channel-view:
+            - /marks.text: channels.dm/name
+            - /encoding.vstack: alphabetical
+
+- notes:
+    - for groups, could do as objects with;
+    - people:
+        group: messages

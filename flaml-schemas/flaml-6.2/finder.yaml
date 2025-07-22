@@ -1,0 +1,56 @@
+# Finder
+# - def-container (folder):
+#     - (folder) folders
+#     - files
+#     - (tree) file-system:
+#         affects: folders | files
+
+# - files
+# - (folder) folder:
+#     - /files =: files
+#     - /folder =: folder
+#     - /file-system =:
+#         (tree) file-system
+
+- def-container (folder):
+    - items
+    - (gui) list-view:
+        - /mark.text: items
+        - /encoding.vstack:
+            (linear) alphabetical:
+              affects: items
+
+- (folder) folders:
+    - /items: items
+
+- items =: files | folders
+
+- (tree) file-system:
+    - affects: items
+    - covers: folders, parents-paths # interesting...
+    - /parents: folders
+    - /leaves: files
+    - /depth-first-search:
+        affects: items
+    - /depth-order:
+        affects: items
+
+- (gui) list-view =: folder.active/list-view
+# - (gui) list-view:
+#     - /mark.text: folder.active->items
+#     - /encoding.vstack:
+#         (linear) alphabetical:
+#           affects: items
+
+- (gui) column-view:
+    - /encoding.hstack: file-system/depth-order
+    - /marks: folder.active->parents-path.folders/list-view
+
+- (gui) grid-view:
+    - /mark.image: folder.active->items
+    - /encoding.hwrap: alphabetical
+
+- notes:
+    - it's kind of possible to defined folders through a recursive container, but it's bad.
+    - huh, folders are also a kind of cover over the tree (ie. its immediate children)
+    - parents-path feels a bit hacky, but I don't think I want to go into much more detail. Using it is a bit messy though...

@@ -1,0 +1,67 @@
+- def-container (video):
+    - timestamps->images
+    - (linear) time:
+        - affects: images
+        - /first =: images.first
+
+- (video) videos
+- (video) videos.in-editor:
+    - /timestamps: editor-timestamps
+    - /time: editor-time
+
+- def-container (track):
+    - (gui) view:
+        - /marks.vline: timestamps
+        - /marks.vline: timestamps.playhead
+        - /encoding.hstack:
+            (linear) editor-time:
+              affects: timestamps
+              covers: videos
+
+- (track) tracks:
+    - /timestamps =: editor-timestamps
+    - /timestamps.playhead =: editor-timestamps.playhead
+    - /videos =: videos.in-editor
+    - /editor-time =:
+        (linear) editor-time:
+          affects: editor-timestamps
+          covers: videos.in-editor
+
+- (gui) editor-timeline:
+    - /marks.regions: tracks/view
+    - /encoding.vstack:
+        (linear) track-order:
+          affects: tracks
+
+- def-container (video-player):
+    - (gui) image-view:
+        - /marks.image: image
+    - (gui) scrubber-view:
+        - /marks.points: timestamps
+        - /marks.icon: timestamps.playhead
+        - /encoding.hstack: time
+    - (gui) view:
+        - /marks: image-view
+        - /marks: scrubber-view
+        - /encoding.vstack: _
+
+- (video-player) timeline-preview:
+    - /image: editor-timestamps.playhead->videos/images
+    - /timestamps: editor-timestamps->videos/timestamps
+    - /timestamps.playhead =: editor-timestamps.playhead
+
+- (video-player) media-preview:
+    - /timestamps: videos.selected/timestamps
+    - /image: /timestamps.playhead->videos.selected/images
+
+- (gui) media-pool:
+    - /marks.images: videos
+    - /encoding.hwrap:
+        (linear) alphabetical: # todo: pick sort order
+          affects: videos
+
+- notes:
+    - videos.in-editor: # this instead of groups??
+        covers: tracks
+    - interesting that I bind stuff only to videos.in-editor. That'll be fun to turn into a digraph.
+    - the instantiation of video players is kind of intense, and hard to validate. Did I get it right??

@@ -1,0 +1,64 @@
+# VSCode
+
+- def-container (file):
+    - name
+    - (linear) buffer-order:
+        affects: characters
+        covers: words, tokens
+
+    - (tree) ast:
+        affects: tokens
+
+    - (group) token-types:
+        affects: tokens, tokens->characters
+
+    - (gui) editor:
+        - /marks.text: characters
+        - /encoding.hwrap: buffer-order
+        - /encoding.color: token-types # as a group applied to tokens? unclear...
+
+    - (gui) auto-complete:
+        - /marks.text: tokens.variables
+        - /encoding.vstack:
+            (linear) match-scoring:
+              affects: tokens.variables
+
+- (file) files
+
+- (tree) file-hierarchy:
+    - affects: files | folders
+    - /leaves: files
+    - /parents: folders
+
+- (gui) file-navigator:
+    - /marks.text: files | folders
+    - /encoding.tree-vis: file-hierarchy
+
+- def-container (tab-group):
+    - (file) files
+    - (gui) view:
+        - /encoding.hstack: _
+        - /marks:
+            - (gui) tab-view:
+                - /mark.text: files
+                - /encoding.hstack:
+                    (linear) tab-order:
+                      affects: files
+            - (gui) editor =: files.active/editor
+
+- (tab-group) tab-groups:
+    - /files =: files.open
+
+- (gui) editors:
+    - /marks: tab-groups/view
+    - /encoding.layout: _ # some combination of hstack and vstack defined by the user...
+
+- (gui) open-editors-view:
+    - /marks.text: files
+    - /encoding.group: tab-group=>files #
+
+- notes:
+    - it feels like coloring stuff based on a group is important.
+    - very common pattern of creating a structure after an encoding that affects the object mapped to the mark.
+      this could be improved syntactically?
+    - still not sure how to do container as group
