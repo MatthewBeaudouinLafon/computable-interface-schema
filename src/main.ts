@@ -12,12 +12,12 @@ const pyodide = await loadPyodide({
 async function main() {
   const editor_a = create_editor(
     path_a,
-    await (await fetch(`./interface-schema/specifications/${path_a}`)).text(),
+    await (await fetch(`./interface-schema/specifications/${path_a}`)).text()
   );
 
   const editor_b = create_editor(
     path_b,
-    await (await fetch(`./interface-schema/specifications/${path_b}`)).text(),
+    await (await fetch(`./interface-schema/specifications/${path_b}`)).text()
   );
 
   document.body.append(editor_a.parent);
@@ -35,7 +35,7 @@ async function main() {
   [editor_a, editor_b].forEach((editor) => {
     editor.editor_view.dom.addEventListener("change", (_) => {
       if (typingTimer != null) clearTimeout(typingTimer);
-      typingTimer = setTimeout(() => update(editor_a), 1000);
+      typingTimer = setTimeout(() => update(editor), 1000);
     });
   });
 
@@ -47,7 +47,7 @@ serialize_analogy(analogy)`,
         spec_a: editor_a.editor_view.state.doc.toString(),
         spec_b: editor_b.editor_view.state.doc.toString(),
       }),
-    },
+    }
   );
 
   console.log(analogy);
