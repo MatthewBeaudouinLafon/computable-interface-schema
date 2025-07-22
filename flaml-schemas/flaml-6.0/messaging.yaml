@@ -16,7 +16,7 @@
   (encoding) hstack-wrapped: message-order
 
 (gui) other-conversations-view: 
-  (marks) _: conversations.not-pinned  # could use logical not here to relate with pinned?
+  (marks) _: conversations.pinned  # could use logical not here to relate with pinned?
   (encoding) vstack: message-order
 
 (gui) conversations-view:
@@ -46,7 +46,7 @@
 
 def (channel):
   - (text) name
-  - (text) messages
+  - (text) messages  # (channel) channels/messages
   - (object) people
 
 (channel) channels:
