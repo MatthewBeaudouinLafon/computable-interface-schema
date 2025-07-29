@@ -46,6 +46,17 @@
         - /encoding.vstack: _
 
 - (video-player) timeline-preview:
+- timeline-preview->image: editor-timestamps.playhead->videos/images
+- timeline-preview->timestamps: editor-timestamps->videos/timestamps
+- timeline-preview->timestamps.playhead =: editor-timestamps.playhead
+
+- (video-player) media-preview:
+    - /timestamps: videos.selected/timestamps
+    - /image: /timestamps.playhead->videos.selected/images
+
+#
+
+- (video-player) timeline-preview:
     - /image: editor-timestamps.playhead->videos/images
     - /timestamps: editor-timestamps->videos/timestamps
     - /timestamps.playhead =: editor-timestamps.playhead
@@ -53,6 +64,8 @@
 - (video-player) media-preview:
     - /timestamps: videos.selected/timestamps
     - /image: /timestamps.playhead->videos.selected/images
+
+#
 
 - (gui) media-pool:
     - /marks.images: videos

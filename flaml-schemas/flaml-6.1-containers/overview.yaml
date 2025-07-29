@@ -62,17 +62,46 @@
     - object-expression | struct-expression: <relation> object-expression | struct-expression
 
 # -------
+- declare (tree) with X:
+
 # experiments
-- declare (tree):
-  if:
-    - self:
-        affects: X
-    # self: <affects> X
-  then:
+# - declare (tree) with X:
+#   if:
+#     - self:
+#         affects: X
+#     # self: <affects> X
+#   then:
+#     - X.root
+#     - X.leaves
+#     - (linear) depth-first-search:
+#         affects: X
+
+- def struct (tree) affects X:
     - X.root
     - X.leaves
-    - (linear) depth-first-search:
+    - (linear) dfs:
         affects: X
+    # covers:
+    #   - all
+    #   - subtree
+
+- (tree) file-sys:
+    affects: files
+- file-sys/dfs:
+    affects: files
+
+- (tree) file-system:
+    - affects: files
+    - /root = files.root
+    - /dfs:
+        affects: files
+
+    - root = file-system/root->file-system
+    - files.root = file-system/root
+
+- def-container (track):
+  asdjapsdj:
+- def-struct (tree):
 
 - declare (tabs-pattern) with contents, content-views, content-name:
     if:

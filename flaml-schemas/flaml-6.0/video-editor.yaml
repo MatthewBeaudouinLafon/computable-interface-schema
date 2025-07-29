@@ -3,7 +3,7 @@ def (video):
   contains:
     - (object) images
     - (linear) timeline:
-        affects: [images, timestamps] # timestamps here is scoped to video
+        affects: [images, timestamps]
 
 (linear) timeline:
   affects: timestamps

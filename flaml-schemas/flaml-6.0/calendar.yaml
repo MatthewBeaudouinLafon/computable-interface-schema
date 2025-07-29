@@ -104,7 +104,6 @@ views:
 
 (gui) week-view:
   (mark) gui/rectangles:
-    # should be a set of views, somehow. Parametrized?
     (gui) day-views:
       (mark) gui/hlines: timestamps
       (mark) gui/rectangles: days[*weeks.active->days]->events # loop over days in active week
