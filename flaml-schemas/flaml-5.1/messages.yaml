@@ -6,7 +6,7 @@ structures:
         type: order
         affects: messages
 
-  - name: convo-order # it's a function of the last message across convos
+  - name: convo-order
     type: order
     affects: conversations
   - name: conversations
@@ -20,20 +20,20 @@ representations:
   - name: chat-view
     type: gui
     objects:
-      - textbox: conversations.selected->messages # selected defined in place
+      - textbox: conversations.selected->messages
     structures:
       - vstack: msg-order
-      - group: conversations # combining structure in a representation is still a bit mysterious
+      - group: conversations
   - name: convo-view
     type: gui
     objects:
-      - region: conversations # group can be used as an object
+      - region: conversations
     structures:
-      - vstack: convo-order # details elided
+      - vstack: convo-order
 
 behavior:
   - name: change-convo
-    edits: conversations.selected # this action gives "selected" its meaning
+    edits: conversations.selected
     input: tap
   - name: next-convo
     moves:

@@ -28,12 +28,39 @@
 - (tree) file-system:
     - affects: items
     - covers: folders, parents-paths # interesting...
-    - /parents: folders
-    - /leaves: files
+    - /parents =: folders
+    - /leaves =: files
     - /depth-first-search:
         affects: items
     - /depth-order:
         affects: items
+
+#
+- def (group) tree:
+    - affects: parents, leaves, (linear) depth-first-search
+
+---
+# V = Vector(
+#   x=1,
+#   y=2
+# )
+
+# V = Vector()
+# V.x = 1
+# V.y = 2
+
+- (tree) file-system:
+    - affects: items
+    - covers: folders, parents-paths # interesting...
+
+- file-system->parents =: folders
+- file-system->leaves =: files
+- file-system->depth-first-search:
+    affects: items
+
+- (group) file-system:
+    affects: parents
+#
 
 - (gui) list-view =: folder.active/list-view
 # - (gui) list-view:

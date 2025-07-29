@@ -19,7 +19,12 @@
     - /encoding.vstack: time
 
 ---
-# slack. TODO
+# slack.
+
+- (group) channels:
+    affects:
+      - name
+      - (group)
 
 ############################################################
 

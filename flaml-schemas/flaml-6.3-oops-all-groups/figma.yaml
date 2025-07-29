@@ -1,36 +1,36 @@
 # Figma
-
 - (group) pages:
-    - layers =: frames | shapes | text # frames = layers.frames then? meh
-    - (group) layers:
-        affects: /properties
+    contains:
+      - layers =: frames | shapes | text # frames = layers.frames then? meh
+      - (group) layers:
+          affects: properties # layers.active/properties, layers.font/properties.type-family
 
-    - (gui) canvas-view:
-        - /marks.points: points
-        - /marks.regions: layers
-        - /encoding.canvas:
-          (two-dimensional) canvas:
-            affects: points
-            covers: layers
+      - (gui) canvas-view:
+          - /marks.points: points
+          - /marks.regions: layers
+          - /encoding.canvas:
+            (two-dimensional) canvas:
+              affects: points
+              covers: layers
 
-    - (tree) layer-hierarchy:
-        - affects: layers
-        - /parents =: frames
-        - /leaves =: shapes, text # could use shapes | text
-        - /depth-first-search:
-            affects: layers
-        - /depth-order: # how deep in the stack
-            affects: layers
+      - (tree) layer-hierarchy:
+          - affects: layers
+          - /parents =: frames
+          - /leaves =: shapes, text # could use shapes | text
+          - /depth-first-search:
+              affects: layers
+          - /depth-order: # how deep in the stack
+              affects: layers
 
-    - (gui) layer-panel:
-        - /marks.text: layers
-        # - /encoding.tree-vis: layer-hierarchy
-        - /encoding.vstack: layer-hierarchy/depth-first-search
-        - /encoding.hoffset: layer-hierarchy/depth-order
+      - (gui) layer-panel:
+          - /marks.text: layers
+          # - /encoding.tree-vis: layer-hierarchy
+          - /encoding.vstack: layer-hierarchy/depth-first-search
+          - /encoding.hoffset: layer-hierarchy/depth-order
 
-    - (gui) inspector-panel:
-        - /marks: layers.selected/properties
-        - /encoding.vstack: _
+      - (gui) inspector-panel:
+          - /marks: layers.selected/properties
+          - /encoding.vstack: _
 
 - (gui) canvas-view =: pages.active/canvas-view
 - (gui) layer-panel =: pages.active/panel-view
