@@ -1,0 +1,56 @@
+# ios messages
+- (group) conversations:
+    affects:
+      - messages
+      - (group) people: # this composes way better than with containers
+          affects: messages
+
+- (gui) chat-view:
+    - /marks: conversations.active->messages
+    - /encoding.vstack:
+        (linear) time:
+          affects: conversations.active->messages, conversations
+
+- (gui) convo-view:
+    - /marks.text: conversations
+    - /encoding.cluster:
+        (group) pin:
+          affects: conversations
+    - /encoding.vstack: time
+
+---
+# slack. TODO
+
+############################################################
+
+---
+# slack
+
+- def-container (channel):
+    - name
+    - messages
+    - (group) people: # weird to mix these, but people definition don't contain messages (really)
+        affects: messages
+
+- (channel) channels
+- channels.dms, channels.!dms
+
+- (linear) time:
+    affects: channels/messages
+
+- (gui) channel-view:
+    - /encoding.vstack: _
+    - /marks:
+        - (gui) named-channel-view:
+            - /marks.text: channels.!dm/name
+            - /encoding.vstack:
+                (linear) alphabetical:
+                  affects: channels
+        - (gui) dm-channel-view:
+            - /marks.text: channels.dm/name
+            - /encoding.vstack: alphabetical
+
+- notes:
+    - for groups, could do as objects with;
+    - people:
+        group: messages

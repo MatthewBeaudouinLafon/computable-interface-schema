@@ -1,0 +1,15 @@
+# Google Calendar
+- (gui) week-view:
+    - /marks.hline: weeks.active->timestamps
+      /marks.rectangles: weeks.active->events
+      /encoding.cluster: weeks.active->days
+      /encoding.vstack:
+        (linear) time:
+          affects: timestamps
+          covers: (group) days, (group) weeks, (group) months, (group) events
+    - /marks: weeks.active->days
+      /encoding.hstack: time
+
+- (gui) mini-month-view:
+    /marks.text: months.active
+    /encoding.hwrap: time

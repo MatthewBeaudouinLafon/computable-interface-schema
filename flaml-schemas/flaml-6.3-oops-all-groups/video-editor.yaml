@@ -1,0 +1,44 @@
+# Video editor
+- (group) videos:
+    (linear) /timeline:
+      affects: /images
+      /first: /images.first
+
+- (gui) editor-timeline:
+    - /marks:
+        (group) tracks:
+          affects: videos.in-editor
+      /encoding.vstack:
+        (linear) track-order:
+          affects: tracks
+    - /marks.vline: timestamps, timestamps.playhead
+      /marks.rectangles: videos.in-editor
+      /encoding.hstack:
+        (linear) timeline:
+          affects: timestamps
+          covers: videos.in-editor
+
+- (gui) media-pool:
+    /marks.images: videos
+    /encoding.hwrap:
+      (linear) alphabetical:
+        affects: videos
+
+- def (video-player):
+    placeholders: (video) video
+    (gui) image-view:
+      - /marks.image: video/images.first
+    (gui) scrubber-view:
+      - /marks.points: video/images
+      - /marks.icon: video/images.playhead
+      - /encoding.hstack: video/time
+    (gui) view:
+      - /marks: image-view
+      - /marks: scrubber-view
+      - /encoding.vstack: _
+
+- (video-player) timeline-preview:
+    /video =: timestamps.playhead->(tracks.first->videos->images) # wow I think that actually works
+
+- (video-player) media-preview:
+    /video =: videos.selected

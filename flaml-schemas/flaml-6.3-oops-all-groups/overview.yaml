@@ -1,0 +1,43 @@
+# This version aims to harmonize covers, groups and containers, basically combining them as groups.
+# It also introduces 'derived groups' as the way to avoid repeating yourself. The group then indexes into each use.
+
+- any-expression: object-expression | struct-expression | view-expression | action-expression
+
+# Object expressions
+- obj-name:
+    mapto: object-expression # maybe??
+    ->: object-expression
+
+    subset: object-expression # maybe??
+    .: object-expression
+
+# Concise expressions
+# - obj-name.subset
+# - obj-name->target-objects
+
+# Groups are both structures and objects (eg. in views)
+- (group) my-group:
+    affects: object-expression | structure-expression | /scoped-name-expression
+- my-group.favorite-group->affected-objects # access contents of my favorite group
+- my-group.worst-group/scoped-attribute
+
+# Derived groups are used to avoid repeating yourself.
+- def (my-derived-group):
+    - placeholders: /name-expression
+    - any-expression # attributes
+
+- (my-derived-group) my-instance:
+    /my-placeholder =: any-expression # fill in the placeholder ie. an alias
+    /my-attribute: any-expression # map expression to attribute
+
+# Structures. They are also groups, potentially with placeholders
+- (structure) my-struct:
+    affects: object-expression
+    covers: (group) name-expression
+    /placeholder =: any-expression
+
+# Views. They are also groups, with placeholders for marks and encodings
+- (view-type) my-view:
+    /marks.mark-type: object-expression
+    /encoding.encoding-type: structure-expression
+# TODO: actions
