@@ -1,0 +1,68 @@
+# This version aims to harmonize covers, groups and containers, basically combining them as groups.
+# It also introduces 'derived groups' as the way to avoid repeating yourself. The group then indexes into each use.
+
+- any-expression: object-expression | struct-expression | view-expression | action-expression
+
+# Object expressions
+- obj-name:
+    # parametrized groups have arguments
+    arguments: $any-expression
+
+    mapto: object-expression # maybe??
+    ->: object-expression
+
+    subset: object-expression # maybe??
+    .: object-expression
+
+    # Groups are both objects and structures (eg. in views)
+    # Simple groups "carve up "
+    groups: object-expression # affected objects
+
+    # Subgroups
+    # List all of the subsets of the affected content
+    subgroups: subset-expression # subset of the affected objects
+
+- def (derivable-group):
+    arguments: any-expression # arguments are prefixed with $.
+
+    # foreach groups "build up"
+    groups foreach: # TODO: better keyword? Is it even needed, or could it just be groups?
+      - any-expression # this will be for each item.
+
+# Concise object expressions. These "compile down" to a subset.
+- obj-name.subset
+- obj-name->target-objects
+
+# Combining objects with and makes them a series of subsets.
+- object-name =: object-expression and object-expression and object-expression
+
+# Instantiating derivable groups.
+- (my-derived-group) my-instance:
+    /my-argument =: any-expression # fill in the placeholder ie. an alias
+    /my-attribute: any-expression # expression->attribute
+
+# Structures. They are also groups, potentially with placeholders
+- (structure) my-struct:
+    affects: object-expression
+    covers: name-expression # These are groups of the affected objects
+    /placeholder =: any-expression
+
+# Views. They are also groups, with placeholders for marks and encodings
+- (view-type) my-view:
+    /marks.mark-type: object-expression
+    /encoding.encoding-type: structure-expression
+# TODO: actions
+
+- notes:
+    - when I do a `group foreach`, how do I talk about just the items in the group? Using /thing works, but it's not quite right when you have already defined the thing
+    - (from data-navigator) could have a "derives-from" field for structures, seems important.
+    - (from olli) could use `$self` in `group forall`
+---
+items =: files and folders
+type:
+  groups: items
+  subgroups: files, folders
+
+(gui) cool-view:
+  /marks: items
+  /encoding.cluster: type

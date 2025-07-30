@@ -1,0 +1,45 @@
+- pages:
+    group foreach:
+      - layers =: frames and shapes and text
+      - layers:
+          groups foreach: properties
+
+      - (gui) canvas-view:
+          /marks.points: points
+          /marks.regions: layers
+          /encoding.canvas:
+            (2D) canvas:
+              affects: points
+              covers: layers
+
+      - (tree) layer-hierarchy:
+          affects: layers
+          /parents =: frames
+          /leaves =: shapes and text
+          /depth-first-search-order:
+            affects: layers
+          /depth-order:
+            affects: layers
+
+      - (gui) layer-panel:
+          /marks.text: layers
+          /encoding.vstack: layer-hierarchy/depth-first-search-order
+          /encoding.hoffset: layer-hierarchy/depth-order
+
+      - (gui) inspector-panel:
+          /marks: layers.selected->properties
+          /encoding.vstack: _
+
+- (gui) canvas-view =: pages.active->canvas-view
+- (gui) inspector-view =: pages.active->inspector-view
+
+- (gui) pages-view:
+    /marks: pages
+    /encoding.vstack:
+      (linear) page-order: # huge action candidate
+        affects: pages
+
+- notes:
+    - I wrote all of the spec for a single page, and now I want to make a bunch of pages.
+      - verdict. Yep, you can just kind of wrap it easily. You don't even need to prefix everything with /, you can just use ->
+      - so maybe the / is not even necessary...

@@ -1,0 +1,92 @@
+# dataset
+- datapoints:
+    group foreach:
+      (reader) /info:
+        /mark: $self->numerical/numbers and $self->categorical # get the values for all axes
+        /encoding.order: alphabetical # using the alphabetical order of axes (this doesn't _technically_ follow the definition of alphabetical)
+
+# olli
+- numerical:
+    group foreach:
+      - /name
+      - (linear) /axis:
+          affects: /numbers, datapoints
+          covers: intervals
+          /first: datapoints.smallest
+          /last: datapoints.largest
+
+      - datapoints:
+          subset: /numbers
+
+      # axis info
+      - (reader) dimension-info:
+          /marks.spoken: /name and datapoints.smallest and datapoints.largest
+
+      # interval info and navigation
+      - intervals:
+          group foreach:
+            (reader) /info:
+              /marks.spoken: /datapoints.interval-smallest and /datapoints.interval-smallest # a bit sketch but works
+
+      # - (reader) intervals-info:
+      #     /marks.spoken: intervals.selected->datapoints.smallest and intervals.selected->datapoints.largest # a bit sketch but works
+      # - (linear) interval-order:
+      #     affects: intervals
+      # - action change-interval:
+      #     moves: intervals.selected <along> interval-order
+
+      # # datapoints
+      # - (reader) data-info:
+      #     /marks.spoken: intervals.selected->datapoints # note sure what happens here
+
+- categorical:
+    group foreach:
+      - /name
+      - categories:
+          groups: datapoints
+
+      - (linear) category-ordering:
+          affects: categories
+
+      # axis info
+      - (reader) dimension-info:
+          /marks.spoken: /name # any other info?
+
+      # interval info and navigation
+      - (reader) category-info:
+          /marks.spoken: category.selected->datapoints # what other info?
+
+- (reader) dimensions-info:
+    /marks.words: numerical and categorical
+    /encoding.order:
+      (linear) alphabetical:
+        affects: numerical and categorical
+
+- (reader) chart-summary:
+    /marks: summary and dimensions-info
+
+- all-views =: chart-summary and dimensions-info and
+    numerical->dimension-info and numerical->interval-info and numerical->data-info
+    category->dimension-info and category->category-info and category->data-info
+
+- (tree) olli-nav:
+    affects: all-views
+    /root =: chart-summary
+    /depth-order:
+      affects: all-views
+
+- action move-up-down-hierarchy:
+    moves: all-views.active <along> olli-nav/depth-order
+
+- notes:
+    - ok it's still not like super easy to do this. Especially with this super limited description of interaction.
+    - probably fine if we just describe the structures required for interaction, which I think are there.
+    - not sure how to combine catagory.selected info view to the all-views.info
+    - when I do a `group foreach`, how do I talk about just the items in the group? Using /thing works, but it's not quite right when you have already defined the thing
+    - I want to talk about the "smallest" element in an interval cover, but that requires a deeper cover logic which hasn't been necessary until now.
+    - moving laterally is hard, not sure how to do that.
+# # datavis
+# - (gui) plot:
+#     /marks.icons: datapoints
+#     /encoding.x-axis: numerical.x/axis
+#     /encoding.y-axis: numerical.y/axis
