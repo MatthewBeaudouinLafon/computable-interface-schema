@@ -51,21 +51,21 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   Parses the string and returns an identifier for the parent to use in a relation.
   """
   if statement[:3] == "def":
-    print(' '*depth+"TODO: interpret definition:", statement)
+    print(' '*depth+"definition:", statement)
   elif re.match(r'^\([\w\-]+\) .*', statement):
-    print(' '*depth+"TODO: interpret instantiation:", statement)
+    print(' '*depth+"instantiation:", statement)
     # TODO: extract type with regex
     statement = re.sub(r'^\([\w\-]+\)', '', statement)  # remove type
   elif statement[0] == '/':
     assert parent is not None, 'The statement starts with `/`, but it does not have a parent.'
-    print(' '*depth+"TODO: interpret attribute:", parent+statement)
+    print(' '*depth+"attribute:", parent+statement)
     statement = parent+statement
 
   
   if '.' in statement or '->' in statement or '/' in statement or ' and ' in statement:
-    print(' '*depth+"TODO: interpret component string:", statement)
+    print(' '*depth+"compound string:", statement)
   else:
-    print(' '*depth+"TODO: interpret simple string:", statement)
+    print(' '*depth+"simple string:", statement)
     
   return statement
 
