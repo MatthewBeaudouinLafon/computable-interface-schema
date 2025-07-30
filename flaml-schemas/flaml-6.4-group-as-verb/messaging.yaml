@@ -6,17 +6,17 @@
           groups: messages
 
 - (gui) chat-view:
-    - /marks: conversations.active->messages
-    - /encoding.vstack:
-        (linear) vstack:
-          affects: conversations.active->messages, conversations
+    /marks: conversations.active->messages
+    /encoding.vstack:
+      (linear) vstack:
+        affects: conversations.active->messages, conversations
 
 - (gui) convo-view:
-    - /marks.text: conversations
-    - /encoding.cluster:
-        pin:
-          groups: conversations
-    - /encoding.vstack: time
+    /marks.text: conversations
+    /encoding.cluster:
+      pin:
+        groups: conversations
+    /encoding.vstack: time
 
 ---
 - channels:
@@ -32,11 +32,11 @@
     affects: messages
 
 - (gui) channel-view:
-    - /encoding.vstack:
-        (linear) alphabetical:
-          affects: channels
-    - /encoding.cluster:
-        channel-type:
-          groups: channels
-          subgroups: channels.dm, channels.!dm
-    - /marks: channels
+    /encoding.vstack:
+      (linear) alphabetical:
+        affects: channels
+    /encoding.cluster:
+      channel-type:
+        groups: channels
+        subgroups: channels.dm, channels.!dm
+    /marks: channels
