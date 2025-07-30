@@ -1,7 +1,7 @@
 # This version aims to harmonize covers, groups and containers, basically combining them as groups.
 # It also introduces 'derived groups' as the way to avoid repeating yourself. The group then indexes into each use.
 
-- any-expression: object-expression | struct-expression | view-expression | action-expression
+# any-expression: object-expression | struct-expression | view-expression | action-expression
 
 # Object expressions
 - obj-name: # PARSE: ID=obj-name

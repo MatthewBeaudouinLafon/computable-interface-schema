@@ -1,0 +1,28 @@
+# This file provides a list of specifications for testing purposes
+# - albums
+# - (linear) alphabetical:
+#     affects: albums
+
+- people:
+    groups: messages
+
+- (linear) time:
+    affects: messages
+
+- (gui) channel-view:
+    - /encoding.vstack:
+        (linear) alphabetical:
+          affects: channels
+    - /encoding.cluster:
+        channel-type:
+          groups: channels
+          subgroups: channels.dm, channels.!dm
+    - /marks: channels
+# ---
+# - title: basic parsing
+
+# ---
+# - title: parsing complex object expressions
+
+# ---
+# - title: parsing derived objects
