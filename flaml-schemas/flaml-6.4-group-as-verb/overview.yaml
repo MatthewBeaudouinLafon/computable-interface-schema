@@ -4,47 +4,63 @@
 - any-expression: object-expression | struct-expression | view-expression | action-expression
 
 # Object expressions
-- obj-name:
-    # parametrized groups have arguments
-    arguments: $any-expression
-
-    mapto: object-expression # maybe??
+- obj-name: # PARSE: ID=obj-name
+    mapto: object-expression # PARSE: SRC:ID=obj-name REL:mapto TRG:ID=object-expression
     ->: object-expression
 
-    subset: object-expression # maybe??
+    subset: object-expression # PARSE: SRC:ID=obj-name REL:subset TRG:ID=object-expression
     .: object-expression
 
     # Groups are both objects and structures (eg. in views)
     # Simple groups "carve up "
+    # PARSE: SRC:ID=obj-name REL:group TRG:ID=object-expre
     groups: object-expression # affected objects
 
     # Subgroups
     # List all of the subsets of the affected content
+    # PARSE: SRC:ID=subset-expression REL:subset TRG:ID=object-name
     subgroups: subset-expression # subset of the affected objects
 
 - def (derivable-group):
+    # PARSE: ID=argument-name
     arguments: any-expression # arguments are prefixed with $.
 
     # foreach groups "build up"
     groups foreach: # TODO: better keyword? Is it even needed, or could it just be groups?
+      # PARSE: SRC:ID=instance-name REL:group-foreach TRG:ID=expression
       - any-expression # this will be for each item.
 
 # Concise object expressions. These "compile down" to a subset.
-- obj-name.subset
-- obj-name->target-objects
+# Order of operation: / . -> # TODO: need to verify this against tests
+- obj-name.subset # PARSE: SRC=obj-name REL:subset TRG:ID=obj-name.subset
+- obj-name->target-obj # PARSE: SRC=obj-name REL:mapto TRG:ID=target-obj
+
+# Alias nodes to equate them
+- object-name =: other-name # PARSE: SRC=obj-name REL:alias TRG:ID=othername
 
 # Combining objects with and makes them a series of subsets.
+# PARSE `and` syntax: SRC:ID=object-expression REL:subset REL:ID=object-expression and object-expression and ...
 - object-name =: object-expression and object-expression and object-expression
 
 # Instantiating derivable groups.
+# PARSE: ID=my-instance, type=derived-group
 - (my-derived-group) my-instance:
+    # PARSE: SRC=my-instance/myargument REL:alias TRG:ID=obj-expression
     /my-argument =: any-expression # fill in the placeholder ie. an alias
+
+    # PARSE: SRC=any-expression REL:alias TRG:ID=my-instance/myattribute
     /my-attribute: any-expression # expression->attribute
 
 # Structures. They are also groups, potentially with placeholders
+# PARSE: ID=my-struct, type=structure
 - (structure) my-struct:
+    # PARSE: SRC:ID=my-struct REL:affects TRG:ID=object-expression
     affects: object-expression
+
+    # PARSE: SRC:ID=my-struct REL:covers TRG:ID=object-expression
     covers: name-expression # These are groups of the affected objects
+
+    # PARSE: SRC=my-instance/myargument REL:alias TRG:ID=obj-expression
     /placeholder =: any-expression
 
 # Views. They are also groups, with placeholders for marks and encodings
