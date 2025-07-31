@@ -5,10 +5,8 @@
 
 - people:
     groups: messages
-
 - (linear) time:
     affects: messages
-
 - (gui) channel-view:
     - /encoding.vstack:
         (linear) alphabetical:
@@ -18,6 +16,12 @@
           groups: channels
           subgroups: channels.dm, channels.!dm
     - /marks: channels
+# - editors:
+#     group foreach: # feels redundant if there's just one (but there could be more!!)
+#       - /videos =: videos.in-editor
+#       - /videos:
+#           /timestamps: editor/timestamps
+#           /time: editor/time
 # ---
 # - title: basic parsing
 

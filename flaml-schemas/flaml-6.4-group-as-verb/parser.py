@@ -34,44 +34,76 @@ class rel(Enum):
   AFFECTS = enum.auto()
   COVERS = enum.auto()
 
-def make_node(name):
-  # TODO: maybe not needed?
-  return name
+  # This is a catchall for relations I haven't figured out what to do yet
+  TBD = enum.auto()
 
-def make_edge(source: str, relation: rel, target: str):
-  return {
+
+def make_edge(interp: list, source: str, relation: rel, target: str):
+  """
+  Declares an edge in the graph by appending it to interp.
+  """
+  interp.append({
     'source': source,
     'relation': relation,
     'target': target
-  }
+  })
+  pretty_source = source
+  pretty_relation = relation.name
+  pretty_target = target
+  print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
 
 # --- Parse spec
 def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str:
   """
-  Parses the string and returns an identifier for the parent to use in a relation.
+  Parses the string and returns an identifier that the caller can use in a relation.
+  Note that this will clean up the statement eg. remove (type), =, etc.
   """
-  if statement[:3] == "def":
+  assert type(statement) is str, f'Type error, expected str got {type(statement)}'
+  # TODO: a bunch of string validation eg. only valid characters, etc.
+
+  # Syntax for inline aliasing
+  if statement[-2:] == " =":  # TODO: do as regex to make the space optional (see other)
+    statement = statement[:-2] # trim alias syntax
+
+  # Syntax for defining new types
+  if str(statement[:3]) == "def":
     print(' '*depth+"definition:", statement)
+    # TODO: finish
+  
+  # Syntax for instantiation
   elif re.match(r'^\([\w\-]+\) .*', statement):
     print(' '*depth+"instantiation:", statement)
     # TODO: extract type with regex
-    statement = re.sub(r'^\([\w\-]+\)', '', statement)  # remove type
+    # TODO: finish
+    statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type
+  
+  # Syntax for attributes
   elif statement[0] == '/':
     assert parent is not None, 'The statement starts with `/`, but it does not have a parent.'
     print(' '*depth+"attribute:", parent+statement)
     statement = parent+statement
 
-  
+  # Compound objects have these characters.
   if '.' in statement or '->' in statement or '/' in statement or ' and ' in statement:
+    # TODO: add all of the appropriate relations (mapto and subset)
+    # TODO: what about `,`?
     print(' '*depth+"compound string:", statement)
+  
+  # Just a normal string, no bells or whistles.
   else:
     print(' '*depth+"simple string:", statement)
     
   return statement
 
-def parse_relation(statement: str, depth: int) -> rel:
+def parse_relation(statement: str) -> rel|None:
+  """
+  Map keywords to relations. 
+  Returns None if it doesn't match, so it can be used to test for a keyword.
+  """
   if statement in ('mapto', '->'):
     return rel.MAPTO
+  elif statement in ('alias'):
+    return rel.ALIAS
   elif statement in ('subset', '.'):
     return rel.SUBSET
   elif statement in ('affects'):
@@ -82,8 +114,14 @@ def parse_relation(statement: str, depth: int) -> rel:
     return rel.GROUP
   elif statement in ('groups foreach'):
     return rel.GROUP_FOREACH
-  else:
-    assert False, f'Statement `{statement}` is not a relation.'
+  elif statement in ('subgroups'):
+    print('TODO: How do subgroups work??')
+    return rel.TBD
+  elif statement in ('arguments'):
+    print('TODO: How do arguments work??')
+    return rel.TBD
+  
+  return None
 
 def parse_list(statements: list, parent: str|None, interp: list, depth: int):
   """
@@ -99,25 +137,72 @@ def parse_list(statements: list, parent: str|None, interp: list, depth: int):
 
 def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
   """
+  Dictionaries are used in a few ways.
 
+  If the key is a relation, then it declares: parent-relation-key.
+  If the key starts with /, then it declares: parent/key-mapto-value.
+  If there's a single key and its value is a list/dict,
+    then its the parent to declaration involving the items in its value.
   """
   assert type(statement) is dict
+  # TODO: rename the key/value to something more semantically meaningful. That
+  # might be hard because the semantics depend on their values...
 
   for key, value in statement.items():
-    key_interp = parse_str(key, parent=parent, interp=interp, depth=depth)
-    if type(parent) is str:
-      parent_for_children = parent + key_interp
-    elif parent is None:
-      parent_for_children = key_interp
-    else:
-      assert False, f'dict parent is the wrong type somehow: {type(parent)}'
+    parsed_key = parse_str(key, parent=parent, interp=interp, depth=depth+1)
 
-    if type(value) is str:
-      parse_str(value, parent=parent, interp=interp, depth=depth+1)
+    # 1. If the key is a relation, then it declares: parent -relation-> value(s).
+    relation = parse_relation(key)
+    if relation is not None:
+      # TODO: if the value is a string with `,` then it should be turned into a list.
+      if type(value) is str:
+        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
+        make_edge(interp, source=parent, relation=relation, target=parsed_value)
+      elif type(value) is list:
+        # if the value is a list, then we make a relation for each item
+        value_items = parse_list(value, parent=parsed_key, interp=interp, depth=depth+1)
+
+        for item in value_items:
+          make_edge(interp, source=parent, relation=relation, target=item)
+      elif type(value) is dict:
+        # TODO: figure out if this is necessary.
+        assert False, f"Value condition not met. That's weird. value={value}"
+        parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
+    
+    # 2. If the key starts with /, then it declares: parent/key -mapto-> value.
+    elif key[0] == '/':
+      # TODO: this is also used to map between structures, which is... meh
+      relation = rel.MAPTO
+
+      # Syntax for alias relations
+      if key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
+        relation = rel.ALIAS
+      
+      parsed_value = None
+      if type(value) is str:
+        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
+      elif type(value) is dict:
+        parsed_value = parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
+      else:
+        # NOTE: I don't think this is ever a list
+        assert False, f"Value condition not met. That's weird. value={value}"
+
+      # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
+      # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
+      make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
+
+    # 3. If there's a single key and its value is a list/dict,
+    #    then its the parent to declaration involving the items in its value.
     elif type(value) is list:
-      parse_list(value, parent=parent_for_children, interp=interp, depth=depth+1)
+      parse_list(value, parent=parsed_key, interp=interp, depth=depth+1)
     elif type(value) is dict:
-      parse_dict(value, parent=parent_for_children, interp=interp, depth=depth+1)
+      parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
+    else:
+      assert False, f"Key condition not met. That's very weird. key={key}"
+  
+  # Dictionaries that need to return an identifier always have one key.
+  if len(statement.keys()) == 1:
+    return parse_str(list(statement.keys())[0], parent=parent, interp=interp, depth=depth)
   return
 
 def make_relations(spec):
@@ -126,5 +211,11 @@ def make_relations(spec):
 
   interp = []
   parse_list(spec, parent=None, interp=interp, depth=0)
+  print('\nresult:')
+  for line in interp:
+    pretty_source = line['source']
+    pretty_relation = line['relation'].name
+    pretty_target = line['target']
+    print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
 
-  return
+  return interp
