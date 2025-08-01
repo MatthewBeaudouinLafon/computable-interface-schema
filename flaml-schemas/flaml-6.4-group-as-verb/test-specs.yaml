@@ -10,7 +10,7 @@
 - (gui) channel-view:
     - /encoding.vstack:
         (linear) alphabetical:
-          affects: channels
+          affects: channels, people
     - /encoding.cluster:
         channel-type:
           groups: channels

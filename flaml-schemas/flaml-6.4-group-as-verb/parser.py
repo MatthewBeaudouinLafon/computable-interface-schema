@@ -1,12 +1,11 @@
 """
-This file aims to ingest a yaml specification and spit out a list of relations.
+This file aims to ingest a yaml 6.4 specification and spit out a list of relations.
 
 A YAML file looks like this:
 - object-expression  # includes a.b->c/d
 - source-expression:
     left-hand-side: target-expression
-
-
+# TODO: fill this out for documentation.
 """
 import yaml
 from pprint import pformat
@@ -61,6 +60,9 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   assert type(statement) is str, f'Type error, expected str got {type(statement)}'
   # TODO: a bunch of string validation eg. only valid characters, etc.
 
+  # Strip leading and trailing whitespace
+  statement = statement.strip()
+
   # Syntax for inline aliasing
   if statement[-2:] == " =":  # TODO: do as regex to make the space optional (see other)
     statement = statement[:-2] # trim alias syntax
@@ -70,7 +72,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     print(' '*depth+"definition:", statement)
     # TODO: finish
   
-  # Syntax for instantiation
+  # Syntax for instantiation eg. (linear) alphabetical
   elif re.match(r'^\([\w\-]+\) .*', statement):
     print(' '*depth+"instantiation:", statement)
     # TODO: extract type with regex
@@ -128,20 +130,24 @@ def parse_list(statements: list, parent: str|None, interp: list, depth: int):
   Parses every item in the list and returns a list of identifiers for the parent to use.
   It passes its parent down to its items.
   """
-  assert type(statements) is list, f'{statements=}'
+  assert type(statements) is list, f'Statements should be a list, got `{type(statements)}` instead. {statements=}'
+
+  results = []
   for statement in statements:
     if type(statement) is str:
-      parse_str(statement, parent=parent, interp=interp, depth=depth+1)
+      results.append(parse_str(statement, parent=parent, interp=interp, depth=depth+1))
     elif type(statement) is dict:
-      parse_dict(statement, parent=parent, interp=interp, depth=depth+1)
+      results.append(parse_dict(statement, parent=parent, interp=interp, depth=depth+1))
+  
+  return results
 
 def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
   """
   Dictionaries are used in a few ways.
 
-  If the key is a relation, then it declares: parent-relation-key.
-  If the key starts with /, then it declares: parent/key-mapto-value.
-  If there's a single key and its value is a list/dict,
+  1. If the key is a relation, then it declares: parent-relation-key.
+  2. If the key starts with /, then it declares: parent/key-mapto-value.
+  3. If there's a single key and its value is a list/dict,
     then its the parent to declaration involving the items in its value.
   """
   assert type(statement) is dict
@@ -149,12 +155,19 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
   # might be hard because the semantics depend on their values...
 
   for key, value in statement.items():
+    # TODO: validate key ie. don't allow `,` until it's supported
+    # TODO: validate value ie. don't allow `=` etc.
+    # TODO: To allow `,` in the key, split on it and add a loop at this level.
     parsed_key = parse_str(key, parent=parent, interp=interp, depth=depth+1)
 
     # 1. If the key is a relation, then it declares: parent -relation-> value(s).
     relation = parse_relation(key)
     if relation is not None:
-      # TODO: if the value is a string with `,` then it should be turned into a list.
+      if type(value) is str and ',' in value:
+        # NOTE: this currently should only be used for YAML values. We might want
+        # to support commas in the YAML keys.
+        value = value.split(',')  # the if block handles based on type.
+
       if type(value) is str:
         parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
         make_edge(interp, source=parent, relation=relation, target=parsed_value)
