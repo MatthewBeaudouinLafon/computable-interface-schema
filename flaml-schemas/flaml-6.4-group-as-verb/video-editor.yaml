@@ -15,6 +15,7 @@
           /time: editor/time
       - (linear) /timeline:
           affects: /timestamps
+          covers: /videos
       - (gui) /view:
           /marks.vline: /timestamps
           /marks.rectangles: /videos
