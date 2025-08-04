@@ -33,11 +33,14 @@ class rel(Enum):
   AFFECTS = enum.auto()
   COVERS = enum.auto()
 
+  # type
+  TYPE = enum.auto()
+
   # This is a catchall for relations I haven't figured out what to do yet
   TBD = enum.auto()
 
 
-def make_edge(interp: list, source: str, relation: rel, target: str):
+def make_edge(interp: list, source: str, relation: rel, target: str, verbose=False):
   """
   Declares an edge in the graph by appending it to interp.
   """
@@ -49,7 +52,8 @@ def make_edge(interp: list, source: str, relation: rel, target: str):
   pretty_source = source
   pretty_relation = relation.name
   pretty_target = target
-  print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
+  if verbose:
+    print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
 
 # --- Parse spec
 def incrementally_aggregate(array: list, symbol: str):
@@ -67,15 +71,18 @@ def incrementally_aggregate(array: list, symbol: str):
     aggregate.append(aggregated_term)
   return aggregate
 
+def strip_type(statement: str):
+  return re.sub(r'\([\w\-]+\) ', '', statement)
+
 def parse_compound_object(statement: str, interp: list):
   """
-  Parses compound objects like files.selected->paths.
+  Parses compound objects like files.selected->paths/icon.
 
   In order of priority
-  ` and ` means union, so A -subset-> A and B etc.
    -> means mapto
    . means subset
-   / means component (it's really a sort of map though)
+   / means component (it's really a sort of group though)
+   NOTE: `and` is parsed in the caller parse_str
   
   NOTE: parse_str (which calls this) already prefixes terms that start with `/`
   NOTE: This function will result in a lot of duplicate relations if a compound
@@ -83,91 +90,84 @@ def parse_compound_object(statement: str, interp: list):
   NOTE: that this doesn't do anything with the statement, it only adds relations
   to interp.
   """
+  assert ' and ' not in statement, "Found `and` in compound parse_compound_object. This should be dealt with in parse_str."
 
-  and_splits = statement.split(' and ')
+  # 1. Parse ->
+  arrow_split = statement.split('->')
+  for arrow_idx, target in enumerate(arrow_split):
+    if arrow_idx == 0:
+      # Skip the first item. If there's only one item, then we'll just move on.
+      continue
+    source = arrow_split[arrow_idx-1]
+    make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
+  
 
-  # 0. Parse `and`
-  if len(and_splits) > 1:
-    for source in and_splits:
-      make_edge(interp=interp, source=source, relation=rel.SUBSET, target=statement)
+  # Parse . and / together. 
+  # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
+  for phrase in arrow_split:
+    # phrase is a combination of atoms split by . and / ie. matches [\w\-\/\.]+
 
-  # Parse 1, 2, 3 inside each and_split statement
-  for and_split in and_splits:
-    # 1. Parse ->
-    arrow_split = and_split.split('->')
-    for arrow_idx, target in enumerate(arrow_split):
-      if arrow_idx == 0:
-        # Skip the first item. If there's only one item, then we'll just move on.
+    # 3. Parse /
+    # The first item in the lhs chain of `.` is groups the first item
+    # eg: a.b/c.d.e/f.g =>
+    # a -GROUP-> a/c
+    # a/c -GROUP-> a/c/f
+
+    # Get the first term (before `.` or `/`)
+    first_dot_term = re.match(r'(^\([\w\-]+\) )?[\w\-]+', phrase)
+    assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
+
+    # Add every term following a `/`
+    leading_dot_terms = [first_dot_term.group()] + \
+      list(map(lambda x: x[1:], re.findall(r'\/[\w\-]+', phrase)))
+
+    # 3. Parse `/` relations.
+    # Aggregate terms incrementally
+    # [a, b, c] => [a, a/b, a/b/c]
+    aggregated_leading_terms = incrementally_aggregate(leading_dot_terms, '/')
+    for idx, aggregated_term in enumerate(aggregated_leading_terms):
+      if idx == 0:
         continue
-      source = arrow_split[arrow_idx-1]
-      make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
-    
 
-    # Parse . and / together. 
-    # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
-    for phrase in arrow_split:
-      # phrase is a combination of atoms split by . and / ie. matches [\w\-\/\.]+
+      prev_aggregated_term =  aggregated_leading_terms[idx-1]
+      # TODO: If this is setup when the /terms are defined, then it doesn't need to be defined here?
+      # In other words, this just let's you declare /terms, which might be fine but not sure.
+      make_edge(
+        interp=interp, 
+        source=prev_aggregated_term, relation=rel.GROUP, target=aggregated_term
+      )
+      
+    # 2. Parse `.`
+    # subsets nested between slashes mush be prefixed with the appropriate group
+    # for namespacing purposes.
+    # eg. a.b.c/d.e.f/g.h =>
+    # a.b -SUB-> a   |   a.b.c -SUB-> a.b
+    # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e
+    # a/d/g.h -SUB-> a/d/g
+    for idx, slash_term in enumerate(phrase.split('/')):
+      prefix = '' if idx == 0 else aggregated_leading_terms[idx-1]+'/'
 
-      # 3. Parse /
-      # The first item in the lhs chain of `.` is groups the first item
-      # eg: a.b/c.d.e/f.g =>
-      # a -GROUP-> a/c
-      # a/c -GROUP-> a/c/f
+      # a.b.c => [a, a.b, a.b.c]
+      dot_aggregates = incrementally_aggregate(slash_term.split('.'), '.')
 
-      # Get the first term (before `.` or `/`)
-      first_dot_term = re.match(r'[\w\-]+', phrase)
-      assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
+      # [a, a.b, a.b.c] => [prefix/a, prefix/a.b, prefix/a.b.c]
+      dot_aggregates = list(map(lambda t: prefix+t, dot_aggregates))
 
-      # Add every term following a `/`
-      leading_dot_terms = [first_dot_term.group()] + \
-        list(map(lambda x: x[1:], re.findall(r'\/[\w\-]+', phrase)))
-
-      # 3. Parse `/` relations. TODO: do we want to, or should that be done with the definition?
-      # Aggregate terms incrementally
-      # [a, b, c] => [a, a/b, a/b/c]
-      aggregated_leading_terms = incrementally_aggregate(leading_dot_terms, '/')
-      for idx, aggregated_term in enumerate(aggregated_leading_terms):
-        if idx == 0:
-          continue
-
-        prev_aggregated_term =  aggregated_leading_terms[idx-1]
-        # TODO: If this is setup when the /terms are defined, then it doesn't need to be defined here?
-        # In other words, this just let's you declare /terms, which might be fine but not sure.
-        make_edge(
-          interp=interp, 
-          source=prev_aggregated_term, relation=rel.GROUP, target=aggregated_term
-        )
-        
-      # 2. Parse `.`
-      # subsets nested between slashes mush be prefixed with the appropriate group
-      # for namespacing purposes.
-      # eg. a.b.c/d.e.f/g.h =>
-      # a.b -SUB-> a   |   a.b.c -SUB-> a.b
-      # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e
-      # a/d/g.h -SUB-> a/d/g
-      for idx, slash_term in enumerate(phrase.split('/')):
-        prefix = '' if idx == 0 else aggregated_leading_terms[idx-1]+'/'
-
-        # a.b.c => [a, a.b, a.b.c]
-        dot_aggregates = incrementally_aggregate(slash_term.split('.'), '.')
-
-        # [a, a.b, a.b.c] => [prefix/a, prefix/a.b, prefix/a.b.c]
-        dot_aggregates = list(map(lambda t: prefix+t, dot_aggregates))
-
-        # iterate through pairs and add an edge.
-        # NOTE: we flip the order because larger sequences are subsets of smaller
-        # subsequences eg. a.b.c -SUBSET-> a.b
-        # In other words, we could iterate through the list backquards.
-        for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
-          next_dot_agg = dot_aggregates[d_idx + 1]
-          make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
+      # iterate through pairs and add an edge.
+      # NOTE: we flip the order because larger sequences are subsets of smaller
+      # subsequences eg. a.b.c -SUBSET-> a.b
+      # In other words, we could iterate through the list backquards.
+      for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
+        next_dot_agg = dot_aggregates[d_idx + 1]
+        make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
 
   return statement
 
 def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str:
   """
   Parses the string and returns an identifier that the caller can use in a relation.
-  Note that this will clean up the statement eg. remove (type), =, etc.
+  NOTE: that this will clean up the statement eg. remove (type), =, etc.
+  NOTE: `and` keyword is parsed in this function, not in parse_compound_object.
   """
   assert type(statement) is str, f'Type error, expected str got {type(statement)}'
   # TODO: a bunch of string validation eg. only valid characters, etc.
@@ -184,30 +184,46 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     print(' '*depth+"definition:", statement)
     # TODO: finish
   
+  # Parse `and` statement and recurse on each phrase
+  if ' and ' in statement:
+    and_splits = statement.split(' and ')
+
+    # remove the (type) signatures in the parsed output
+    statement_without_types = strip_type(statement)
+    for and_phrase in and_splits:
+      assert ' and ' not in and_phrase, 'ERROR: `and` found where it shouldn\'t be'
+      # a and b => a -SUBSET-> a and b, b -SUBSET-> a and b
+      make_edge(interp=interp, source=strip_type(and_phrase), relation=rel.SUBSET, target=statement_without_types)
+
+      # Each "phrase" (as in `phrase1 and phrase2`) is parsed as its own string
+      parse_str(and_phrase, parent=parent, interp=interp, depth=depth+1)  # recurse on each phrase
+    return statement_without_types
+      
   # Syntax for instantiation eg. (linear) alphabetical
-  elif re.match(r'^\([\w\-]+\) .*', statement):
-    print(' '*depth+"instantiation:", statement)
-    # TODO: extract type with regex
-    # TODO: finish
-    statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type
+  if type_match := re.match(r'^\((?P<type>[\w\-]+)\) (?P<instance>[\w\-]+)', statement):
+    # extract type=`type` and instance='thingy' in `(type) thingy`.
+    # NOTE: the match will fail if it doesn't get both. So if you only provide 
+    # the type, it will not match, which might come across as a silent failure.
+    extracted_type = type_match.group('type')
+    extracted_instance = type_match.group('instance')
+    make_edge(interp=interp, source=extracted_type, relation=rel.TYPE, target=extracted_instance)
+
+    statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
   
   # Syntax for attributes
   elif statement[0] == '/':
     assert parent is not None, 'The statement starts with `/`, but it does not have a parent.'
-    print(' '*depth+"attribute:", parent+statement)
     statement = parent+statement
 
   # Compound objects have these characters.
-  if '.' in statement or '->' in statement or '/' in statement or ' and ' in statement:
-    # TODO: add all of the appropriate relations (mapto and subset)
-    # TODO: what about `,`?
-    print(' '*depth+"compound string:", statement)
-    parse_compound_object(statement, interp)
+  if '.' in statement or '->' in statement or '/' in statement:
+    parse_compound_object(statement=statement, interp=interp)
   
   # Just a normal string, no bells or whistles.
   else:
-    print(' '*depth+"simple string:", statement)
-    
+    pass
+
+  # TODO: validate the final string only contains the right characters.
   return statement
 
 def parse_relation(statement: str) -> rel|None:
@@ -268,9 +284,8 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
   # might be hard because the semantics depend on their values...
 
   for key, value in statement.items():
-    # TODO: validate key ie. don't allow `,` until it's supported
+    # TODO: validate key
     # TODO: validate value ie. don't allow `=` etc.
-    # TODO: To allow `,` in the key, split on it and add a loop at this level.
     parsed_key = parse_str(key, parent=parent, interp=interp, depth=depth+1)
 
     # 1. If the key is a relation, then it declares: parent -relation-> value(s).

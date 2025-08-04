@@ -8,6 +8,9 @@ import pytest
 import parser
 from parser import rel
 
+def parse_str(statement: str, interp: list):
+  return parser.parse_str(statement=statement, parent=None, interp=interp, depth=0)
+
 def interp_as_tuple(interp):
   res = []
   for relation in interp:
@@ -24,7 +27,7 @@ def compare_interp(test, expected: list[tuple]):
 
   for t in interp_as_tuple(test):
     if t not in expected_dict:
-      assert False, f'Could not find `{t}` in expected interp.'
+      assert False, f'Result includes `{t}`, which is not part of the expected interp.'
     expected_dict[t] += 1
   
   unfound_relations = [relation for relation, count in expected_dict.items() if count == 0]
@@ -76,7 +79,7 @@ class TestCompoundObjectParser:
     
   def test_and(self):
     interp = []
-    parser.parse_compound_object('a-1 and b-2', interp)
+    parse_str('a-1 and b-2', interp)
     assert compare_interp(interp, 
                           [
                             ('a-1', rel.SUBSET, 'a-1 and b-2'),
@@ -84,12 +87,21 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('a and b and c', interp)
+    parse_str('a and b and c and d', interp=interp)
     assert compare_interp(interp, 
                           [
-                            ('a', rel.SUBSET, 'a and b and c'),
-                            ('b', rel.SUBSET, 'a and b and c'),
-                            ('c', rel.SUBSET, 'a and b and c'),
+                            ('a', rel.SUBSET, 'a and b and c and d'),
+                            ('b', rel.SUBSET, 'a and b and c and d'),
+                            ('c', rel.SUBSET, 'a and b and c and d'),
+                            ('d', rel.SUBSET, 'a and b and c and d'),
+                          ])
+    
+  def test_type(self):
+    interp = []
+    parse_str('(a-1) b-2', interp=interp, )
+    assert compare_interp(interp, 
+                          [
+                            ('a-1', rel.TYPE, 'b-2'),
                           ])
     
   def test_imagined_compound_terms(self):
@@ -132,7 +144,7 @@ class TestCompoundObjectParser:
                           ])
 
     interp = []
-    parser.parse_compound_object('a.b and c->d and e/f', interp)
+    parse_str('a.b and c->d and e/f', interp=interp)
     assert compare_interp(interp, 
                           [
                             ('a.b', rel.SUBSET, 'a.b and c->d and e/f'),
@@ -141,6 +153,19 @@ class TestCompoundObjectParser:
                             ('c', rel.MAPTO, 'd'),
                             ('e/f', rel.SUBSET, 'a.b and c->d and e/f'),
                             ('e', rel.GROUP, 'e/f'),
+                          ])
+    
+    interp = []
+    parse_str('(a) b.c/d and (x) y.z', interp=interp)
+    assert compare_interp(interp, 
+                          [
+                            ('b.c/d', rel.SUBSET, 'b.c/d and y.z'),
+                            ('a', rel.TYPE, 'b'),
+                            ('b.c', rel.SUBSET, 'b'),
+                            ('b', rel.GROUP, 'b/d'),
+                            ('y.z', rel.SUBSET, 'b.c/d and y.z'),
+                            ('x', rel.TYPE, 'y'),
+                            ('y.z', rel.SUBSET, 'y'),
                           ])
   
   def test_realistic_compound_objects(self):
@@ -177,7 +202,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('folders and files', interp)
+    parse_str('folders and files', interp=interp)
     assert compare_interp(interp, 
                           [
                             ('folders', rel.SUBSET, 'folders and files'),
@@ -185,7 +210,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('chart-summary and numerical->dimension-info and numerical->interval-info', interp)
+    parse_str('chart-summary and numerical->dimension-info and numerical->interval-info', interp=interp)
     assert compare_interp(interp, 
                           [
                             ('chart-summary', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
