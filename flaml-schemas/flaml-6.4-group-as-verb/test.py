@@ -74,6 +74,24 @@ class TestCompoundObjectParser:
                             ('a-1/b-2', rel.GROUP, 'a-1/b-2/c-3'),
                           ])
     
+  def test_and(self):
+    interp = []
+    parser.parse_compound_object('a-1 and b-2', interp)
+    assert compare_interp(interp, 
+                          [
+                            ('a-1', rel.SUBSET, 'a-1 and b-2'),
+                            ('b-2', rel.SUBSET, 'a-1 and b-2'),
+                          ])
+    
+    interp = []
+    parser.parse_compound_object('a and b and c', interp)
+    assert compare_interp(interp, 
+                          [
+                            ('a', rel.SUBSET, 'a and b and c'),
+                            ('b', rel.SUBSET, 'a and b and c'),
+                            ('c', rel.SUBSET, 'a and b and c'),
+                          ])
+    
   def test_imagined_compound_terms(self):
     interp = []
     parser.parse_compound_object('a.b/c.d.e/f.g', interp)
@@ -112,6 +130,18 @@ class TestCompoundObjectParser:
                             ('d.e', rel.SUBSET, 'd'),
                             ('g.h', rel.SUBSET, 'g'),
                           ])
+
+    interp = []
+    parser.parse_compound_object('a.b and c->d and e/f', interp)
+    assert compare_interp(interp, 
+                          [
+                            ('a.b', rel.SUBSET, 'a.b and c->d and e/f'),
+                            ('a.b', rel.SUBSET, 'a'),
+                            ('c->d', rel.SUBSET, 'a.b and c->d and e/f'),
+                            ('c', rel.MAPTO, 'd'),
+                            ('e/f', rel.SUBSET, 'a.b and c->d and e/f'),
+                            ('e', rel.GROUP, 'e/f'),
+                          ])
   
   def test_realistic_compound_objects(self):
     interp = []
@@ -144,6 +174,25 @@ class TestCompoundObjectParser:
     assert compare_interp(interp, 
                           [
                             ('channels.!dm', rel.SUBSET, 'channels'),
+                          ])
+    
+    interp = []
+    parser.parse_compound_object('folders and files', interp)
+    assert compare_interp(interp, 
+                          [
+                            ('folders', rel.SUBSET, 'folders and files'),
+                            ('files', rel.SUBSET, 'folders and files'),
+                          ])
+    
+    interp = []
+    parser.parse_compound_object('chart-summary and numerical->dimension-info and numerical->interval-info', interp)
+    assert compare_interp(interp, 
+                          [
+                            ('chart-summary', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
+                            ('numerical->dimension-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
+                            ('numerical', rel.MAPTO, 'dimension-info'),
+                            ('numerical->interval-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
+                            ('numerical', rel.MAPTO, 'interval-info'),
                           ])
 
 class TestSpecParser:

@@ -72,6 +72,7 @@ def parse_compound_object(statement: str, interp: list):
   Parses compound objects like files.selected->paths.
 
   In order of priority
+  ` and ` means union, so A -subset-> A and B etc.
    -> means mapto
    . means subset
    / means component (it's really a sort of map though)
@@ -83,74 +84,83 @@ def parse_compound_object(statement: str, interp: list):
   to interp.
   """
 
-  # 1. Parse ->
-  arrow_split = statement.split('->')
-  for arrow_idx, target in enumerate(arrow_split):
-    if arrow_idx == 0:
-      # Skip the first item. If there's only one item, then we'll just move on.
-      continue
-    source = arrow_split[arrow_idx-1]
-    make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
-  
+  and_splits = statement.split(' and ')
 
-  # Parse . and / together. 
-  # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
-  for phrase in arrow_split:
-    # phrase is a combination of atoms split by . and / ie. matches [\w\-\/\.]+
+  # 0. Parse `and`
+  if len(and_splits) > 1:
+    for source in and_splits:
+      make_edge(interp=interp, source=source, relation=rel.SUBSET, target=statement)
 
-    # 3. Parse /
-    # The first item in the lhs chain of `.` is groups the first item
-    # eg: a.b/c.d.e/f.g =>
-    # a -GROUP-> a/c
-    # a/c -GROUP-> a/c/f
-
-    # Get the first term (before `.` or `/`)
-    first_dot_term = re.match(r'[\w\-]+', phrase)
-    assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
-
-    # Add every term following a `/`
-    leading_dot_terms = [first_dot_term.group()] + \
-      list(map(lambda x: x[1:], re.findall(r'\/[\w\-]+', phrase)))
-
-    # 3. Parse `/` relations. TODO: do we want to, or should that be done with the definition?
-    # Aggregate terms incrementally
-    # [a, b, c] => [a, a/b, a/b/c]
-    aggregated_leading_terms = incrementally_aggregate(leading_dot_terms, '/')
-    for idx, aggregated_term in enumerate(aggregated_leading_terms):
-      if idx == 0:
+  # Parse 1, 2, 3 inside each and_split statement
+  for and_split in and_splits:
+    # 1. Parse ->
+    arrow_split = and_split.split('->')
+    for arrow_idx, target in enumerate(arrow_split):
+      if arrow_idx == 0:
+        # Skip the first item. If there's only one item, then we'll just move on.
         continue
+      source = arrow_split[arrow_idx-1]
+      make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
+    
 
-      prev_aggregated_term =  aggregated_leading_terms[idx-1]
-      # TODO: If this is setup when the /terms are defined, then it doesn't need to be defined here?
-      # In other words, this just let's you declare /terms, which might be fine but not sure.
-      make_edge(
-        interp=interp, 
-        source=prev_aggregated_term, relation=rel.GROUP, target=aggregated_term
-      )
-      
-    # 2. Parse `.`
-    # subsets nested between slashes mush be prefixed with the appropriate group
-    # for namespacing purposes.
-    # eg. a.b.c/d.e.f/g.h =>
-    # a.b -SUB-> a   |   a.b.c -SUB-> a.b
-    # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e
-    # a/d/g.h -SUB-> a/d/g
-    for idx, slash_term in enumerate(phrase.split('/')):
-      prefix = '' if idx == 0 else aggregated_leading_terms[idx-1]+'/'
+    # Parse . and / together. 
+    # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
+    for phrase in arrow_split:
+      # phrase is a combination of atoms split by . and / ie. matches [\w\-\/\.]+
 
-      # a.b.c => [a, a.b, a.b.c]
-      dot_aggregates = incrementally_aggregate(slash_term.split('.'), '.')
+      # 3. Parse /
+      # The first item in the lhs chain of `.` is groups the first item
+      # eg: a.b/c.d.e/f.g =>
+      # a -GROUP-> a/c
+      # a/c -GROUP-> a/c/f
 
-      # [a, a.b, a.b.c] => [prefix/a, prefix/a.b, prefix/a.b.c]
-      dot_aggregates = list(map(lambda t: prefix+t, dot_aggregates))
+      # Get the first term (before `.` or `/`)
+      first_dot_term = re.match(r'[\w\-]+', phrase)
+      assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
 
-      # iterate through pairs and add an edge.
-      # NOTE: we flip the order because larger sequences are subsets of smaller
-      # subsequences eg. a.b.c -SUBSET-> a.b
-      # In other words, we could iterate through the list backquards.
-      for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
-        next_dot_agg = dot_aggregates[d_idx + 1]
-        make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
+      # Add every term following a `/`
+      leading_dot_terms = [first_dot_term.group()] + \
+        list(map(lambda x: x[1:], re.findall(r'\/[\w\-]+', phrase)))
+
+      # 3. Parse `/` relations. TODO: do we want to, or should that be done with the definition?
+      # Aggregate terms incrementally
+      # [a, b, c] => [a, a/b, a/b/c]
+      aggregated_leading_terms = incrementally_aggregate(leading_dot_terms, '/')
+      for idx, aggregated_term in enumerate(aggregated_leading_terms):
+        if idx == 0:
+          continue
+
+        prev_aggregated_term =  aggregated_leading_terms[idx-1]
+        # TODO: If this is setup when the /terms are defined, then it doesn't need to be defined here?
+        # In other words, this just let's you declare /terms, which might be fine but not sure.
+        make_edge(
+          interp=interp, 
+          source=prev_aggregated_term, relation=rel.GROUP, target=aggregated_term
+        )
+        
+      # 2. Parse `.`
+      # subsets nested between slashes mush be prefixed with the appropriate group
+      # for namespacing purposes.
+      # eg. a.b.c/d.e.f/g.h =>
+      # a.b -SUB-> a   |   a.b.c -SUB-> a.b
+      # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e
+      # a/d/g.h -SUB-> a/d/g
+      for idx, slash_term in enumerate(phrase.split('/')):
+        prefix = '' if idx == 0 else aggregated_leading_terms[idx-1]+'/'
+
+        # a.b.c => [a, a.b, a.b.c]
+        dot_aggregates = incrementally_aggregate(slash_term.split('.'), '.')
+
+        # [a, a.b, a.b.c] => [prefix/a, prefix/a.b, prefix/a.b.c]
+        dot_aggregates = list(map(lambda t: prefix+t, dot_aggregates))
+
+        # iterate through pairs and add an edge.
+        # NOTE: we flip the order because larger sequences are subsets of smaller
+        # subsequences eg. a.b.c -SUBSET-> a.b
+        # In other words, we could iterate through the list backquards.
+        for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
+          next_dot_agg = dot_aggregates[d_idx + 1]
+          make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
 
   return statement
 
