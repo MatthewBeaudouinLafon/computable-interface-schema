@@ -3,19 +3,44 @@
 # - (linear) alphabetical:
 #     affects: albums
 
-- people:
-    groups: messages
-- (linear) time:
-    affects: messages
-- (gui) channel-view:
-    - /encoding.vstack:
-        (linear) alphabetical:
-          affects: channels, people
-    - /encoding.cluster:
-        channel-type:
-          groups: channels
-          subgroups: channels.dm, channels.!dm
-    - /marks: channels
+# ---- misc
+# - people:
+#     groups: messages
+# - (linear) time:
+#     affects: messages
+# - (gui) channel-view:
+#     - /encoding.vstack:
+#         (linear) alphabetical:
+#           affects: channels, people, items
+#     - /encoding.cluster:
+#         channel-type:
+#           groups: channels
+#           subgroups: channels.dm, channels.!dm
+#     - /marks: channels
+# - items =: folders and files
+# - things =:
+#     - foo
+#     - bar
+
+# ---- messaging
+- conversations:
+    group foreach:
+      - messages
+      - people:
+          groups: messages
+
+- (gui) chat-view:
+    /marks: conversations.active->messages
+    /encoding.vstack:
+      (linear) vstack:
+        affects: conversations.active->messages, conversations
+
+- (gui) convo-view:
+    /marks.text: conversations
+    /encoding.cluster:
+      pin:
+        groups: conversations
+    /encoding.vstack: time
 # - editors:
 #     group foreach: # feels redundant if there's just one (but there could be more!!)
 #       - /videos =: videos.in-editor

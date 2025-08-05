@@ -332,6 +332,23 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
       # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
       make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
 
+    # Syntax for alias relations
+    elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
+      # TODO: repeated code with the alias check `elif key[0] == '/'`. Could abstract as a function?
+      if type(value) is str:
+        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
+        make_edge(interp=interp, source=parsed_value, relation=rel.ALIAS, target=parsed_key)
+
+      elif type(value) is list:
+        # NOTE: I didn't intend for this to be listable, but it's kind of cool
+        for list_parsed_value in parse_list(value, parent=parsed_key, interp=interp, depth=depth+1):
+          make_edge(interp=interp, source=parsed_key, relation=rel.ALIAS, target=list_parsed_value)
+
+      else:
+        # NOTE: I don't think this is ever a dict
+        assert False, f"Value condition not met. That's weird. value={value}"
+
+
     # 3. If there's a single key and its value is a list/dict,
     #    then its the parent to declaration involving the items in its value.
     elif type(value) is list:
@@ -339,7 +356,7 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
     elif type(value) is dict:
       parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
     else:
-      assert False, f"Key condition not met. That's very weird. key={key}"
+      assert False, f"Key condition not met. That's very weird. key='{key}'"
   
   # Dictionaries that need to return an identifier always have one key.
   if len(statement.keys()) == 1:
