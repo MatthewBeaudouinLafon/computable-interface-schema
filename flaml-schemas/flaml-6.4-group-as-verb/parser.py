@@ -140,7 +140,7 @@ def parse_compound_object(statement: str, interp: list):
       # In other words, this just let's you declare /terms, which might be fine but not sure.
       make_edge(
         interp=interp, 
-        source=prev_aggregated_term, relation=rel.GROUP, target=aggregated_term
+        source=prev_aggregated_term, relation=rel.GROUP_FOREACH, target=aggregated_term
       )
       
     # 2. Parse `.`

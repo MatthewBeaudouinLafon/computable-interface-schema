@@ -27,6 +27,7 @@ def compare_interp(test, expected: list[tuple]):
 
   for t in interp_as_tuple(test):
     if t not in expected_dict:
+      # TODO: instead of asserting, collect and print all of the issues.
       assert False, f'Result includes `{t}`, which is not part of the expected interp.'
     expected_dict[t] += 1
   
@@ -75,8 +76,8 @@ class TestCompoundObjectParser:
     parser.parse_compound_object('a-1/b-2/c-3', interp)
     assert compare_interp(interp, 
                           [
-                            ('a-1', rel.GROUP, 'a-1/b-2'),
-                            ('a-1/b-2', rel.GROUP, 'a-1/b-2/c-3'),
+                            ('a-1', rel.GROUP_FOREACH, 'a-1/b-2'),
+                            ('a-1/b-2', rel.GROUP_FOREACH, 'a-1/b-2/c-3'),
                           ])
     
   def test_and(self):
@@ -111,8 +112,8 @@ class TestCompoundObjectParser:
     parser.parse_compound_object('a.b/c.d.e/f.g', interp)
     assert compare_interp(interp, 
                           [
-                            ('a', rel.GROUP, 'a/c'),
-                            ('a/c', rel.GROUP, 'a/c/f'),
+                            ('a', rel.GROUP_FOREACH, 'a/c'),
+                            ('a/c', rel.GROUP_FOREACH, 'a/c/f'),
                             ('a.b', rel.SUBSET, 'a'),
                             ('a/c.d', rel.SUBSET, 'a/c'),
                             ('a/c.d.e', rel.SUBSET, 'a/c.d'),
@@ -125,10 +126,10 @@ class TestCompoundObjectParser:
                           [
                             ('a/b', rel.MAPTO, 'c.d/e'),
                             ('c.d/e', rel.MAPTO, 'f/g.h'),
-                            ('a', rel.GROUP, 'a/b'),
-                            ('c', rel.GROUP, 'c/e'),
+                            ('a', rel.GROUP_FOREACH, 'a/b'),
+                            ('c', rel.GROUP_FOREACH, 'c/e'),
                             ('c.d', rel.SUBSET, 'c'),
-                            ('f', rel.GROUP, 'f/g'),
+                            ('f', rel.GROUP_FOREACH, 'f/g'),
                             ('f/g.h', rel.SUBSET, 'f/g'),
                             ('a/b->c.d/e->f/g.h', rel.SUBSET, 'f/g.h'),
                           ])
@@ -157,7 +158,7 @@ class TestCompoundObjectParser:
                             ('c->d', rel.SUBSET, 'd'),
                             ('c', rel.MAPTO, 'd'),
                             ('e/f', rel.SUBSET, 'a.b and c->d and e/f'),
-                            ('e', rel.GROUP, 'e/f'),
+                            ('e', rel.GROUP_FOREACH, 'e/f'),
                           ])
     
     interp = []
@@ -167,7 +168,7 @@ class TestCompoundObjectParser:
                             ('b.c/d', rel.SUBSET, 'b.c/d and y.z'),
                             ('a', rel.TYPE, 'b'),
                             ('b.c', rel.SUBSET, 'b'),
-                            ('b', rel.GROUP, 'b/d'),
+                            ('b', rel.GROUP_FOREACH, 'b/d'),
                             ('y.z', rel.SUBSET, 'b.c/d and y.z'),
                             ('x', rel.TYPE, 'y'),
                             ('y.z', rel.SUBSET, 'y'),
@@ -179,7 +180,7 @@ class TestCompoundObjectParser:
     assert compare_interp(interp, 
                           [
                             ('playhead', rel.MAPTO, 'video/timestamps'),
-                            ('video', rel.GROUP, 'video/timestamps'),
+                            ('video', rel.GROUP_FOREACH, 'video/timestamps'),
                             ('playhead->video/timestamps', rel.SUBSET, 'video/timestamps'),
                           ])
     
@@ -187,7 +188,7 @@ class TestCompoundObjectParser:
     parser.parse_compound_object('editors.current/timestamps.playhead', interp)
     assert compare_interp(interp, 
                           [
-                            ('editors', rel.GROUP, 'editors/timestamps'),
+                            ('editors', rel.GROUP_FOREACH, 'editors/timestamps'),
                             ('editors.current', rel.SUBSET, 'editors'),
                             ('editors/timestamps.playhead', rel.SUBSET, 'editors/timestamps'),
                           ])
