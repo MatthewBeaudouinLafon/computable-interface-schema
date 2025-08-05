@@ -101,6 +101,12 @@ def parse_compound_object(statement: str, interp: list):
     source = arrow_split[arrow_idx-1]
     make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
   
+  # a->b->c -SUBSET-> c
+  # NOTE: This is arguably the compiler's job, but since this is only true when
+  # using inline arrow notation it makes sense to have it here. This might not be
+  # worth it if it adds useless nodes.
+  if len(arrow_split) > 1:
+    make_edge(interp=interp, source=statement, relation=rel.SUBSET, target=arrow_split[-1])
 
   # Parse . and / together. 
   # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows

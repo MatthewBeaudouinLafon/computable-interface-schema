@@ -59,6 +59,7 @@ class TestCompoundObjectParser:
                           [
                             ('a', rel.MAPTO, 'b'),
                             ('b', rel.MAPTO, 'c'),
+                            ('a->b->c', rel.SUBSET, 'c'),
                           ])
     
     interp = []
@@ -66,6 +67,7 @@ class TestCompoundObjectParser:
     assert compare_interp(interp, 
                           [
                             ('a-b', rel.MAPTO, 'c-d'),
+                            ('a-b->c-d', rel.SUBSET, 'c-d'),
                           ])
     
   def test_slash(self):
@@ -128,6 +130,7 @@ class TestCompoundObjectParser:
                             ('c.d', rel.SUBSET, 'c'),
                             ('f', rel.GROUP, 'f/g'),
                             ('f/g.h', rel.SUBSET, 'f/g'),
+                            ('a/b->c.d/e->f/g.h', rel.SUBSET, 'f/g.h'),
                           ])
     
     interp = []
@@ -141,6 +144,7 @@ class TestCompoundObjectParser:
                             ('d.e.f', rel.SUBSET, 'd.e'),
                             ('d.e', rel.SUBSET, 'd'),
                             ('g.h', rel.SUBSET, 'g'),
+                            ('a.b.c->d.e.f->g.h', rel.SUBSET, 'g.h'),
                           ])
 
     interp = []
@@ -150,6 +154,7 @@ class TestCompoundObjectParser:
                             ('a.b', rel.SUBSET, 'a.b and c->d and e/f'),
                             ('a.b', rel.SUBSET, 'a'),
                             ('c->d', rel.SUBSET, 'a.b and c->d and e/f'),
+                            ('c->d', rel.SUBSET, 'd'),
                             ('c', rel.MAPTO, 'd'),
                             ('e/f', rel.SUBSET, 'a.b and c->d and e/f'),
                             ('e', rel.GROUP, 'e/f'),
@@ -175,6 +180,7 @@ class TestCompoundObjectParser:
                           [
                             ('playhead', rel.MAPTO, 'video/timestamps'),
                             ('video', rel.GROUP, 'video/timestamps'),
+                            ('playhead->video/timestamps', rel.SUBSET, 'video/timestamps'),
                           ])
     
     interp = []
@@ -192,6 +198,7 @@ class TestCompoundObjectParser:
                           [
                             ('folders.in-selected-path', rel.MAPTO, 'items'),
                             ('folders.in-selected-path', rel.SUBSET, 'folders'),
+                            ('folders.in-selected-path->items', rel.SUBSET, 'items'),
                           ])
     
     interp = []
@@ -214,8 +221,10 @@ class TestCompoundObjectParser:
     assert compare_interp(interp, 
                           [
                             ('chart-summary', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
+                            ('numerical->dimension-info', rel.SUBSET, 'dimension-info'),
                             ('numerical->dimension-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
                             ('numerical', rel.MAPTO, 'dimension-info'),
+                            ('numerical->interval-info', rel.SUBSET, 'interval-info'),
                             ('numerical->interval-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
                             ('numerical', rel.MAPTO, 'interval-info'),
                           ])
