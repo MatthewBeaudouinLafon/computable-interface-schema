@@ -61,7 +61,7 @@
     covers: name-expression # These are groups of the affected objects
 
     # PARSE: SRC=my-instance/myargument REL:alias TRG:ID=obj-expression
-    /placeholder =: any-expression
+    /argument =: any-expression
 
 # Views. They are also groups, with placeholders for marks and encodings
 - (view-type) my-view:

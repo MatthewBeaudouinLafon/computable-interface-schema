@@ -8,7 +8,7 @@
 - (gui) chat-view:
     /marks: conversations.active->messages
     /encoding.vstack:
-      (linear) vstack:
+      (linear) time:
         affects: conversations.active->messages, conversations
 
 - (gui) convo-view:

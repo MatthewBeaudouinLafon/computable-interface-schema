@@ -26,7 +26,7 @@
       - intervals:
           group foreach:
             (reader) /info:
-              /marks.spoken: /datapoints.interval-smallest and /datapoints.interval-smallest # a bit sketch but works
+              /marks.spoken: /datapoints.interval.selected.smallest and /datapoints.interval.selected.smallest # a bit sketch but works
 
       # - (reader) intervals-info:
       #     /marks.spoken: intervals.selected->datapoints.smallest and intervals.selected->datapoints.largest # a bit sketch but works
@@ -75,8 +75,9 @@
     /depth-order:
       affects: all-views
 
-- action move-up-down-hierarchy:
-    moves: all-views.active <along> olli-nav/depth-order
+- (action) move-up-down-hierarchy:
+    /moves: all-views.active
+    /along: olli-nav/depth-order
 
 - notes:
     - ok it's still not like super easy to do this. Especially with this super limited description of interaction.

@@ -12,7 +12,7 @@
       - /videos =: videos.in-editor
       - /videos:
           /timestamps: editor/timestamps
-          /time: editor/time
+          /timeline: editor/time
       - (linear) /timeline:
           affects: /timestamps
           covers: /videos
@@ -30,7 +30,7 @@
       (linear) sort-order:
         affects: videos
 
-- (video-player):
+- def (video-player):
     arguments: (video) video, playhead
     group foreach:
       - (gui) image-view:
@@ -44,9 +44,9 @@
           /encoding.vstack: _
 
 - (video-player) timeline-preview:
-    /video: editor/composited-video # kind of a hack?
-    /playhead: editors.current/timestamps.playhead
+    /video =: editor/composited-video # kind of a hack?
+    /playhead =: editors.current/timestamps.playhead
 
 - (video-player) media-preview:
-    /video: videos.selected
+    /video =: videos.selected
     # what happens to the playhead?
