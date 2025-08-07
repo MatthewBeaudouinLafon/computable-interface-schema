@@ -1,0 +1,132 @@
+# The goal is to make it clear when you're spatially vs temporally multiplexing something.
+# Let's do a simple carousel.
+- (linear) order:
+    affects: images
+
+# Grid of images
+- (gui) grid-view:
+    /marks.images: images
+    /encoding.hwrap: order
+
+# Carousel: view one image at a time
+- (gui) carousel-view:
+    /marks.images: images.current
+- (move-action) change-image:
+    /trajector: images.current
+    /substrate: images
+    /along: order
+# ---------------X------------>
+#   ^substrate   ^trajector   ^along (structure)
+
+# Screen reader reads images one after the other.
+# Screen readers mostly force temporal multiplexing (at least when speaking words).
+# So the temporal multiplexing is a bit hidden in the encoding.
+- (reader) all-images-info:
+    /mark.spoken: images
+    /encoding.order: order
+
+# Screen reader reads one image at a time, the user can navigate.
+# This version makes it even-more temporally multiplexed, in that the user's
+# interaction is required.
+- (reader) single-images-info:
+    /mark.spoken: images.current
+- (move-action) change-image:
+    /trajector: images.current
+    /substrate: images
+    /along: order
+
+- notes:
+    - it feels like some navigation actions (and actions in general) "belong" in
+      a view eg. when the view is moving between different content, which is common.
+    - it would be a bit weird to put a move-action inside a structure. It makes a
+      bit more sense inside of
+
+# - (type) instance/attribute ~> type.instance->(type.instance->attribute)
+
+---
+# Let's look at some other kinds of interactions. Let's see how much of the UI
+# is described when you go "interaction first" (analogous to going "view first")
+
+# Calendar interactions
+- (edit-action) create-event:
+    /edits: events
+
+- (move-action) drag-event:
+    /along:
+      (linear) time:
+        affects: timestamps
+        covered-by: events
+    /trajector: events.selected
+    /substrate: timestamps # this is a good example where the substrate is not just the superset ie. events
+
+- (move-action) drag-start:
+    /along: time
+    /trajector: events.selected/start->timestamps # not sure how /start works
+    /substrate: timestamps
+
+- notes:
+    - it gets pretty technical very fast.
+    - In previous version I've had a `when` keyword which describes when an action is used.
+      That got crazy very fast too, but it worked! Though it required more of a set logic to do hit-testing.
+      It helps think about modes though!
+      - it's kind of interesting for analogies because it connects actions to views.
+    - I've also had an `input` field, but I don't think that helps with analogies at all.
+
+---
+# Messaging
+- (edit-action) send-message:
+    /edits: conversations.active->messages
+    /along:
+      (linear) time:
+        affects: messages
+# `Along` is meant to express that you insert it relative to the structure (at the end)
+
+- (edit-action) change-conversation:
+    /edits: conversations.active <subset> conversations
+
+---
+# todo app
+# Click the box to mark it as done.
+- (edit-action) check-task:
+    # /edits: task-status <groups> tasks
+    /edits:
+      /source: # doing this so I can define it in-place
+        task-status:
+          groups: tasks
+      /relation: <groups> # <relation> notation. Could use that for keys too?
+      /target: tasks
+# - (linear) alphabetical:
+#     <affects>: items
+
+---
+# Canvas manipulation
+- (move-action) move-shape:
+    /trajector: shapes.selected
+    /substrate: points
+    /along:
+      (2D) canvas:
+        affects: points
+        covered-by: shapes, curves
+
+- (move-action) rotate-shape:
+    /trajector: shapes.selected
+    /substrate: points
+    /along: canvas
+# I need vega-express to distinguish these!
+
+# Pen Tool
+- curves:
+    group foreach:
+      - control-points:
+          mapto: points
+
+- (edit-action) select-curve:
+    /edits: curves.selected <subset> curves
+
+- (edit-action) add-point:
+    /edits: curves.selected
+
+- (move-action) move-control-point:
+    /trajector: curves.selected->control-points.selected
+    /substrate: points
+    /along: canvas
