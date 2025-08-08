@@ -1,0 +1,26 @@
+# Finder
+- items =: files | folders
+
+- (tree) file-system:
+    affects: items
+    covers: (group) folders, (group) items->paths
+    /parents =: folders
+    /leaves =: files
+    /depth-first-search:
+      affects: items
+    /depth-order:
+      affects: items
+
+- (gui) list-view:
+    /marks.text: folder.active->items
+    /encoding.vstack:
+      (linear) alphabetical:
+        affects: items
+
+- folders.in-selected-path =: items.selected->paths->folders
+- (gui) column-view:
+    - /mark.text: folders.in-selected-path->items
+      /encoding.cluster: folders.in-selected-path
+      /encoding.vstack: alphabetical
+    - /mark: folders.in-selected-path
+      /encoding.hstack: file-system/depth-order

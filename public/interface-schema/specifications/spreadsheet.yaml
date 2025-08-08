@@ -1,0 +1,11 @@
+# Spreadsheet
+- (gui) main:
+    - /marks.text: cells
+    - /encoding.grid:
+        (2D) sheet:
+          affects: cells
+          covers: range
+
+- (digraph) reference:
+    affects: cells
+# how do I describe the computational nature of formulas?

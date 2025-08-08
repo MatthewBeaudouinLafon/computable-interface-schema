@@ -1,0 +1,115 @@
+/* ----------------------- Resize ----------------------- */
+
+.resizable {
+  display: flex;
+
+  > .resizable-handle {
+    user-select: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.being-dragged {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &.horizontal > .resizable-handle {
+    border-left: 1px solid rgba(255, 255, 255, 0.175);
+    width: 10px;
+    cursor: ew-resize;
+    height: auto;
+  }
+
+  &.vertical > .resizable-handle {
+    flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.175);
+    height: 10px;
+    cursor: ns-resize;
+    width: auto;
+  }
+}
+
+/* ------------------------ Tabs ------------------------ */
+.tabs-toggles {
+  display: flex;
+  gap: 4px;
+
+  > * {
+    opacity: 0.4;
+    padding: 4px 6px;
+    width: fit-content;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.active {
+      background: rgba(0, 0, 0, 0.1) !important;
+      opacity: 1;
+    }
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.tabs-panes {
+  display: flex;
+  flex-grow: 1;
+
+  > *:not(.active) {
+    display: none !important;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.vtabs {
+  flex-direction: row;
+
+  > .tabs-toggles {
+    flex-direction: column;
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* ----------------------- Stacks ----------------------- */
+.stack {
+  display: flex;
+
+  &.vstack {
+    flex-direction: column;
+  }
+}
+
+.file-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 2px;
+  left: 0px;
+  border-radius: 3px;
+  overflow: hidden;
+
+  > img {
+    width: 13px;
+    height: 13px;
+  }
+
+  &.file-icon-ts {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  &.file-icon-js {
+    filter: saturate(1.2) brightness(0.9);
+  }
+}

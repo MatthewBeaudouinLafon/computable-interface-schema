@@ -1,94 +1,83 @@
-import {
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-} from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  foldKeymap,
-  indentOnInput,
-  StreamLanguage,
-  syntaxHighlighting,
-} from "@codemirror/language";
-import { yaml } from "@codemirror/legacy-modes/mode/yaml";
-import { lintKeymap } from "@codemirror/lint";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
-import { EditorState } from "@codemirror/state";
-import {
-  crosshairCursor,
-  dropCursor,
-  highlightSpecialChars,
-  keymap,
-  // lineNumbers,
-  rectangularSelection,
-} from "@codemirror/view";
-import { EditorView } from "codemirror";
-import { el } from "../utilities/utilities";
+import { get_pyodide } from "../main";
+import { div, svg } from "../utilities/utilities";
+import { CodeMirrorEditor, create_codemirror } from "./codemirror/codemirror";
 import "./editor.css";
 
 export type Editor = {
-  parent: HTMLElement;
-  editor_view: EditorView;
-  path: string;
+  codemirror: CodeMirrorEditor;
+  frag: HTMLElement;
+  code: string;
 };
 
-export function create_editor(path: string = "", default_text: string): Editor {
-  const parent = el(
-    "div",
-    { class: "editor-container" },
-    el("div", { class: "editor-heading", innerText: path })
-  );
+export function create_editor(initial_code: string) {
+  // Sub views
+  const codemirror = create_codemirror(initial_code);
 
-  // https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
-  const basic_setup = (() => [
-    EditorView.updateListener.of((v) => {
-      if (v.docChanged) {
-        const event = new CustomEvent("change", { detail: v });
-        v.view.dom.dispatchEvent(event);
-      }
-    }),
-    highlightSpecialChars(),
-    history(),
-    dropCursor(),
-    EditorState.allowMultipleSelections.of(true),
-    indentOnInput(),
-    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-    bracketMatching(),
-    closeBrackets(),
-    rectangularSelection(),
-    crosshairCursor(),
-    highlightSelectionMatches(),
-    keymap.of([
-      ...closeBracketsKeymap,
-      ...defaultKeymap,
-      ...searchKeymap,
-      ...historyKeymap,
-      ...foldKeymap,
-      ...completionKeymap,
-      ...lintKeymap,
-    ]),
-  ])();
+  // View
+  const frag = div(".editor", [
+    codemirror.frag,
+    svg("svg", ".editor-code-overlay"),
+  ]);
 
-  const editor_view = new EditorView({
-    state: EditorState.create({
-      extensions: [
-        ...basic_setup,
-        StreamLanguage.define(yaml),
-        EditorView.lineWrapping,
-      ],
-    }),
-    parent: parent,
+  const view: Editor = {
+    frag,
+    code: initial_code,
+    codemirror,
+  };
+
+  // Event listeners
+  codemirror.editor_view.dom.addEventListener("change", () => {
+    editor_update_code(view, codemirror.value);
   });
 
-  editor_view.dispatch({ changes: [{ from: 0, insert: default_text }] });
+  // Initial setup
+  editor_update_code(view, initial_code);
 
-  parent.append(el("pre", { class: "mermaid", innerHTML: "" }));
+  return view;
+}
 
-  return {
-    editor_view,
-    parent,
-    path,
-  };
+export async function editor_update_code(editor: Editor, code: string) {
+  editor.code = code;
+
+  const pyodide = get_pyodide();
+
+  const result = await pyodide.runPython(
+    `from compiler import compile
+
+compile(spec)`,
+    {
+      locals: pyodide.toPy({
+        spec: editor.code,
+      }),
+    }
+  );
+
+  console.log(result);
+
+  // ...draw diagram
+  //   async function update(editor: {
+  //   editor_view: EditorView;
+  //   el: HTMLElement;
+  //   value: () => string;
+  // }) {
+  //   const mermaid_el = editor.el.parentElement!.querySelector(
+  //     ".mermaid"
+  //   ) as HTMLElement;
+
+  //   const result = await pyodide.runPython(
+  //     `mermaid_graph(yaml.safe_load(spec))`,
+  //     {
+  //       locals: pyodide.toPy({
+  //         spec: editor.value(),
+  //       }),
+  //     }
+  //   );
+
+  //   mermaid_el.innerHTML = result;
+  //   mermaid_el.removeAttribute("data-processed");
+
+  //   mermaid.run({
+  //     nodes: [mermaid_el],
+  //   });
+  // }
 }
