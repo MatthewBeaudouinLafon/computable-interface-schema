@@ -1,0 +1,82 @@
+# Structures
+- def (structure):
+    subgroup: digraph
+
+- def (digraph):
+    subgroup: tree, 2D, 3D, ND
+
+- def (tree):
+    subgroup: linear
+    group foreach:
+      - /root
+      - /leaves
+      - /internal-nodes
+      - (linear) depth-first-search-order
+      - (linear) breadth-first-search-order
+      - (linear) depth-order
+
+- def (linear):
+    group foreach:
+      - /first =: /root
+      - /last =: /leaves
+
+- def (2D):
+    group foreach:
+      - (linear) x-axis
+      - (linear) y-axis
+
+- def (3D):
+    group foreach:
+      - (linear) x-axis
+      - (linear) y-axis
+      - (linear) z-axis
+      - (2D) xy-projection
+      - (2D) yz-projection
+      - (2D) zx-projection
+
+# Views
+- def (presentation):
+    subgroups: gui, reader
+
+- def (gui):
+    group foreach:
+      - /encoding:
+          subset: .vstack, .hstack, .cluster, .canvas, .color
+      - /marks:
+          subset: .points, .hlines, .vlines, .rectangles, .icons, .text
+
+- def (reader):
+    group foreach:
+      - /encoding:
+          subset: .order
+      - /marks:
+          subset: .spoken
+
+# Action
+- def (action):
+    subgroup: navigate
+- def (navigate)
+
+# Input Devices (super tentative)
+- def (mouse):
+    group foreach:
+      - /position->gui/marks.points
+      - (action) click:
+          triggers: /position->gui/marks.points->action # hit testing
+      - (action) drag-start:
+          triggers: /position->gui/marks.points->action
+      - (action) drag-end:
+          triggers: /position->gui/marks.points->action
+      - (action) drag: #2D somehow
+
+- def (key):
+    group foreach:
+      - (action) click
+      - (action) down
+      - (action) up
+
+- def (keyboard):
+    group foreach:
+      - (key) keys:
+          - subset: .arrows, .modifiers
+      - (action) arrows: #2D somehow
