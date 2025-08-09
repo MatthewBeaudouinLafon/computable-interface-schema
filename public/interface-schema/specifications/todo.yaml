@@ -1,0 +1,8 @@
+# To do list
+- items
+- (group) status:
+    affects: items
+- status.done->items # items.done
+
+---
+- items, items.done, items.doing

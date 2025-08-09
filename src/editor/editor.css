@@ -1,41 +1,16 @@
-.cm-editor,
-.ͼ1 .cm-scroller {
-  font-family: var(--monospace-font) !important;
-}
-
-.cm-editor {
+.editor-container {
+  display: flex;
   width: 100%;
-  /* border: 1px solid rgba(0, 0, 0, 0.137); */
-  outline: none !important;
 }
 
-.cm-gutter {
+.editor {
+  display: flex;
+
+  height: calc(100% - 40px);
+  width: 800px;
   background: white;
-  color: black;
-}
 
-.cm-gutterElement {
-  min-width: 20px !important;
-  opacity: 0.4;
-}
-
-.ͼ1 .cm-content {
-  padding: 10px 10px;
-}
-
-.ͼg {
-  color: black;
-}
-.ͼb {
-  color: #4e4e4e;
-}
-.ͼd {
-  color: #005cc5;
-}
-.ͼe {
-  color: #032f62;
-}
-
-.ͼl {
-  color: #0451a5;
+  border-radius: 5px;
+  margin: 10px 0px;
+  box-shadow: rgba(89, 85, 101, 0.2) 0px 4px 12px 0px;
 }
