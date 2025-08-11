@@ -369,17 +369,19 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
     return parse_str(list(statement.keys())[0], parent=parent, interp=interp, depth=depth)
   return
 
-def make_relations(spec):
-  assert type(spec) is list, 'Top level of YAML specification must be a string.'
-  print(pformat(spec))
+def make_relations(spec, verbose=False):
+  assert type(spec) is list, 'Top level of YAML specification must be a list.'
 
   interp = []
   parse_list(spec, parent=None, interp=interp, depth=0)
-  print('\nresult:')
-  for line in interp:
-    pretty_source = line['source']
-    pretty_relation = line['relation'].name
-    pretty_target = line['target']
-    print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
+
+  if verbose:
+    print(pformat(spec))
+    print('\nresult:')
+    for line in interp:
+      pretty_source = line['source']
+      pretty_relation = line['relation'].name
+      pretty_target = line['target']
+      print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
 
   return interp
