@@ -17,7 +17,7 @@ def interp_as_tuple(interp):
     res.append((relation['source'], relation['relation'], relation['target']))
   return res
 
-def compare_interp(test, expected: list[tuple]):
+def compare_interp(test, expected: list[tuple], verbose=False):
   assert type(test) == list, f'Expected list, got `{type(test)}` instead.'
 
   # NOTE: We could check the the lenghts are the same, but then we couldn't get
@@ -26,6 +26,8 @@ def compare_interp(test, expected: list[tuple]):
   expected_dict = dict(list(map(lambda x: (x, 0), expected)))
 
   for t in interp_as_tuple(test):
+    if verbose:
+      print(f'{t[0]} -{t[1]}-> {t[2]}')
     if t not in expected_dict:
       # TODO: instead of asserting, collect and print all of the issues.
       assert False, f'Result includes `{t}`, which is not part of the expected interp.'
@@ -39,7 +41,7 @@ def compare_interp(test, expected: list[tuple]):
 class TestCompoundObjectParser:
   def test_subsets(self):
     interp = []
-    parser.parse_compound_object('a.b.c', interp)
+    parser.parse_compound_object('a.b.c', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a.b.c', rel.SUBSET, 'a.b'),
@@ -47,7 +49,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('a-b.c-d', interp)
+    parser.parse_compound_object('a-b.c-d', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a-b.c-d', rel.SUBSET, 'a-b'),
@@ -55,7 +57,7 @@ class TestCompoundObjectParser:
   
   def test_arrows(self):
     interp = []
-    parser.parse_compound_object('a->b->c', interp)
+    parser.parse_compound_object('a->b->c', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a', rel.MAPTO, 'b'),
@@ -64,7 +66,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('a-b->c-d', interp)
+    parser.parse_compound_object('a-b->c-d', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a-b', rel.MAPTO, 'c-d'),
@@ -73,7 +75,7 @@ class TestCompoundObjectParser:
     
   def test_slash(self):
     interp = []
-    parser.parse_compound_object('a-1/b-2/c-3', interp)
+    parser.parse_compound_object('a-1/b-2/c-3', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a-1', rel.GROUP_FOREACH, 'a-1/b-2'),
@@ -106,10 +108,27 @@ class TestCompoundObjectParser:
                           [
                             ('a-1', rel.TYPE, 'b-2'),
                           ])
+  
+  def test_validate_instance_dict(self):
+    key = 'affects'
+    assert parser.validate_instance_dict(key), f'`{key}` failed'
+
+    key = '/attribute-map <>'
+    assert parser.validate_instance_dict(key), f'`{key}` failed'
+
+    key = '/attribute-alias ='
+    assert parser.validate_instance_dict(key), f'`{key}` failed'
+
+    key = '/plain-attribute'
+    assert parser.validate_instance_dict(key), f'`{key}` failed'
+
+    with pytest.raises(AssertionError):
+      key = 'plain-word'
+      parser.validate_instance_dict(key), f'`{key}` failed'
     
   def test_imagined_compound_terms(self):
     interp = []
-    parser.parse_compound_object('a.b/c.d.e/f.g', interp)
+    parser.parse_compound_object('a.b/c.d.e/f.g', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a', rel.GROUP_FOREACH, 'a/c'),
@@ -121,7 +140,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('a/b->c.d/e->f/g.h', interp)
+    parser.parse_compound_object('a/b->c.d/e->f/g.h', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a/b', rel.MAPTO, 'c.d/e'),
@@ -135,7 +154,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('a.b.c->d.e.f->g.h', interp)
+    parser.parse_compound_object('a.b.c->d.e.f->g.h', '', interp)
     assert compare_interp(interp, 
                           [
                             ('a.b.c', rel.MAPTO, 'd.e.f'),
@@ -161,6 +180,18 @@ class TestCompoundObjectParser:
                             ('e', rel.GROUP_FOREACH, 'e/f'),
                           ])
     
+
+    interp = []
+    parse_str('b.c/d and y.z', interp=interp)
+    assert compare_interp(interp, 
+                          [
+                            ('b.c/d', rel.SUBSET, 'b.c/d and y.z'),
+                            ('b.c', rel.SUBSET, 'b'),
+                            ('b', rel.GROUP_FOREACH, 'b/d'),
+                            ('y.z', rel.SUBSET, 'b.c/d and y.z'),
+                            ('y.z', rel.SUBSET, 'y'),
+                          ])
+
     interp = []
     parse_str('(a) b.c/d and (x) y.z', interp=interp)
     assert compare_interp(interp, 
@@ -176,7 +207,7 @@ class TestCompoundObjectParser:
   
   def test_realistic_compound_objects(self):
     interp = []
-    parser.parse_compound_object('playhead->video/timestamps', interp)
+    parser.parse_compound_object('playhead->video/timestamps', '', interp)
     assert compare_interp(interp, 
                           [
                             ('playhead', rel.MAPTO, 'video/timestamps'),
@@ -185,7 +216,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('editors.current/timestamps.playhead', interp)
+    parser.parse_compound_object('editors.current/timestamps.playhead', '', interp)
     assert compare_interp(interp, 
                           [
                             ('editors', rel.GROUP_FOREACH, 'editors/timestamps'),
@@ -194,7 +225,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('folders.in-selected-path->items', interp)
+    parser.parse_compound_object('folders.in-selected-path->items', '', interp)
     assert compare_interp(interp, 
                           [
                             ('folders.in-selected-path', rel.MAPTO, 'items'),
@@ -203,7 +234,7 @@ class TestCompoundObjectParser:
                           ])
     
     interp = []
-    parser.parse_compound_object('channels.!dm', interp)
+    parser.parse_compound_object('channels.!dm', '', interp)
     assert compare_interp(interp, 
                           [
                             ('channels.!dm', rel.SUBSET, 'channels'),

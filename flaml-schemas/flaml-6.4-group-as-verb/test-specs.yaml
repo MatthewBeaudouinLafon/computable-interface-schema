@@ -30,17 +30,17 @@
           groups: messages
 
 - (gui) chat-view:
-    /marks: conversations.active->messages
-    /encoding.vstack:
+    /marks <>: conversations.active->messages
+    /encoding.vstack <>:
       (linear) time:
         affects: conversations.active->messages, conversations
 
 - (gui) convo-view:
-    /marks.text: conversations
-    /encoding.cluster:
+    /marks.text <>: conversations
+    /encoding.cluster <>:
       pin:
         groups: conversations
-    /encoding.vstack: time
+    /encoding.vstack <>: time
 # - editors:
 #     group foreach: # feels redundant if there's just one (but there could be more!!)
 #       - /videos =: videos.in-editor

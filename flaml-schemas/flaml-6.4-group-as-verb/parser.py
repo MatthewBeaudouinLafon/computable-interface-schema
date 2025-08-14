@@ -52,6 +52,10 @@ def make_edge(interp: list, source: str, relation: rel, target: str, verbose=Fal
   pretty_source = source
   pretty_relation = relation.name
   pretty_target = target
+
+  assert source is not None, f'`source` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
+  assert relation is not None, f'`relation` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
+  assert target is not None, f'`target` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
   if verbose:
     print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
 
@@ -74,7 +78,29 @@ def incrementally_aggregate(array: list, symbol: str):
 def strip_type(statement: str):
   return re.sub(r'\([\w\-]+\) ', '', statement)
 
-def parse_compound_object(statement: str, interp: list):
+"""
+Validate that the keys in an instance declaration's dictionary are well formed.
+
+(type) instance:
+  statement: ___
+
+statement can be of the forms:
+1. relation: _
+2. /attribute_map <>: _
+3. /attribute_alias =: _
+4. /attribute: _
+"""
+def validate_instance_dict(statement: str):
+  # NOTE: this could be a regex, but this is probably clearer and faster.
+  assert type(statement) is str, f'Type Error: `{statement}` should be a string'
+  is_relation = parse_relation(statement) is not None
+  is_attribute = statement[0] == '/'
+  is_valid = is_relation or is_attribute
+  assert is_valid, f'Key `{statement}` is an invalid key for an instance dict. \
+  {is_relation=} or {is_attribute=}'
+  return is_valid
+
+def parse_compound_object(statement: str, parent: str, interp: list):
   """
   Parses compound objects like files.selected->paths/icon.
 
@@ -84,16 +110,21 @@ def parse_compound_object(statement: str, interp: list):
    / means component (it's really a sort of group though)
    NOTE: `and` is parsed in the caller parse_str
   
-  NOTE: parse_str (which calls this) already prefixes terms that start with `/`
   NOTE: This function will result in a lot of duplicate relations if a compound
   item is called multiple times. We could cache results if things get out of hand.
-  NOTE: that this doesn't do anything with the statement, it only adds relations
-  to interp.
+  NOTE: This function returns a statement with / prefixed appropriately.
   """
   assert ' and ' not in statement, "Found `and` in compound parse_compound_object. This should be dealt with in parse_str."
 
   # 1. Parse ->
-  arrow_split = statement.split('->')
+  # First, prepend parent when the term starts with `/`
+  arrow_split = []
+  for phrase in statement.split('->'):
+    if phrase[0] == '/':
+      assert parent is not None, f'`{phrase}` starts with `/`, but its parent is None.'
+      phrase = parent+phrase
+    arrow_split.append(phrase)
+
   for arrow_idx, target in enumerate(arrow_split):
     if arrow_idx == 0:
       # Skip the first item. If there's only one item, then we'll just move on.
@@ -101,12 +132,16 @@ def parse_compound_object(statement: str, interp: list):
     source = arrow_split[arrow_idx-1]
     make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
   
+  # NOTE: we do this join instead of using the original statement because
+  # we may have prepended parents to /phrases
+  rebuilt_statement = '->'.join(arrow_split)
+
   # a->b->c -SUBSET-> c
   # NOTE: This is arguably the compiler's job, but since this is only true when
   # using inline arrow notation it makes sense to have it here. This might not be
   # worth it if it adds useless nodes.
   if len(arrow_split) > 1:
-    make_edge(interp=interp, source=statement, relation=rel.SUBSET, target=arrow_split[-1])
+    make_edge(interp=interp, source=rebuilt_statement, relation=rel.SUBSET, target=arrow_split[-1])
 
   # Parse . and / together. 
   # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
@@ -138,6 +173,10 @@ def parse_compound_object(statement: str, interp: list):
       prev_aggregated_term =  aggregated_leading_terms[idx-1]
       # TODO: If this is setup when the /terms are defined, then it doesn't need to be defined here?
       # In other words, this just let's you declare /terms, which might be fine but not sure.
+
+      # TODO: I think this make_edge causes more trouble than it's worth. GROUP_EACH relations should
+      # be defined through relations, rather than these compound objects. With it, it produces a ton
+      # of redundant edges (eg. for views)
       make_edge(
         interp=interp, 
         source=prev_aggregated_term, relation=rel.GROUP_FOREACH, target=aggregated_term
@@ -167,7 +206,7 @@ def parse_compound_object(statement: str, interp: list):
         next_dot_agg = dot_aggregates[d_idx + 1]
         make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
 
-  return statement
+  return rebuilt_statement
 
 def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str:
   """
@@ -184,11 +223,16 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   # Syntax for inline aliasing
   if statement[-2:] == " =":  # TODO: do as regex to make the space optional (see other)
     statement = statement[:-2] # trim alias syntax
+  
+  # Syntax for attribute maps
+  if statement[-3:] == " <>":
+    statement = statement[:-3] # trim mapping syntax
 
   # Syntax for defining new types
   if str(statement[:3]) == "def":
     print(' '*depth+"definition:", statement)
     # TODO: finish
+    return None
   
   # Parse `and` statement and recurse on each phrase
   if ' and ' in statement:
@@ -206,24 +250,29 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     return statement_without_types
       
   # Syntax for instantiation eg. (linear) alphabetical
-  if type_match := re.match(r'^\((?P<type>[\w\-]+)\) (?P<instance>[\w\-]+)', statement):
-    # extract type=`type` and instance='thingy' in `(type) thingy`.
+  if type_match := re.match(r'^\((?P<type>[\w\-]+)\) (?P<instance>[\w\-\.\/>]+)', statement):
+    # extract type=`type` and instance='thingy.xyz' in `(type) thingy.xyz`.
+    # NOTE: ?P<instance> captures compound statements like a.b->c/d
     # NOTE: the match will fail if it doesn't get both. So if you only provide 
     # the type, it will not match, which might come across as a silent failure.
     extracted_type = type_match.group('type')
     extracted_instance = type_match.group('instance')
-    make_edge(interp=interp, source=extracted_type, relation=rel.TYPE, target=extracted_instance)
 
-    statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
-  
-  # Syntax for attributes
-  elif statement[0] == '/':
-    assert parent is not None, 'The statement starts with `/`, but it does not have a parent.'
-    statement = parent+statement
+    # If we're declaring a typed attribute eg. (linear) /timeline, prefix the parent
+    # NOTE: maybe this should use parse_compound_object, but that feels overkill.
+    if extracted_instance[0] == '/':
+      # TODO: handle None parent
+      extracted_instance = parent + extracted_instance
+
+    # TYPE relation only applies to the first part of a compound phrase, so we grab that with a regex.
+    first_instance_word = re.match(r'^[\w\-\/]+', extracted_instance.split('->')[0]).group()
+    make_edge(interp=interp, source=extracted_type, relation=rel.TYPE, target=first_instance_word)
+    # statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
+    statement = extracted_instance
 
   # Compound objects have these characters.
   if '.' in statement or '->' in statement or '/' in statement:
-    parse_compound_object(statement=statement, interp=interp)
+    statement = parse_compound_object(statement=statement, parent=parent, interp=interp)
   
   # Just a normal string, no bells or whistles.
   else:
@@ -247,9 +296,9 @@ def parse_relation(statement: str) -> rel|None:
     return rel.AFFECTS
   elif statement in ('covers'):
     return rel.COVERS
-  elif statement in ('groups'):
+  elif statement in ('groups', 'group'):
     return rel.GROUP
-  elif statement in ('groups foreach'):
+  elif statement in ('groups foreach', 'group foreach'):
     return rel.GROUP_FOREACH
   elif statement in ('subgroups'):
     print('TODO: How do subgroups work??')
@@ -260,7 +309,7 @@ def parse_relation(statement: str) -> rel|None:
   
   return None
 
-def parse_list(statements: list, parent: str|None, interp: list, depth: int):
+def parse_list(statements: list, key_parent: str|None, val_parent: str|None, interp: list, depth: int):
   """
   Parses every item in the list and returns a list of identifiers for the parent to use.
   It passes its parent down to its items.
@@ -270,13 +319,13 @@ def parse_list(statements: list, parent: str|None, interp: list, depth: int):
   results = []
   for statement in statements:
     if type(statement) is str:
-      results.append(parse_str(statement, parent=parent, interp=interp, depth=depth+1))
+      results.append(parse_str(statement, parent=val_parent, interp=interp, depth=depth+1))
     elif type(statement) is dict:
-      results.append(parse_dict(statement, parent=parent, interp=interp, depth=depth+1))
+      results.append(parse_dict(statement, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1))
   
   return results
 
-def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
+def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, interp: list, depth: int):
   """
   Dictionaries are used in a few ways.
 
@@ -284,6 +333,16 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
   2. If the key starts with /, then it declares: parent/key-mapto-value.
   3. If there's a single key and its value is a list/dict,
     then its the parent to declaration involving the items in its value.
+  
+  In some cases, dictionaries use different parents for their keys and their values.
+  This is useful when instantiating objects, since the left hand side will be attributes
+  of the instance, whereas the right hand side will inherit previous val_parents.
+  eg.
+  (my-type) my-instance:
+    (gui) /view:
+      /marks: /my-attribute  # key_parent=my-instance/view    val_parent=my-instance
+  
+  This gets tricky when parsing keys that start with `/`.
   """
   assert type(statement) is dict
   # TODO: rename the key/value to something more semantically meaningful. That
@@ -291,8 +350,8 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
 
   for key, value in statement.items():
     # TODO: validate key
-    # TODO: validate value ie. don't allow `=` etc.
-    parsed_key = parse_str(key, parent=parent, interp=interp, depth=depth+1)
+    # TODO: validate value
+    parsed_key = parse_str(key, parent=key_parent, interp=interp, depth=depth+1)
 
     # 1. If the key is a relation, then it declares: parent -relation-> value(s).
     relation = parse_relation(key)
@@ -300,54 +359,96 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
       if type(value) is str and ',' in value:
         # NOTE: this currently should only be used for YAML values. We might want
         # to support commas in the YAML keys.
-        value = value.split(',')  # the if block handles based on type.
+        value = value.split(',')  # becomes a list
 
       if type(value) is str:
-        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
-        make_edge(interp, source=parent, relation=relation, target=parsed_value)
+        # Since this is the value, we just pass val_parent as parent.
+        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+
+        # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
+        make_edge(interp, source=key_parent, relation=relation, target=parsed_value)
       elif type(value) is list:
         # if the value is a list, then we make a relation for each item
-        value_items = parse_list(value, parent=parsed_key, interp=interp, depth=depth+1)
+        # NOTE: Key/val parent doesn't really matter here, parse_list will just pass it down.
+        value_items = parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1)
 
         for item in value_items:
-          make_edge(interp, source=parent, relation=relation, target=item)
+          # parent (from key) relates to each item
+          make_edge(interp, source=key_parent, relation=relation, target=item)
       elif type(value) is dict:
         # TODO: figure out if this is necessary.
         assert False, f"Value condition not met. That's weird. value={value}"
-        parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
+        # parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
     
     # 2. If the key starts with /, then it declares: parent/key -mapto-> value.
     elif key[0] == '/':
       # TODO: this is also used to map between structures, which is... meh
-      relation = rel.MAPTO
+      relation = None
+      next_key_parent = None
+      next_val_parent = None
 
-      # Syntax for alias relations
-      if key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
+      if key[-3:] == " <>":
+        # Syntax for Instance Attribute Map eg.
+        # (gui) view:
+        #   /marks <>: my-cool-thing    <--- mapping attributes
+        relation = rel.MAPTO
+        # Right hand side (my-cool-thing) just gets the value parent
+        next_key_parent = val_parent  
+        next_val_parent = val_parent
+
+      elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
+        # Syntax for alias relations eg.
+        # (linear) alphabet:
+        #   /first =: characters.a      <--- making alias
         relation = rel.ALIAS
+        # Right hand side (characters.a) just gets the value parent
+        next_key_parent = val_parent
+        next_val_parent = val_parent
       
-      parsed_value = None
-      if type(value) is str:
-        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
-      elif type(value) is dict:
-        parsed_value = parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
       else:
-        # NOTE: I don't think this is ever a list
-        assert False, f"Value condition not met. That's weird. value={value}"
-
-      # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
-      # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
-      make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
+        # This is defining or using an Instance Attribute Object eg.
+        # (type) instance:
+        #   - /my-attribute:    <--- Instance Attribute Object 
+        #       groups: stuff  (<- can have a child dictionary)
+        # -- or --
+        # (type) instance:
+        #   - (gui) view:
+        #       /marks <>:
+        #         /my-attribute <--- Instance Attribute Object (not marks!)
+        # -- or --
+        # (tree) instance:
+        #   /depth-order:       <--- Instance Attribute Object
+        #     affects: something
+        relation = None
+        # If /my-attribute maps to a dict, we want its keys to use parse_str('/my-attribute)
+        # This is basically the same as a type definition eg. (linear) alphabet: ...
+        next_key_parent = parsed_key
+        next_val_parent = val_parent
+        # NOTE: no edges added. Could *maybe* add the group foreach, but I'm a level too low I think.
+      
+      if relation is not None:
+        parsed_value = None
+        if type(value) is str:
+          parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+        elif type(value) is dict:
+          parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
+        else:
+          # NOTE: I don't think this is ever a list
+          assert False, f"Value condition not met. That's weird. {value=}"
+        # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
+        # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
+        make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
 
     # Syntax for alias relations
     elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
       # TODO: repeated code with the alias check `elif key[0] == '/'`. Could abstract as a function?
       if type(value) is str:
-        parsed_value = parse_str(value, parent=parsed_key, interp=interp, depth=depth+1)
+        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
         make_edge(interp=interp, source=parsed_value, relation=rel.ALIAS, target=parsed_key)
 
       elif type(value) is list:
         # NOTE: I didn't intend for this to be listable, but it's kind of cool
-        for list_parsed_value in parse_list(value, parent=parsed_key, interp=interp, depth=depth+1):
+        for list_parsed_value in parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1):
           make_edge(interp=interp, source=parsed_key, relation=rel.ALIAS, target=list_parsed_value)
 
       else:
@@ -358,22 +459,40 @@ def parse_dict(statement: dict, parent: str|None, interp: list, depth: int):
     # 3. If there's a single key and its value is a list/dict,
     #    then its the parent to declaration involving the items in its value.
     elif type(value) is list:
-      parse_list(value, parent=parsed_key, interp=interp, depth=depth+1)
-    elif type(value) is dict:
-      parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
+      parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1)
+    
+    elif type(value) is dict:  
+      # There are two scenarios in which you pass down your name as parents for children.
+      # a. you have a group_foreach relation
+      if rel.GROUP_FOREACH in map(lambda x: parse_relation(x), value.keys()):
+        # In this case, the key is the source of the relation and one of the values is `group_foreach`
+        # Therefore, the key and value parents are relation source aka parsed_key
+        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1)
+      
+      # b. you are an instance statement that's not an element of a parent
+      # TODO: probably use proper regex...
+      elif key[0] == '(':
+        # key parent is the instance name, while val parent is the previous val parent
+        # This is an intentional bifurcation of parents.
+        parse_dict(value, key_parent=parsed_key, val_parent=val_parent, interp=interp, depth=depth+1)
+
+      else:
+        # If the key is just a variable name, then it's just an object with group/foreach relation
+        # Just pass it down to the values as parents.
+        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1)
     else:
       assert False, f"Key condition not met. That's very weird. key='{key}'"
   
   # Dictionaries that need to return an identifier always have one key.
   if len(statement.keys()) == 1:
-    return parse_str(list(statement.keys())[0], parent=parent, interp=interp, depth=depth)
+    return parse_str(list(statement.keys())[0], parent=key_parent, interp=interp, depth=depth)
   return
 
 def make_relations(spec, verbose=False):
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
 
   interp = []
-  parse_list(spec, parent=None, interp=interp, depth=0)
+  parse_list(spec, key_parent=None, val_parent=None, interp=interp, depth=0)
 
   if verbose:
     print(pformat(spec))

@@ -1,5 +1,10 @@
 # This version aims to harmonize covers, groups and containers, basically combining them as groups.
 # It also introduces 'derived groups' as the way to avoid repeating yourself. The group then indexes into each use.
+# 6.4.1: Add the <> icon for instance attributes to disambiguate with creating attribute objects.
+#        eg. my-object:                           # object
+#              group foreach:                     # relation
+#               - (gui) my-view:                  # instance
+#                   /marks <>: /my-object-attribute  # instance mapping: instance attribute
 
 # any-expression: object-expression | struct-expression | view-expression | action-expression
 

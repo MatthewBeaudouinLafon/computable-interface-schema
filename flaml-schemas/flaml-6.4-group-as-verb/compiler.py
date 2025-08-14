@@ -4,11 +4,36 @@ import parser
 from parser import rel
 
 # --- Helpers
+"""
+Find an alias if it exists.
+"""
 def lookup_alias(alias_registry: dict[str, str], name: str):
   alias_name = alias_registry.get(name, None)
   if alias_name is not None:
     return alias_name
   return name
+
+"""
+Convert a relation to source ilk.
+If an object is the source to a relation, it implies that the source is of a
+certain ilk.
+NOTE: let's assume that there must be a single ilk and see if we run into trouble.
+"""
+def convert_relation_to_ilk(relation: rel):
+  match relation:
+    case rel.MAPTO | rel.SUBSET | rel.ALIAS | rel.TBD | rel.GROUP | rel.GROUP_FOREACH:
+      return None
+    
+    # TODO: this will collide with affects for linear etc. so need to think it through
+    # case rel.GROUP | rel.GROUP_FOREACH:
+    #   return 'group'
+
+    case rel.AFFECTS | rel.COVERS:
+      return 'structure'
+    
+    case rel.TYPE:
+      return 'type-definition'
+  assert False, f'Relation has not matching ilk. {relation=}'
 
 # --- Compile
 def compile(file_path: str, verbose=False):
@@ -46,6 +71,10 @@ def compile_interp(interp: list, verbose=False):
 
     graphs[relation_enum] = nx.DiGraph()
   
+  type_registry = {}  # node: type
+  ilk_registry = {}   # node: ilk
+  
+  # --- Alias pass
   # Use a different data structure for alias. Keys are original names, 
   # a = b = c =>
   #   alias_registry = {
@@ -82,27 +111,49 @@ def compile_interp(interp: list, verbose=False):
     target = lookup_alias(alias_registry, line['target'])
 
     if relation in (rel.TBD, rel.ALIAS):
-      vprint('Skipping: ', line)
+      vprint('Skipping due to relation type: ', line)
       continue
+
+    if relation == rel.TYPE:
+      # Tagging types as nodes reduces proliferating vertices (expensive)
+      # but it's just as expressive as using edges.
+      # NOTE: rel.TYPE is added to the graph after compose_all to avoid
+      # losing attributes to the graph composition.
+
+      # Tag node (target) with the type (source)
+      type_registry[target] = source
+      continue    
 
     vprint(f'{source} -{relation.name}-> {target}')
-
-    # Tag node (target) with the type (source)
-    # NOTE: This helps prevent the proliferation of nodes and is just as powerful.
-    if relation == rel.TYPE:
-      rel_graph.add_node(target, type=source)
-      continue
-
     rel_graph = graphs[relation]
-    # NOTE: the relation attribute is then carried through to the composed graph at the end
+
+    # NOTE: ilk is added to the graph after compose_all to avoid
+    # losing attributes to the graph composition.
+    source_ilk = convert_relation_to_ilk(relation)
+    if source_ilk is not None:
+      assert ilk_registry.get(source) is None or ilk_registry.get(source) == source_ilk, f'Node already has an ilk (node={source}, ilk={ilk_registry.get(source)}) cannot give it another ilk (ilk={source_ilk})'
+      ilk_registry[source] = source_ilk
+
+    # Finally add edge
     rel_graph.add_edge(source, target, relation=relation.name)
 
   # --- Combine graphs
   # NOTE: if multiple graphs use the same node-attribute, then compose_all will
   # use the last one. Seems like a footgun to me!
-  return nx.compose_all(
+  combined_graph = nx.compose_all(
     [nx.MultiDiGraph(graph) for graph in graphs.values()]
   )
+
+  # - Assign types
+  for node, node_type in type_registry.items():
+    combined_graph.add_node(node, type=node_type)
+  
+  # - Assign ilk
+  for node, node_type in ilk_registry.items():
+    combined_graph.add_node(node, ilk=node_type)
+
+  return combined_graph
+
 
 def mermaid_graph(graph: nx.MultiDiGraph, verbose=False):
   if verbose:

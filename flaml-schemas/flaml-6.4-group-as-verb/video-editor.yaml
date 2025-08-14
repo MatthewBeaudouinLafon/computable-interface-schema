@@ -1,9 +1,9 @@
-- def (video):
-    group foreach:
-      - /timestamps->/images
-      - (linear) /timeline:
-          affects: /images
-          /first =: /images.first
+# - def (video):
+#     group foreach:
+#       - /timestamps->/images
+#       - (linear) /timeline:
+#           affects: /images
+#           /first =: /images.first
 
 - (video) videos
 
@@ -11,37 +11,37 @@
     group foreach: # feels redundant if there's just one (but there could be more!!)
       - /videos =: videos.in-editor
       - /videos:
-          /timestamps: editor/timestamps
-          /timeline: editor/time
+          /timestamps <>: editor/timestamps
+          /timeline <>: editor/time
       - (linear) /timeline:
           affects: /timestamps
           covers: /videos
       - (gui) /view:
-          /marks.vline: /timestamps
-          /marks.rectangles: /videos
-          /encoding.hstack: /timeline
-          /encoding.cluster:
+          /marks.vline <>: /timestamps
+          /marks.rectangles <>: /videos
+          /encoding.hstack <>: /timeline
+          /encoding.cluster <>:
             /tracks:
               groups: /videos
 
 - (gui) media-pool:
-    /marks: videos
-    /encoding.hwrap:
+    /marks <>: videos
+    /encoding.hwrap <>:
       (linear) sort-order:
         affects: videos
 
-- def (video-player):
-    arguments: (video) video, playhead
-    group foreach:
-      - (gui) image-view:
-          /marks.image: video/images.current
-      - (gui) scrubber-view:
-          /marks.points: video/timestamps
-          /marks.icon: playhead->video/timestamps
-          /encoding.hstack: video/timeline
-      - (gui) view:
-          /marks: image-view and scrubber-view
-          /encoding.vstack: _
+# - def (video-player):
+#     arguments: (video) video, playhead
+#     group foreach:
+#       - (gui) image-view:
+#           /marks.image <>: video/images.current
+#       - (gui) scrubber-view:
+#           /marks.points <>: video/timestamps
+#           /marks.icon <>: playhead->video/timestamps
+#           /encoding.hstack <>: video/timeline
+#       - (gui) view:
+#           /marks <>: image-view and scrubber-view
+#           /encoding.vstack <>: _
 
 - (video-player) timeline-preview:
     /video =: editor/composited-video # kind of a hack?
