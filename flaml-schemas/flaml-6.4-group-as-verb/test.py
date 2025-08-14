@@ -32,9 +32,6 @@ def compare_interp(test, expected: list[tuple], verbose=False):
    
   return True
 
-def compare_parse(test, expected, verbose=False):
-  return test == expected
-
 class TestCompoundObjectParser:
   def test_subsets(self):
     interp = []
@@ -257,19 +254,22 @@ class TestCompoundObjectParser:
                             ('numerical->interval-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
                             ('numerical', rel.MAPTO, 'interval-info'),
                           ])
-    
+
+
 class TestRecursiveDescent:
   def test_group(self):
-    relations = parser.make_relations(parser.spec_from_string("""
+    interp = parser.make_relations(parser.spec_from_string("""
 - thing:
     groups: other-thing
 """))
-    compare_parse(relations, 
+    compare_interp(interp, 
                   [
                     ('thing', rel.GROUP, 'other-thing')
                   ])
     
-    
+  # def test_type_relation(self):
+
+
 
 class TestSpecParser:
   def test_spec_parser(self):
