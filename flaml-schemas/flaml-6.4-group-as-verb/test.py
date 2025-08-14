@@ -11,12 +11,6 @@ from parser import rel
 def parse_str(statement: str, interp: list):
   return parser.parse_str(statement=statement, parent=None, interp=interp, depth=0)
 
-def interp_as_tuple(interp):
-  res = []
-  for relation in interp:
-    res.append((relation['source'], relation['relation'], relation['target']))
-  return res
-
 def compare_interp(test, expected: list[tuple], verbose=False):
   assert type(test) == list, f'Expected list, got `{type(test)}` instead.'
 
@@ -25,18 +19,21 @@ def compare_interp(test, expected: list[tuple], verbose=False):
   
   expected_dict = dict(list(map(lambda x: (x, 0), expected)))
 
-  for t in interp_as_tuple(test):
+  for edge in test:
     if verbose:
-      print(f'{t[0]} -{t[1]}-> {t[2]}')
-    if t not in expected_dict:
+      parser.print_edge(edge)
+    if edge not in expected_dict:
       # TODO: instead of asserting, collect and print all of the issues.
-      assert False, f'Result includes `{t}`, which is not part of the expected interp.'
-    expected_dict[t] += 1
+      assert False, f'Result includes `{edge}`, which is not part of the expected interp.'
+    expected_dict[edge] += 1
   
   unfound_relations = [relation for relation, count in expected_dict.items() if count == 0]
   assert len(unfound_relations) == 0, f'The following relations were expected: {unfound_relations}'
    
   return True
+
+def compare_parse(test, expected, verbose=False):
+  return test == expected
 
 class TestCompoundObjectParser:
   def test_subsets(self):
@@ -260,9 +257,22 @@ class TestCompoundObjectParser:
                             ('numerical->interval-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info'),
                             ('numerical', rel.MAPTO, 'interval-info'),
                           ])
+    
+class TestRecursiveDescent:
+  def test_group(self):
+    relations = parser.make_relations(parser.spec_from_string("""
+- thing:
+    groups: other-thing
+"""))
+    compare_parse(relations, 
+                  [
+                    ('thing', rel.GROUP, 'other-thing')
+                  ])
+    
+    
 
 class TestSpecParser:
   def test_spec_parser(self):
-    spec = parser.parse_yaml('test-specs.yaml')
+    spec = parser.spec_from_file('test-specs.yaml')
     parser.make_relations(spec)
     # assert False

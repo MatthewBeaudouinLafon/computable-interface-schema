@@ -14,11 +14,15 @@ import re
 import enum
 from enum import Enum
 
-def parse_yaml(file_path):
+def spec_from_file(file_path):
   real_path = Path(__file__).with_name(file_path)  # https://stackoverflow.com/a/65174822
   with open(real_path, "r") as file_handle:
     spec = yaml.safe_load(file_handle)
   return spec
+
+def spec_from_string(yaml_str: str):
+  assert type(yaml_str) is str
+  return yaml.safe_load(yaml_str)
 
 # --- interpreted relations
 class rel(Enum):
@@ -44,20 +48,34 @@ def make_edge(interp: list, source: str, relation: rel, target: str, verbose=Fal
   """
   Declares an edge in the graph by appending it to interp.
   """
-  interp.append({
-    'source': source,
-    'relation': relation,
-    'target': target
-  })
-  pretty_source = source
-  pretty_relation = relation.name
-  pretty_target = target
+  interp.append((source, relation, target))
 
-  assert source is not None, f'`source` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
-  assert relation is not None, f'`relation` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
-  assert target is not None, f'`target` cannot be None in: {pretty_source}  -{pretty_relation}->  {pretty_target}'
+  pretty_relation = relation.name
+
+  assert source is not None, f'`source` cannot be None in: {source}  -{pretty_relation}->  {target}'
+  assert relation is not None, f'`relation` cannot be None in: {source}  -{pretty_relation}->  {target}'
+  assert target is not None, f'`target` cannot be None in: {source}  -{pretty_relation}->  {target}'
   if verbose:
-    print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
+    print(f'{source}  -{pretty_relation}->  {target}')
+
+def get_edge_source(interp: list):
+  return interp[0]
+
+def get_edge_relation(interp: list):
+  return interp[1]
+
+def get_edge_target(interp: list):
+  return interp[2]
+
+def print_edge(edge: tuple):
+  source = get_edge_source(edge)
+  relation = get_edge_relation(edge).name
+  target = get_edge_target(edge)
+  print(f'{source}  -{relation}->  {target}')
+
+def print_interp(interp: list):
+  for edge in interp:
+    print_edge(edge)
 
 # --- Parse spec
 def incrementally_aggregate(array: list, symbol: str):
@@ -497,10 +515,6 @@ def make_relations(spec, verbose=False):
   if verbose:
     print(pformat(spec))
     print('\nresult:')
-    for line in interp:
-      pretty_source = line['source']
-      pretty_relation = line['relation'].name
-      pretty_target = line['target']
-      print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
+    print_interp(interp)
 
   return interp

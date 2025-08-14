@@ -37,15 +37,11 @@ def convert_relation_to_ilk(relation: rel):
 
 # --- Compile
 def compile(file_path: str, verbose=False):
-  spec = parser.parse_yaml(file_path)
+  spec = parser.spec_from_file(file_path)
   interp = parser.make_relations(spec)
   if verbose:
     print('\n --- Parsing spec ---')
-    for line in interp:
-      pretty_source = line['source']
-      pretty_relation = line['relation'].name
-      pretty_target = line['target']
-      print(f'{pretty_source}  -{pretty_relation}->  {pretty_target}')
+    parser.print_interp(interp)
 
   return compile_interp(interp, verbose=verbose)
 
@@ -85,9 +81,9 @@ def compile_interp(interp: list, verbose=False):
   # We do a pass on interp to get the aliases, since we'll use them for the other
   # graphs after.
   for line in interp:
-    source = line['source']
-    relation = line['relation']
-    target = line['target']
+    source = parser.get_edge_source(line)
+    relation = parser.get_edge_relation(line)
+    target = parser.get_edge_target(line)
 
     if relation == rel.ALIAS:
       graphs[rel.ALIAS].add_edge(source, target, relation=rel.ALIAS)
@@ -106,9 +102,9 @@ def compile_interp(interp: list, verbose=False):
   # NOTE: since these are DiGraphs, there is at most one directed edge between 
   # two nodes. This means that duplicate relations are automatically delt with.
   for line in interp:
-    source = lookup_alias(alias_registry, line['source'])
-    relation = line['relation']
-    target = lookup_alias(alias_registry, line['target'])
+    source = lookup_alias(alias_registry, parser.get_edge_source(line))
+    relation = parser.get_edge_relation(line)
+    target = lookup_alias(alias_registry, parser.get_edge_target(line))
 
     if relation in (rel.TBD, rel.ALIAS):
       vprint('Skipping due to relation type: ', line)
