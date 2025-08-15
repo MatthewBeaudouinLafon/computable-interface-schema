@@ -3,6 +3,9 @@ import networkx as nx
 import parser
 from parser import rel, dpower
 
+import sys
+import os
+
 # --- Helpers
 """
 Find an alias if it exists.
@@ -233,5 +236,19 @@ def mermaid_graph(graph: nx.MultiDiGraph, verbose=False):
 
 if __name__ == '__main__':
   # test_graph = compile('test-specs.yaml', verbose=True)
-  test_graph = compile('video-editor.yaml', verbose=True, ignore_decl_strength=False)
-  mermaid_graph(test_graph, verbose=True)
+  specs = ['calendar.yaml']
+  if len(sys.argv) > 0:
+    specs = sys.argv
+  
+  for spec_file in specs:
+    assert type(spec_file) is str
+    if spec_file[-5:] != '.yaml':
+      print(f'Skipping `{spec_file}` because it\'s not yaml')
+      continue
+
+    if not os.path.exists(spec_file):
+      print(f'Skipping `{spec_file}` because it does not exist.')
+      continue
+
+    test_graph = compile(spec_file, verbose=False, ignore_decl_strength=False)
+    mermaid_graph(test_graph, verbose=True)
