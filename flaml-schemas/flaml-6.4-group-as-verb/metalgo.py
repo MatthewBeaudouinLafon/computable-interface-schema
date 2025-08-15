@@ -117,14 +117,13 @@ def print_analogy(analogy: Analogy):
   # TODO: take the graphs as parameters to list the insertions and deletions
   print("- nodes")
   for sinister_node, dexter_node in analogy[0].items():
-    print(f"{sinister_node} = {dexter_node}")
+    print(f"{sinister_node:>30} <=> {dexter_node:<30}")
 
   print("\n- edges")
   for sinister_node, dexter_node in analogy[1].items():
     lhs = f"{sinister_node[0]} ~ {sinister_node[1]}"
     rhs = f"{dexter_node[0]} ~ {dexter_node[1]}"
-    print(f"{lhs} = {rhs}")
-
+    print(f"{lhs:>50} <=> {rhs:<50}")
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
@@ -175,6 +174,9 @@ provided in the prep_analogy
 def compute_analogy(
   sinister_graph, dexter_graph, timeout: int = 1 * 60, verbose=False
 ):
+  if verbose:
+    print('\n-- Starting Analogy --')
+
   geds = nx.optimize_edit_paths(
     sinister_graph,
     dexter_graph,
@@ -225,6 +227,6 @@ def compute_analogy(
   return analogy, cost
 
 if __name__ == '__main__':
-  # sinister_graph = compiler.compile('calendar.yaml')
-  dexter_graph = compiler.compile('video-editor.yaml', verbose=True)
-  # analogy = compute_analogy()
+  sinister_graph = compiler.compile('calendar.yaml')
+  dexter_graph = compiler.compile('video-editor.yaml')
+  analogy = compute_analogy(sinister_graph, dexter_graph, verbose=True)
