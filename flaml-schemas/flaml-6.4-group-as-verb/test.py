@@ -16,7 +16,6 @@ def compare_interp(test, expected: list[tuple], verbose=False):
 
   # NOTE: We could check the the lenghts are the same, but then we couldn't get
   # an error telling us where the mismatch is.
-  
   expected_dict = dict(list(map(lambda x: (x, 0), expected)))
 
   for edge in test:
@@ -24,11 +23,11 @@ def compare_interp(test, expected: list[tuple], verbose=False):
       parser.print_edge(edge)
     if edge not in expected_dict:
       # TODO: instead of asserting, collect and print all of the issues.
-      assert False, f'Result includes `{edge}`, which is not part of the expected interp.'
+      assert False, f'Test includes `{edge}`, which is not part of the expected interp.'
     expected_dict[edge] += 1
   
   unfound_relations = [relation for relation, count in expected_dict.items() if count == 0]
-  assert len(unfound_relations) == 0, f'The following relations were expected: {unfound_relations}'
+  assert len(unfound_relations) == 0, f'The following relations were expected edges, but not found in the test:{unfound_relations}'
    
   return True
 
@@ -257,18 +256,170 @@ class TestCompoundObjectParser:
 
 
 class TestRecursiveDescent:
+  # --- Testing base cases
   def test_group(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - thing:
     groups: other-thing
 """))
-    compare_interp(interp, 
+    assert compare_interp(interp, 
                   [
                     ('thing', rel.GROUP, 'other-thing')
                   ])
     
-  # def test_type_relation(self):
+  def test_type_relation(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (linear) alphabetical
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('linear', rel.TYPE, 'alphabetical')
+                  ])
+    
+  def test_compound_relation(self):
+    # Check that putting something in the list is the same as using the compound_object function
+    compound_expression = 'a.b and c->d and e/f'
+    file_interp = parser.make_relations(parser.spec_from_string(f"""
+- {compound_expression}
+"""))
 
+    string_interp = []
+    parser.parse_str(compound_expression, parent=None, interp=string_interp, depth=0)
+    assert compare_interp(file_interp,string_interp)
+
+  # --- Testing recursive features
+  def test_structure(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (linear) alphabetical:
+    affects: people
+    covers: words
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('linear', rel.TYPE, 'alphabetical'),
+                    ('alphabetical', rel.AFFECTS, 'people'),
+                    ('alphabetical', rel.COVERS, 'words'),
+                  ])
+    
+  def test_structure_attribute_alias(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (linear) alphabetical:
+    /first =: a
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('linear', rel.TYPE, 'alphabetical'),
+                    ('alphabetical', rel.GROUP_FOREACH, 'alphabetical/first'),
+                    ('a', rel.ALIAS, 'alphabetical/first'),
+                  ])
+    
+  def test_structure_attribute_mapping(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (gui) chat-view:
+    /marks <>: messages
+    /encoding <>: time
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('gui', rel.TYPE, 'chat-view'),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks'),
+                    ('messages', rel.MAPTO, 'chat-view/marks'),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding'),
+                    ('time', rel.MAPTO, 'chat-view/encoding'),
+                  ])
+
+  def test_group_attributes(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- editors:
+    group foreach:
+      - /videos
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos')
+                  ])
+    
+  def test_group_attribute_alias(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- editors:
+    group foreach:
+      - /videos =: videos-in-editor
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos'),
+                    ('videos.in-editor', rel.ALIAS, 'editors/videos'),
+                  ])
+
+    
+  def test_group_attribute_alias(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- editors:
+    group foreach:
+      - /videos <>: videos-in-editor
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos'),
+                    ('videos-in-editor', rel.MAPTO, 'editors/videos'),
+                  ])
+  
+  def test_inline_structure_definition(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (gui) chat-view:
+    /marks <>: messages
+    /encoding <>:
+        (linear) time:
+            affects: messages
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('gui', rel.TYPE, 'chat-view'),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks'),
+                    ('messages', rel.MAPTO, 'chat-view/marks'),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding'),
+                    ('time', rel.MAPTO, 'chat-view/encoding'),
+                    ('linear', rel.TYPE, 'time'),
+                    ('time', rel.AFFECTS, 'messages'),
+                  ])
+  
+  def test_attribute_structure(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- editors:
+    group foreach:
+      - (linear) /timeline:
+          affects: /timestamps
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('editors', rel.GROUP_FOREACH, 'editors/timeline'),
+                    ('editors', rel.GROUP_FOREACH, 'editors/timestamps'),
+                    ('linear', rel.TYPE, 'editors/timeline'),
+                    ('editors/timeline', rel.AFFECTS, 'editors/timestamps'),
+                  ])
+    
+  def test_group_of_structure_with_attributes(self):
+    # The turbo nest
+    interp = parser.make_relations(parser.spec_from_string("""
+- editors:
+    group foreach: # feels redundant if there's just one (but there could be more!!)
+      - (gui) /view:
+          /encoding.cluster <>:
+            /tracks:
+              groups: /videos
+"""))
+    parser.print_interp(interp)
+    assert compare_interp(interp, 
+                  [
+                    ('editors', rel.GROUP_FOREACH, 'editors/view'),
+                    ('gui', rel.TYPE, 'editors/view'),
+                    ('editors/view', rel.GROUP_FOREACH, 'editors/view/encoding'),
+                    ('editors/view/encoding.cluster', rel.SUBSET, 'editors/view/encoding'),
+                    ('editors/tracks', rel.MAPTO, 'editors/view/encoding.cluster'),
+                    ('editors', rel.GROUP_FOREACH, 'editors/tracks'),
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos'),
+                    ('editors/tracks', rel.GROUP, 'editors/videos'),
+                  ])
 
 
 class TestSpecParser:

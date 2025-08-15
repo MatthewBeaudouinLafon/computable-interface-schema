@@ -1,13 +1,17 @@
 # Google Calendar
+# - thing:
+#     group foreach:
+#       - /attribute
+
 - (gui) week-view:
-    /marks.hline: weeks.active->timestamps
-    /marks.rectangles: weeks.active->events
-    /encoding.vstack:
+    /marks.hline <>: weeks.active->timestamps
+    /marks.rectangles <>: weeks.active->events
+    /encoding.vstack <>:
       (linear) time:
         affects: timestamps
         covers: events, days, weeks, months
-    /encoding.cluster: days
+    /encoding.cluster <>: days
 
 - (gui) mini-month-view:
-    /marks.text: months.selected->days
-    /marks.hwrap: time
+    /marks.text <>: months.selected->days
+    /marks.hwrap <>: time

@@ -234,6 +234,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   """
   assert type(statement) is str, f'Type error, expected str got {type(statement)}'
   # TODO: a bunch of string validation eg. only valid characters, etc.
+  print(f'parsed_str    : {statement=}')
 
   # Strip leading and trailing whitespace
   statement = statement.strip()
@@ -437,22 +438,27 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         # (tree) instance:
         #   /depth-order:       <--- Instance Attribute Object
         #     affects: something
+        # NOTE: This should only be hit when declaring attributes in foreach block
+        #       A simple mistake could be to forget the <> in an instance-attribute-map
+        # TODO: guard against ^??
         relation = None
         # If /my-attribute maps to a dict, we want its keys to use parse_str('/my-attribute)
         # This is basically the same as a type definition eg. (linear) alphabet: ...
         next_key_parent = parsed_key
         next_val_parent = val_parent
         # NOTE: no edges added. Could *maybe* add the group foreach, but I'm a level too low I think.
-      
+        
+      parsed_value = None
+      if type(value) is str:
+        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+      elif type(value) is dict:
+        parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
+      else:
+        # NOTE: I don't think this is ever a list
+        assert False, f"Value condition not met. That's weird. {value=}"
+
+      print(f'/* => {relation=}     {parsed_value=}')
       if relation is not None:
-        parsed_value = None
-        if type(value) is str:
-          parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
-        elif type(value) is dict:
-          parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
-        else:
-          # NOTE: I don't think this is ever a list
-          assert False, f"Value condition not met. That's weird. {value=}"
         # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
         # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
         make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
@@ -503,7 +509,8 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
   
   # Dictionaries that need to return an identifier always have one key.
   if len(statement.keys()) == 1:
-    return parse_str(list(statement.keys())[0], parent=key_parent, interp=interp, depth=depth)
+    # NOTE: interp is [] because this key's edges was already added ot interp in the `for key, val` loop
+    return parse_str(list(statement.keys())[0], parent=key_parent, interp=[], depth=depth)
   return
 
 def make_relations(spec, verbose=False):
