@@ -44,11 +44,25 @@ class rel(Enum):
   TBD = enum.auto()
 
 
-def make_edge(interp: list, source: str, relation: rel, target: str, verbose=False):
+class dpower(Enum):
+  # Definitely add the source, target, and relation to the graph.
+  # eg. attribute maps, affects/covers/groups keywords
+  STRONG = enum.auto()
+
+  # Add the relation if the source and target are already in the graph
+  # eg. compound term relations
+  WEAK = enum.auto()
+
+  # Compiler should check that this 
+  # eg. compound term relations
+  QUESTION = enum.auto()
+
+
+def declare(interp: list, source: str, relation: rel, target: str, power: dpower, verbose=False):
   """
   Declares an edge in the graph by appending it to interp.
   """
-  interp.append((source, relation, target))
+  interp.append((source, relation, target, power))
 
   pretty_relation = relation.name
 
@@ -58,24 +72,38 @@ def make_edge(interp: list, source: str, relation: rel, target: str, verbose=Fal
   if verbose:
     print(f'{source}  -{pretty_relation}->  {target}')
 
-def get_edge_source(interp: list):
-  return interp[0]
+def get_declaration_source(edge: tuple) -> str:
+  return edge[0]
 
-def get_edge_relation(interp: list):
-  return interp[1]
+def get_declaration_relation(edge: tuple) -> rel:
+  return edge[1]
 
-def get_edge_target(interp: list):
-  return interp[2]
+def get_declaration_target(edge: tuple) -> str:
+  return edge[2]
+
+def get_declaration_power(edge: tuple) -> dpower:
+  return edge[3]
 
 def print_edge(edge: tuple):
-  source = get_edge_source(edge)
-  relation = get_edge_relation(edge).name
-  target = get_edge_target(edge)
-  print(f'{source}  -{relation}->  {target}')
+  source = get_declaration_source(edge)
+  relation = get_declaration_relation(edge).name
+  target = get_declaration_target(edge)
+  power = get_declaration_power(edge)
+
+  power = ''
+  match get_declaration_power(edge):
+    case dpower.STRONG:
+      power = 'S'
+    case dpower.WEAK:
+      power = 'W'
+    case dpower.QUESTION:
+      power = '?'
+
+  print(f'({power}) {source}  -{relation}->  {target}')
 
 def print_interp(interp: list):
-  for edge in interp:
-    print_edge(edge)
+  for declaration in interp:
+    print_edge(declaration)
 
 # --- Parse spec
 def incrementally_aggregate(array: list, symbol: str):
@@ -148,7 +176,7 @@ def parse_compound_object(statement: str, parent: str, interp: list):
       # Skip the first item. If there's only one item, then we'll just move on.
       continue
     source = arrow_split[arrow_idx-1]
-    make_edge(interp=interp, source=source, relation=rel.MAPTO, target=target)
+    declare(interp=interp, source=source, relation=rel.MAPTO, target=target, power=dpower.WEAK)
   
   # NOTE: we do this join instead of using the original statement because
   # we may have prepended parents to /phrases
@@ -159,7 +187,7 @@ def parse_compound_object(statement: str, parent: str, interp: list):
   # using inline arrow notation it makes sense to have it here. This might not be
   # worth it if it adds useless nodes.
   if len(arrow_split) > 1:
-    make_edge(interp=interp, source=rebuilt_statement, relation=rel.SUBSET, target=arrow_split[-1])
+    declare(interp=interp, source=rebuilt_statement, relation=rel.SUBSET, target=arrow_split[-1], power=dpower.WEAK)
 
   # Parse . and / together. 
   # NOTE: they don't interact with arrows at all, so we look at the phrases between arrows
@@ -195,9 +223,10 @@ def parse_compound_object(statement: str, parent: str, interp: list):
       # TODO: I think this make_edge causes more trouble than it's worth. GROUP_EACH relations should
       # be defined through relations, rather than these compound objects. With it, it produces a ton
       # of redundant edges (eg. for views)
-      make_edge(
+      declare(
         interp=interp, 
-        source=prev_aggregated_term, relation=rel.GROUP_FOREACH, target=aggregated_term
+        source=prev_aggregated_term, relation=rel.GROUP_FOREACH, target=aggregated_term,
+        power=dpower.WEAK
       )
       
     # 2. Parse `.`
@@ -222,7 +251,7 @@ def parse_compound_object(statement: str, parent: str, interp: list):
       # In other words, we could iterate through the list backquards.
       for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
         next_dot_agg = dot_aggregates[d_idx + 1]
-        make_edge(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg)
+        declare(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg, power=dpower.WEAK)
 
   return rebuilt_statement
 
@@ -262,7 +291,9 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     for and_phrase in and_splits:
       assert ' and ' not in and_phrase, 'ERROR: `and` found where it shouldn\'t be'
       # a and b => a -SUBSET-> a and b, b -SUBSET-> a and b
-      make_edge(interp=interp, source=strip_type(and_phrase), relation=rel.SUBSET, target=statement_without_types)
+      declare(interp=interp, 
+                source=strip_type(and_phrase), relation=rel.SUBSET, target=statement_without_types,
+                power=dpower.WEAK)
 
       # Each "phrase" (as in `phrase1 and phrase2`) is parsed as its own string
       parse_str(and_phrase, parent=parent, interp=interp, depth=depth+1)  # recurse on each phrase
@@ -285,7 +316,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
 
     # TYPE relation only applies to the first part of a compound phrase, so we grab that with a regex.
     first_instance_word = re.match(r'^[\w\-\/]+', extracted_instance.split('->')[0]).group()
-    make_edge(interp=interp, source=extracted_type, relation=rel.TYPE, target=first_instance_word)
+    declare(interp=interp, source=extracted_type, relation=rel.TYPE, target=first_instance_word, power=dpower.STRONG)
     # statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
     statement = extracted_instance
 
@@ -385,7 +416,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
 
         # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
-        make_edge(interp, source=key_parent, relation=relation, target=parsed_value)
+        declare(interp=interp, source=key_parent, relation=relation, target=parsed_value, power=dpower.STRONG)
       elif type(value) is list:
         # if the value is a list, then we make a relation for each item
         # NOTE: Key/val parent doesn't really matter here, parse_list will just pass it down.
@@ -393,7 +424,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
 
         for item in value_items:
           # parent (from key) relates to each item
-          make_edge(interp, source=key_parent, relation=relation, target=item)
+          declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.WEAK)
       elif type(value) is dict:
         # TODO: figure out if this is necessary.
         assert False, f"Value condition not met. That's weird. value={value}"
@@ -460,19 +491,19 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
       if relation is not None:
         # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
         # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
-        make_edge(interp=interp, source=parsed_value, relation=relation, target=parsed_key)
+        declare(interp=interp, source=parsed_value, relation=relation, target=parsed_key, power=dpower.STRONG)
 
     # Syntax for alias relations
     elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
       # TODO: repeated code with the alias check `elif key[0] == '/'`. Could abstract as a function?
       if type(value) is str:
         parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
-        make_edge(interp=interp, source=parsed_value, relation=rel.ALIAS, target=parsed_key)
+        declare(interp=interp, source=parsed_value, relation=rel.ALIAS, target=parsed_key, power=dpower.STRONG)
 
       elif type(value) is list:
         # NOTE: I didn't intend for this to be listable, but it's kind of cool
         for list_parsed_value in parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1):
-          make_edge(interp=interp, source=parsed_key, relation=rel.ALIAS, target=list_parsed_value)
+          declare(interp=interp, source=parsed_key, relation=rel.ALIAS, target=list_parsed_value, power=dpower.STRONG)
 
       else:
         # NOTE: I don't think this is ever a dict

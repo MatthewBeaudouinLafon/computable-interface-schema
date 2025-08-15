@@ -1,7 +1,7 @@
 import pprint
 import networkx as nx
 import parser
-from parser import rel
+from parser import rel, dpower
 
 # --- Helpers
 """
@@ -36,16 +36,16 @@ def convert_relation_to_ilk(relation: rel):
   assert False, f'Relation has not matching ilk. {relation=}'
 
 # --- Compile
-def compile(file_path: str, verbose=False):
+def compile(file_path: str, verbose=False, ignore_decl_strength=False):
   spec = parser.spec_from_file(file_path)
   interp = parser.make_relations(spec)
   if verbose:
     print('\n --- Parsing spec ---')
     parser.print_interp(interp)
 
-  return compile_interp(interp, verbose=verbose)
+  return compile_interp(interp, verbose=verbose, ignore_decl_strength=ignore_decl_strength)
 
-def compile_interp(interp: list, verbose=False):
+def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
   """
   Takes a list of interpreted relations (from the parser) and produces a networkx
   MultiGraph which represents this list. It also applies various transitive rules
@@ -70,7 +70,8 @@ def compile_interp(interp: list, verbose=False):
   type_registry = {}  # node: type
   ilk_registry = {}   # node: ilk
   
-  # --- Alias pass
+
+  # --- Alias Pass.
   # Use a different data structure for alias. Keys are original names, 
   # a = b = c =>
   #   alias_registry = {
@@ -80,10 +81,11 @@ def compile_interp(interp: list, verbose=False):
   #   }
   # We do a pass on interp to get the aliases, since we'll use them for the other
   # graphs after.
-  for line in interp:
-    source = parser.get_edge_source(line)
-    relation = parser.get_edge_relation(line)
-    target = parser.get_edge_target(line)
+  for declaration in interp:
+    source = parser.get_declaration_source(declaration)
+    relation = parser.get_declaration_relation(declaration)
+    target = parser.get_declaration_target(declaration)
+    # NOTE: This ignores declaration power
 
     if relation == rel.ALIAS:
       graphs[rel.ALIAS].add_edge(source, target, relation=rel.ALIAS)
@@ -97,17 +99,23 @@ def compile_interp(interp: list, verbose=False):
   # Alias graph is no longer needed, so we delete it. This means it doesn't get
   # combined in the final multigraph.
   graphs.pop(rel.ALIAS)
-  
-  # --- Add each edge to the appropriate relation graph.
+
+
+  # --- Strong Declaration Pass
+  # Add each nodes and edges of strong declarations to the appropriate relation graph.
   # NOTE: since these are DiGraphs, there is at most one directed edge between 
   # two nodes. This means that duplicate relations are automatically delt with.
-  for line in interp:
-    source = lookup_alias(alias_registry, parser.get_edge_source(line))
-    relation = parser.get_edge_relation(line)
-    target = lookup_alias(alias_registry, parser.get_edge_target(line))
+  for declaration in interp:
+    # Skip Weak and Question declarations.
+    if parser.get_declaration_power(declaration) is not dpower.STRONG and not ignore_decl_strength:
+      continue
+
+    source = lookup_alias(alias_registry, parser.get_declaration_source(declaration))
+    relation = parser.get_declaration_relation(declaration)
+    target = lookup_alias(alias_registry, parser.get_declaration_target(declaration))
 
     if relation in (rel.TBD, rel.ALIAS):
-      vprint('Skipping due to relation type: ', line)
+      vprint('Skipping due to relation type: ', declaration)
       continue
 
     if relation == rel.TYPE:
@@ -123,6 +131,7 @@ def compile_interp(interp: list, verbose=False):
     vprint(f'{source} -{relation.name}-> {target}')
     rel_graph = graphs[relation]
 
+    # Add Ilk to the node
     # NOTE: ilk is added to the graph after compose_all to avoid
     # losing attributes to the graph composition.
     source_ilk = convert_relation_to_ilk(relation)
@@ -133,7 +142,38 @@ def compile_interp(interp: list, verbose=False):
     # Finally add edge
     rel_graph.add_edge(source, target, relation=relation.name)
 
-  # --- Combine graphs
+
+  # --- Weak Declaration Pass.
+  # If the source and target were declared in the Strong pass, then we add the weak relation.
+  # This helps prevent the proliferation of vertices that the user doesn't actually care about
+  # eg. (view/encoding.vstack, rel.SUBSET, view/encoding, dpower.WEAK) doesn't mean we care about view/encoding
+  if not ignore_decl_strength:
+    strong_nodes = nx.compose_all(
+      [nx.MultiDiGraph(graph) for graph in graphs.values()]
+    ).nodes()
+    for declaration in interp:
+      if parser.get_declaration_power(declaration) is not dpower.WEAK:
+        # Skip Weak and Question declarations.
+        continue
+
+      source = lookup_alias(alias_registry, parser.get_declaration_source(declaration))
+      relation = parser.get_declaration_relation(declaration)
+      target = lookup_alias(alias_registry, parser.get_declaration_target(declaration))
+
+      if source in strong_nodes and target in strong_nodes:
+        vprint(f'{source} -{relation.name}-> {target}')
+        rel_graph = graphs[relation]
+        # Finally add edge
+        rel_graph.add_edge(source, target, relation=relation.name)
+  
+
+  # --- Question Declartion Pass.
+  # Do the Question declarations actually check out?
+  # TODO: first need to figure out when question declarations are made and
+  #       figure out how `def` stuff will work.
+
+
+  # --- Combine Graphs.
   # NOTE: if multiple graphs use the same node-attribute, then compose_all will
   # use the last one. Seems like a footgun to me!
   combined_graph = nx.compose_all(
@@ -192,5 +232,6 @@ def mermaid_graph(graph: nx.MultiDiGraph, verbose=False):
   return mermaid
 
 if __name__ == '__main__':
-  test_graph = compile('test-specs.yaml', verbose=True)
+  # test_graph = compile('test-specs.yaml', verbose=True)
+  test_graph = compile('video-editor.yaml', verbose=True, ignore_decl_strength=False)
   mermaid_graph(test_graph, verbose=True)
