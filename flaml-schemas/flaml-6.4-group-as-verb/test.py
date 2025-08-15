@@ -316,6 +316,7 @@ class TestRecursiveDescent:
                   [
                     ('linear', rel.TYPE, 'alphabetical', dpower.STRONG),
                     ('alphabetical', rel.GROUP_FOREACH, 'alphabetical/first', dpower.WEAK),
+                    ('alphabetical', rel.GROUP_FOREACH, 'alphabetical/first', dpower.STRONG),
                     ('a', rel.ALIAS, 'alphabetical/first', dpower.STRONG),
                   ])
     
@@ -328,8 +329,10 @@ class TestRecursiveDescent:
     assert compare_interp(interp, 
                   [
                     ('gui', rel.TYPE, 'chat-view', dpower.STRONG),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.WEAK),
                     ('messages', rel.MAPTO, 'chat-view/marks', dpower.STRONG),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding', dpower.WEAK),
                     ('time', rel.MAPTO, 'chat-view/encoding', dpower.STRONG),
                   ])
@@ -340,9 +343,11 @@ class TestRecursiveDescent:
     group foreach:
       - /videos
 """))
+    parser.print_interp(interp)
     assert compare_interp(interp, 
                   [
-                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK)
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),  # from group_foreach
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK)    # from compound term editors/videos
                   ])
     
   def test_group_attribute_alias(self):
@@ -354,11 +359,12 @@ class TestRecursiveDescent:
     assert compare_interp(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
-                    ('videos.in-editor', rel.ALIAS, 'editors/videos', dpower.STRONG),
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
+                    ('videos-in-editor', rel.ALIAS, 'editors/videos', dpower.STRONG),
                   ])
 
     
-  def test_group_attribute_alias(self):
+  def test_group_attribute_map(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
     group foreach:
@@ -367,6 +373,7 @@ class TestRecursiveDescent:
     assert compare_interp(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
                     ('videos-in-editor', rel.MAPTO, 'editors/videos', dpower.STRONG),
                   ])
   
@@ -382,8 +389,10 @@ class TestRecursiveDescent:
                   [
                     ('gui', rel.TYPE, 'chat-view', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.WEAK),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.STRONG),
                     ('messages', rel.MAPTO, 'chat-view/marks', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding', dpower.WEAK),
+                    ('chat-view', rel.GROUP_FOREACH, 'chat-view/encoding', dpower.STRONG),
                     ('time', rel.MAPTO, 'chat-view/encoding', dpower.STRONG),
                     ('linear', rel.TYPE, 'time', dpower.STRONG),
                     ('time', rel.AFFECTS, 'messages', dpower.STRONG),
@@ -395,11 +404,13 @@ class TestRecursiveDescent:
     group foreach:
       - (linear) /timeline:
           affects: /timestamps
-"""))
+"""), verbose=True)
     assert compare_interp(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/timeline', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/timeline', dpower.STRONG),
                     ('editors', rel.GROUP_FOREACH, 'editors/timestamps', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/timestamps', dpower.STRONG),
                     ('linear', rel.TYPE, 'editors/timeline', dpower.STRONG),
                     ('editors/timeline', rel.AFFECTS, 'editors/timestamps', dpower.STRONG),
                   ])
@@ -418,12 +429,16 @@ class TestRecursiveDescent:
     assert compare_interp(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/view', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/view', dpower.STRONG),
                     ('gui', rel.TYPE, 'editors/view', dpower.STRONG),
                     ('editors/view', rel.GROUP_FOREACH, 'editors/view/encoding', dpower.WEAK),
+                    ('editors/view', rel.GROUP_FOREACH, 'editors/view/encoding.cluster', dpower.STRONG),
                     ('editors/view/encoding.cluster', rel.SUBSET, 'editors/view/encoding', dpower.WEAK),
                     ('editors/tracks', rel.MAPTO, 'editors/view/encoding.cluster', dpower.STRONG),
                     ('editors', rel.GROUP_FOREACH, 'editors/tracks', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/tracks', dpower.STRONG),
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
+                    ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
                     ('editors/tracks', rel.GROUP, 'editors/videos', dpower.STRONG),
                   ])
 

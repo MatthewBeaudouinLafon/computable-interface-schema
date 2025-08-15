@@ -320,9 +320,19 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     # statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
     statement = extracted_instance
 
+  should_declare_parent_foreach = False
+  if statement[0] == '/':
+    # TODO: If this is in a instantiation, then it should be a dpower.QUESTION. If it's in a group_foreach,
+    #       then it should be dpower.STRONG.
+    should_declare_parent_foreach = True
+
   # Compound objects have these characters.
   if '.' in statement or '->' in statement or '/' in statement:
     statement = parse_compound_object(statement=statement, parent=parent, interp=interp)
+  
+  # Declare the parent for /statement after it's been prefixed properly.
+  if should_declare_parent_foreach:
+    declare(interp=interp, source=parent, relation=rel.GROUP_FOREACH, target=statement, power=dpower.STRONG)
   
   # Just a normal string, no bells or whistles.
   else:
@@ -424,7 +434,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
 
         for item in value_items:
           # parent (from key) relates to each item
-          declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.WEAK)
+          declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.STRONG)
       elif type(value) is dict:
         # TODO: figure out if this is necessary.
         assert False, f"Value condition not met. That's weird. value={value}"
@@ -477,7 +487,6 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         # This is basically the same as a type definition eg. (linear) alphabet: ...
         next_key_parent = parsed_key
         next_val_parent = val_parent
-        # NOTE: no edges added. Could *maybe* add the group foreach, but I'm a level too low I think.
         
       parsed_value = None
       if type(value) is str:
@@ -530,6 +539,16 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         # This is an intentional bifurcation of parents.
         parse_dict(value, key_parent=parsed_key, val_parent=val_parent, interp=interp, depth=depth+1)
 
+        # Add group_foreach edges between instance and attributes.
+        for value_key in value.keys():
+          # Check that keys are attributes
+          assert type(value_key) is str, f'Type Error. Expected `str` or relation, and got `{type(value_key)}'
+
+          # Skip relations
+          if parse_relation(value_key) is not None:
+            continue
+
+          assert value_key[0] == '/', f'Values for instantiation should be /statements or a relation, got `{value_key}` instead.'
       else:
         # If the key is just a variable name, then it's just an object with group/foreach relation
         # Just pass it down to the values as parents.
@@ -555,3 +574,7 @@ def make_relations(spec, verbose=False):
     print_interp(interp)
 
   return interp
+
+if __name__ == '__main__':
+  spec = spec_from_file('calendar.yaml')
+  make_relations(spec, verbose=True)
