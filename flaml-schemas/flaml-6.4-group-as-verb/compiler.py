@@ -3,8 +3,13 @@ import networkx as nx
 import parser
 from parser import rel, dpower
 
-import sys
+import argparse
 import os
+
+argp = argparse.ArgumentParser(
+                    prog='Interface Schema Compiler',
+                    description='Prints mermaid diagram for provided files. Default is calendar.yaml.')
+argp.add_argument('filenames', action='append')
 
 # --- Helpers
 """
@@ -193,29 +198,39 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
 
   return combined_graph
 
-
-def mermaid_graph(graph: nx.MultiDiGraph, verbose=False):
-  if verbose:
-    print('\n--- Making Mermaid Graph ---')
-
-  pad = "  "
-
-  id_gen = 0    # generated id for each node
+def mermaid_graph_core(
+    graph: nx.MultiDiGraph,
+    should_color_node: callable,
+    should_color_edge: callable,
+    pad: str,
+    start_index: int,
+    ):
   id_dict = {}  # {graph_node_id: number_id}
-  mermaid = "flowchart LR\n"
-
+  id_gen = start_index    # generated id for each node
+  
+  mermaid = f"{pad}classDef Highlighted fill:#fbcef6,stroke:#8353e4;\n\n"
+  # --- List nodes
   for node_name, attributes in graph.nodes.data():
     # Prefix (type) if it exists.
     node_type = attributes.get('type', None)
     type_prefix = ''
     if node_type is not None:
       type_prefix = f'({node_type}) '
+    
+    style_suffix = ''
+    if callable(should_color_node) and should_color_node(node_name):
+      style_suffix = ':::Highlighted'
 
     # Define node name with id.
-    mermaid += f'{pad}{id_gen}["{type_prefix}{node_name}"]\n'
+    mermaid += f'{pad}{id_gen}["{type_prefix}{node_name}"]{style_suffix}\n'
     id_dict[node_name] = id_gen
     id_gen += 1
 
+  # --- List edges
+  # Keep track of links highlighted links because you have to list them by order
+  # of appearance: https://mermaid.js.org/syntax/flowchart.html#styling-links
+  highlighted_links = []
+  link_count = 0
   for source, target, attributes in graph.edges.data():
     assert (
       source in id_dict.keys()
@@ -225,22 +240,54 @@ def mermaid_graph(graph: nx.MultiDiGraph, verbose=False):
     ), f"missing target from edge: ({source} ~~>) {target}"
 
     rel = attributes.get("relation", "None")
+    if callable(should_color_edge) and should_color_edge((source, target)):
+      highlighted_links.append(link_count)
 
     source_id = id_dict.get(source)
     target_id = id_dict.get(target)
     mermaid += f"{pad}{source_id} -->|{rel}| {target_id}\n"
+    link_count += 1
   
+  # Style links
+  # NOTE: mermaid parser complains if there are no nodes
+  if len(highlighted_links) > 0:
+    highlighted_links_str = ",".join([str(n) for n in highlighted_links])
+    mermaid += f"{pad}linkStyle {highlighted_links_str} color:purple,stroke:purple,stroke-width:2px;\n"
+
+  return (mermaid, id_dict)
+  
+
+def mermaid_graph(
+    graph: nx.MultiDiGraph,
+    should_color_node: callable = None,
+    should_color_edge: callable = None,
+    verbose=False):
+  if verbose:
+    print('\n--- Making Mermaid Graph ---')
+
+  mermaid = "flowchart LR\n"
+  mermaid_core, _ = mermaid_graph_core(
+    graph,
+    should_color_edge=None,
+    should_color_node=None,
+    pad = '  ',
+    start_index=0
+  )
+  mermaid += mermaid_core
+
   if verbose:
     print(mermaid)
   return mermaid
 
 if __name__ == '__main__':
   # test_graph = compile('test-specs.yaml', verbose=True)
-  specs = ['calendar.yaml']
-  if len(sys.argv) > 0:
-    specs = sys.argv
+  files = ['calendar.yaml']
+
+  args = argp.parse_args()
+  if len(args.filenames) > 0:
+    files = args.filenames
   
-  for spec_file in specs:
+  for spec_file in files:
     assert type(spec_file) is str
     if spec_file[-5:] != '.yaml':
       print(f'Skipping `{spec_file}` because it\'s not yaml')

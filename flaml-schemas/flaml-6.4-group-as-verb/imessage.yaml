@@ -1,0 +1,19 @@
+# ios messages
+- conversations:
+    group foreach:
+      - messages
+      - people:
+          groups: messages
+
+- (gui) chat-view:
+    /marks <>: conversations.active->messages
+    /encoding.vstack <>:
+      (linear) time:
+        affects: messages, conversations
+
+- (gui) convo-view:
+    /marks.text <>: conversations
+    /encoding.cluster <>:
+      pin:
+        groups: conversations
+    /encoding.vstack <>: time

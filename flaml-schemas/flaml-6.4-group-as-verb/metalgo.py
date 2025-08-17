@@ -8,6 +8,7 @@ edges in individual graphs.
 """
 import networkx as nx
 import compiler
+import pprint
 
 # ----- Match Representation
 # forward_match = (
@@ -93,11 +94,11 @@ def get_analogous_node(analogy: Analogy, sinister_node: str):
   # node doesn't exist, or it is "deleted" in the analogy.
   return analogy[0].get(sinister_node, None)
 
-
 def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # Returns None if there is no analogous edge. This might be because the source,
   # edge doesn't exist, or it is "deleted" in the analogy.
   return analogy[1].get(sinister_edge, None)
+
 
 # Checkers
 def is_node_in_sinister(analogy: Analogy, node_id) -> bool:
@@ -153,6 +154,13 @@ def node_subst_cost(n1, n2):
   return MAX_COST
 
 """
+Cost of inserting or deleting a node
+Used for both node_del_cost and node_ins_cost, since it should be symmetric.
+"""
+def node_diff_cost(n1):
+  return 1
+
+"""
 Cost incurred from making an analogy between two edges.
 """
 def edge_subst_cost(e1, e2):
@@ -166,6 +174,17 @@ def edge_subst_cost(e1, e2):
   else:
     return MAX_COST
 
+"""
+Cost of inserting or deleting a edge
+Used for both edge_del_cost and edge_ins_cost, since it should be symmetric.
+"""
+def edge_diff_cost(edge):
+  # return 1
+  match edge.get('relation'):
+    case 'GROUP_FOREACH':
+      return 100
+ 
+  return 10
 
 """
 Compute analogy. This can terminate on its own, but it'll stop at the timeout
@@ -182,9 +201,11 @@ def compute_analogy(
     dexter_graph,
     timeout=timeout,
     node_subst_cost=node_subst_cost,
+    node_ins_cost=node_diff_cost,
+    node_del_cost=node_diff_cost,
     edge_subst_cost=edge_subst_cost,
-    #  node_match=node_match,
-    #  edge_match=edge_match,
+    edge_ins_cost=edge_diff_cost,
+    edge_del_cost=edge_diff_cost,
     #  strictly_decreasing=True,
   )
 
@@ -226,7 +247,112 @@ def compute_analogy(
 
   return analogy, cost
 
+# --- Show analogies as mermaid diagrams
+def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str):
+  # side_index = 0
+  # if side
+  assert side == 'dexter' or side == 'sinister', f'Side should be `sinister` or `dexter`, got `{side}` instead.'
+
+  def is_node_in_analogy(node):
+    assert type(node) is str, f'Type Error: expected `str`, got `{type(node)}` instead. {node=}'
+    if side == 'sinister':
+      return is_node_in_sinister(analogy=analogy, node_id=node)
+    elif side == 'dexter':
+      return is_node_in_dexter(analogy=analogy, node_id=node)
+
+  def is_edge_in_analogy(edge):
+    assert type(edge) is tuple, f'Type Error: expected `tuple`, got `{type(edge)}` instead. {edge=}'
+    if side == 'sinister':
+      return is_edge_in_sinister(analogy=analogy, edge=edge)
+    elif side == 'dexter':
+      return is_edge_in_dexter(analogy=analogy, edge=edge)
+  
+  return compiler.mermaid_graph(graph, should_color_node=is_node_in_analogy, should_color_edge=is_edge_in_analogy, verbose=True)
+
+def mermaid_analogy_only(analogy: Analogy):
+  pad = "  "
+  ret = "flowchart LR\n"
+
+  id_gen = 0    # generated id for each node
+  id_dict = {}  # {graph_node_id: number_id}
+
+  for s_node, d_node in analogy[0].items():
+    # TODO: add ilk to get the right shape
+    node_id = f"{s_node} <> {d_node}"
+    id_dict[node_id] = id_gen
+    ret += f"{pad}{id_gen}[{node_id}]\n"
+
+    id_gen += 1
+
+  for s_edge, d_edge in analogy[1].items():
+    s_src, s_trg = s_edge
+    d_src, d_trg = d_edge
+
+    src = f"{s_src} <> {d_src}"
+    trg = f"{s_trg} <> {d_trg}"
+
+    src_id = id_dict.get(src)
+    trg_id = id_dict.get(trg)
+
+    # TODO: tag with relation
+    ret += f"{pad}{src_id} --> {trg_id}\n"
+
+  return ret
+
+def mermaid_analogy_with_graphs(analogy: Analogy,
+                                sinister_name: str, sinister_graph: nx.MultiDiGraph,
+                                dexter_name: str, dexter_graph: nx.MultiDiGraph):
+  mermaid = 'flowchart LR\n'
+  pad = '  '
+  # -- Sinister graph
+  mermaid += f'{pad}subgraph {sinister_name}\n'
+  sinister_merm, sinister_ids = compiler.mermaid_graph_core(
+    sinister_graph,
+    should_color_node=lambda node: is_node_in_sinister(analogy=analogy, node_id=node),
+    should_color_edge=lambda edge: is_edge_in_sinister(analogy=analogy, edge=edge),
+    pad='  ',
+    start_index=0
+  )
+  max_sinister_id = max(sinister_ids.values())
+  mermaid += sinister_merm
+  mermaid += f'{pad}end\n\n'
+
+  # -- Dexter graph
+  mermaid += f'{pad}subgraph {dexter_name}\n'
+  dexter_merm, dexter_ids = compiler.mermaid_graph_core(
+    dexter_graph,
+    should_color_node=lambda node: is_node_in_dexter(analogy=analogy, node_id=node),
+    should_color_edge=lambda edge: is_edge_in_dexter(analogy=analogy, edge=edge),
+    pad='  ',
+    start_index=max_sinister_id + 1
+  )
+  mermaid += dexter_merm
+  mermaid += f'{pad}end\n\n'
+
+  # -- Links between domains
+  for sinister_node, dexter_node in analogy[0].items():
+    assert sinister_node in sinister_ids.keys()
+    assert dexter_node in dexter_ids.keys()
+    
+    source_id = sinister_ids.get(sinister_node)
+    target_id = dexter_ids.get(dexter_node)
+    mermaid += f"{pad}{source_id} -.- {target_id}\n"
+
+  return mermaid
+
 if __name__ == '__main__':
-  sinister_graph = compiler.compile('calendar.yaml')
-  dexter_graph = compiler.compile('video-editor.yaml')
-  analogy = compute_analogy(sinister_graph, dexter_graph, verbose=True)
+  # sinister_graph = compiler.compile('calendar.yaml')
+  # dexter_graph = compiler.compile('video-editor.yaml')
+  # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
+
+  sinister_graph = compiler.compile('imessage.yaml')
+  dexter_graph = compiler.compile('slack.yaml')
+  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
+
+  # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')
+  # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')
+  print(mermaid_analogy_with_graphs(analogy, sinister_name='imessage', sinister_graph=sinister_graph,dexter_name='slack', dexter_graph=dexter_graph))
+
+  # print(mermaid_analogy_with_graphs(analogy,
+  #                             sinister_name='imessage', sinister_graph=sinister_graph,
+  #                             dexter_name='slack', dexter_graph=dexter_graph))

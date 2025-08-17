@@ -11,8 +11,8 @@
     group foreach: # feels redundant if there's just one (but there could be more!!)
       - /videos =: videos.in-editor
       - /videos:
-          /timestamps <>: editor/timestamps
-          /timeline <>: editor/time
+          /timestamps <>: /timestamps
+          /timeline <>: /time
       - (linear) /timeline:
           affects: /timestamps
           covers: /videos
@@ -44,7 +44,7 @@
 #           /encoding.vstack <>: _
 
 - (video-player) timeline-preview:
-    /video =: editor/composited-video # kind of a hack?
+    /video =: editors/composited-video # kind of a hack?
     /playhead =: editors.current/timestamps.playhead
 
 - (video-player) media-preview:
