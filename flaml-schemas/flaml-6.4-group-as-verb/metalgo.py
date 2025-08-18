@@ -344,14 +344,18 @@ if __name__ == '__main__':
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-
-  sinister_graph = compiler.compile('imessage.yaml')
-  dexter_graph = compiler.compile('slack.yaml')
+  # sinister_name = 'imessage'
+  # dexter_name = 'slack'
+  sinister_name = 'calendar'
+  dexter_name = 'video-editor'
+  
+  sinister_graph = compiler.compile(sinister_name + '.yaml')
+  dexter_graph = compiler.compile(dexter_name + '.yaml')
   analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
 
   # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')
   # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')
-  print(mermaid_analogy_with_graphs(analogy, sinister_name='imessage', sinister_graph=sinister_graph,dexter_name='slack', dexter_graph=dexter_graph))
+  print(mermaid_analogy_with_graphs(analogy, sinister_name=sinister_name, sinister_graph=sinister_graph,dexter_name=dexter_name, dexter_graph=dexter_graph))
 
   # print(mermaid_analogy_with_graphs(analogy,
   #                             sinister_name='imessage', sinister_graph=sinister_graph,

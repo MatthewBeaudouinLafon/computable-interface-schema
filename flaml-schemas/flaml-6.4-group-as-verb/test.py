@@ -26,7 +26,7 @@ def compare_interp(test, expected: list[tuple], verbose=False):
     assert type(parser.get_declaration_power(edge)) is dpower, f'Declaration must be a string, got {parser.get_declaration_power(edge)} instead.'
 
     if verbose:
-      parser.print_edge(edge)
+      parser.print_declaration(edge)
     if edge not in expected_dict:
       # TODO: instead of asserting, collect and print all of the issues.
       assert False, f'Test includes `{edge}`, which is not part of the expected interp.'
@@ -192,16 +192,18 @@ class TestCompoundObjectParser:
                           ])
 
     interp = []
-    parse_str('(a) b.c/d and (x) y.z', interp=interp)
+    parse_str('(a) b.c/d and (x) y.z->w', interp=interp)
     assert compare_interp(interp, 
                           [
-                            ('b.c/d', rel.SUBSET, 'b.c/d and y.z', dpower.WEAK),
-                            ('a', rel.TYPE, 'b', dpower.STRONG),
+                            ('b.c/d', rel.SUBSET, 'b.c/d and y.z->w', dpower.WEAK),
+                            ('a', rel.TYPE, 'b.c/d', dpower.STRONG),
                             ('b.c', rel.SUBSET, 'b', dpower.WEAK),
                             ('b', rel.GROUP_FOREACH, 'b/d', dpower.WEAK),
-                            ('y.z', rel.SUBSET, 'b.c/d and y.z', dpower.WEAK),
-                            ('x', rel.TYPE, 'y', dpower.STRONG),
+                            ('y.z->w', rel.SUBSET, 'b.c/d and y.z->w', dpower.WEAK),
+                            ('x', rel.TYPE, 'y.z', dpower.STRONG),
                             ('y.z', rel.SUBSET, 'y', dpower.WEAK),
+                            ('y.z', rel.MAPTO, 'w', dpower.WEAK),
+                            ('y.z->w', rel.SUBSET, 'w', dpower.WEAK),
                           ])
   
   def test_realistic_compound_objects(self):
@@ -440,6 +442,67 @@ class TestRecursiveDescent:
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
                     ('editors/tracks', rel.GROUP, 'editors/videos', dpower.STRONG),
+                  ])
+
+
+class TestTypeDeclarations:
+  def test_basic(self):
+    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+- def (video):
+    group foreach:
+      - /timestamps
+"""))
+    
+    interp = type_interps.get('video', None)
+    assert interp is not None
+
+    assert compare_interp(interp, 
+                  [
+                    ('@', rel.GROUP_FOREACH, '@/timestamps', dpower.WEAK),
+                  ])
+  
+  def test_multiple(self):
+    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+- def (linear):
+    group foreach:
+      - /first
+
+- def (tree):
+    group foreach:
+      - /root
+"""))
+    
+    linear_interp = type_interps.get('linear', None)
+    assert linear_interp is not None
+    assert compare_interp(linear_interp, 
+                  [
+                    ('@', rel.GROUP_FOREACH, '@/first', dpower.WEAK),                    
+                  ])
+
+    tree_interp = type_interps.get('tree', None)
+    assert tree_interp is not None
+    assert compare_interp(tree_interp, 
+                  [
+                    ('@', rel.GROUP_FOREACH, '@/root', dpower.WEAK),                    
+                  ])
+
+  def test_depth(self):
+    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+- def (video):
+    group foreach:
+      - (linear) /timeline:
+          affects: /images
+"""))
+    
+    interp = type_interps.get('video', None)
+    assert interp is not None
+
+    assert compare_interp(interp, 
+                  [
+                    ('@', rel.GROUP_FOREACH, '@/timeline', dpower.WEAK),
+                    ('@', rel.GROUP_FOREACH, '@/images', dpower.WEAK),
+                    ('linear', rel.TYPE, '@/timeline', dpower.WEAK),
+                    ('@/timeline', rel.AFFECTS, '@/images', dpower.WEAK),
                   ])
 
 

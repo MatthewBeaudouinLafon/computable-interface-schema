@@ -16,10 +16,7 @@ argp.add_argument('filenames', action='append')
 Find an alias if it exists.
 """
 def lookup_alias(alias_registry: dict[str, str], name: str):
-  alias_name = alias_registry.get(name, None)
-  if alias_name is not None:
-    return alias_name
-  return name
+  return alias_registry.get(name, name)  # return name if it wasn't found in the registry
 
 """
 Convert a relation to source ilk.
@@ -44,16 +41,51 @@ def convert_relation_to_ilk(relation: rel):
   assert False, f'Relation has not matching ilk. {relation=}'
 
 # --- Compile
-def compile(file_path: str, verbose=False, ignore_decl_strength=False):
+def make_type_registry_extension(type_registry: dict[str, list], type_interps: dict[str, list], valid_nodes: list[str], get_alias: callable):
+  # Find type and add instances when used, including when nested
+  if len(type_registry.keys()) == 0:  # base case
+    return {}
+
+  type_registry_extension = {}
+  for spec_inst_name, spec_type_name in type_registry.items():
+    type_interp = type_interps.get(spec_type_name, None)
+    assert type_interp is not None, f'Type `{spec_type_name}` was used with `{spec_inst_name}` but not declared.'
+
+    for type_declaration in type_interp:
+      type_declaration = parser.substitute_instance_name_in_decl(type_declaration, spec_inst_name)
+      
+      source = get_alias(parser.get_declaration_source(type_declaration))  # type name
+      relation = parser.get_declaration_relation(type_declaration)
+      target = get_alias(parser.get_declaration_target(type_declaration))  # declaration instance node
+
+      # parser.print_declaration(type_declaration)  # DEBUG
+      if relation == rel.TYPE and target in valid_nodes:
+        # Tag node (target) with the type (source)
+        type_registry_extension[target] = source
+  
+  return type_registry_extension | make_type_registry_extension(type_registry_extension, type_interps, valid_nodes, get_alias)
+
+
+def compile(file_path: str, verbose=False):
   spec = parser.spec_from_file(file_path)
+  std_spec = parser.spec_from_file('standard.yaml')
   interp = parser.make_relations(spec)
   if verbose:
-    print('\n --- Parsing spec ---')
+    print('\n--- Parsing spec ---')
     parser.print_interp(interp)
+  
+  # TODO: combine with standard.yaml type definitions
+  if verbose:
+    print('\n--- Parsing standard library ---')
+  standard_type_interps = parser.parse_type_definitions(std_spec, verbose)
 
-  return compile_interp(interp, verbose=verbose, ignore_decl_strength=ignore_decl_strength)
+  if verbose:
+    print('\n--- Parsing spec types ---')
+  type_interps = standard_type_interps | parser.parse_type_definitions(spec, verbose)
+  
+  return compile_interp(interp, type_interps, verbose=verbose)
 
-def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
+def compile_interp(interp: list, type_interps: dict, verbose=False):
   """
   Takes a list of interpreted relations (from the parser) and produces a networkx
   MultiGraph which represents this list. It also applies various transitive rules
@@ -80,6 +112,7 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
   
 
   # --- Alias Pass.
+  vprint('\n-- Alias Pass')
   # Use a different data structure for alias. Keys are original names, 
   # a = b = c =>
   #   alias_registry = {
@@ -104,6 +137,13 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
     for node in connected:
       alias_registry[node] = combined_name
   
+  def get_alias(node_name):
+    return lookup_alias(alias_registry, node_name)
+  
+  if verbose:
+    for node, alias_name in alias_registry.items():
+      vprint(f'{node:>25} : {alias_name}')
+
   # Alias graph is no longer needed, so we delete it. This means it doesn't get
   # combined in the final multigraph.
   graphs.pop(rel.ALIAS)
@@ -113,14 +153,15 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
   # Add each nodes and edges of strong declarations to the appropriate relation graph.
   # NOTE: since these are DiGraphs, there is at most one directed edge between 
   # two nodes. This means that duplicate relations are automatically delt with.
+  vprint('\n-- Strong Declaration Pass')
   for declaration in interp:
     # Skip Weak and Question declarations.
-    if parser.get_declaration_power(declaration) is not dpower.STRONG and not ignore_decl_strength:
+    if parser.get_declaration_power(declaration) != dpower.STRONG:
       continue
 
-    source = lookup_alias(alias_registry, parser.get_declaration_source(declaration))
+    source = get_alias(parser.get_declaration_source(declaration))
     relation = parser.get_declaration_relation(declaration)
-    target = lookup_alias(alias_registry, parser.get_declaration_target(declaration))
+    target = get_alias(parser.get_declaration_target(declaration))
 
     if relation in (rel.TBD, rel.ALIAS):
       vprint('Skipping due to relation type: ', declaration)
@@ -150,29 +191,59 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
     # Finally add edge
     rel_graph.add_edge(source, target, relation=relation.name)
 
+  # --- TYPE Declaration Pass.
+  vprint('\n-- Type Declaration Pass --')
+  num_strong_declarations = len(interp)
+  
+  # Any instance of a type might used the type's attributes. This includes maybe
+  # adding instances of other types and their attributes (recursively). However,
+  # We only want to add stuff if it's actually used in the spec.
+  strong_nodes = nx.compose_all(
+    [nx.MultiDiGraph(graph) for graph in graphs.values()]
+  ).nodes()
+
+  # Find type and add instances when used, including when nested
+  type_registry = type_registry | make_type_registry_extension(type_registry, type_interps, strong_nodes, get_alias)
+
+  for spec_inst_name, spec_type_name in type_registry.items():
+    type_interp = type_interps.get(spec_type_name, None)
+    assert type_interp is not None, f'Type `{spec_type_name}` was used with `{spec_inst_name}` but not declared.'
+
+    for type_declaration in type_interp:
+      type_declaration = parser.substitute_instance_name_in_decl(type_declaration, spec_inst_name)
+      source = get_alias(parser.get_declaration_source(type_declaration))  # declaration type
+      relation = parser.get_declaration_relation(type_declaration)
+      target = get_alias(parser.get_declaration_target(type_declaration))  # declaration instance node
+      if relation == rel.TYPE and target in strong_nodes:
+        continue  # already dealt with types
+
+      interp.append(parser.substitute_instance_name_in_decl(type_declaration, spec_inst_name))
+
+  vprint('\n- These declarations were added from type definitions:')
+  if verbose:
+    for decl in interp[num_strong_declarations:]:
+      parser.print_declaration(decl)
 
   # --- Weak Declaration Pass.
+  vprint('\n-- Weak Declaration Pass --')
   # If the source and target were declared in the Strong pass, then we add the weak relation.
   # This helps prevent the proliferation of vertices that the user doesn't actually care about
   # eg. (view/encoding.vstack, rel.SUBSET, view/encoding, dpower.WEAK) doesn't mean we care about view/encoding
-  if not ignore_decl_strength:
-    strong_nodes = nx.compose_all(
-      [nx.MultiDiGraph(graph) for graph in graphs.values()]
-    ).nodes()
-    for declaration in interp:
-      if parser.get_declaration_power(declaration) is not dpower.WEAK:
-        # Skip Weak and Question declarations.
-        continue
 
-      source = lookup_alias(alias_registry, parser.get_declaration_source(declaration))
-      relation = parser.get_declaration_relation(declaration)
-      target = lookup_alias(alias_registry, parser.get_declaration_target(declaration))
+  for declaration in interp:
+    if parser.get_declaration_power(declaration) is not dpower.WEAK:
+      # Skip Strong and Question declarations.
+      continue
 
-      if source in strong_nodes and target in strong_nodes:
-        vprint(f'{source} -{relation.name}-> {target}')
-        rel_graph = graphs[relation]
-        # Finally add edge
-        rel_graph.add_edge(source, target, relation=relation.name)
+    source = lookup_alias(alias_registry, parser.get_declaration_source(declaration))
+    relation = parser.get_declaration_relation(declaration)
+    target = lookup_alias(alias_registry, parser.get_declaration_target(declaration))
+
+    if source in strong_nodes and target in strong_nodes:
+      vprint(f'{source} -{relation.name}-> {target}')
+      rel_graph = graphs[relation]
+      # Finally add edge
+      rel_graph.add_edge(source, target, relation=relation.name)
   
 
   # --- Question Declartion Pass.
@@ -182,6 +253,7 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
 
 
   # --- Combine Graphs.
+  vprint('-- Combine Graphs')
   # NOTE: if multiple graphs use the same node-attribute, then compose_all will
   # use the last one. Seems like a footgun to me!
   combined_graph = nx.compose_all(
@@ -189,12 +261,16 @@ def compile_interp(interp: list, verbose=False, ignore_decl_strength=False):
   )
 
   # - Assign types
+  vprint('- Assign Types')
   for node, node_type in type_registry.items():
+    vprint(f'({node_type}) {node}')
     combined_graph.add_node(node, type=node_type)
   
   # - Assign ilk
-  for node, node_type in ilk_registry.items():
-    combined_graph.add_node(node, ilk=node_type)
+  vprint('- Assign Ilks')
+  for node, node_ilk in ilk_registry.items():
+    vprint(f'<{node_ilk}> {node}')
+    combined_graph.add_node(node, ilk=node_ilk)
 
   return combined_graph
 
@@ -297,5 +373,5 @@ if __name__ == '__main__':
       print(f'Skipping `{spec_file}` because it does not exist.')
       continue
 
-    test_graph = compile(spec_file, verbose=False, ignore_decl_strength=False)
+    test_graph = compile(spec_file, verbose=False)
     mermaid_graph(test_graph, verbose=True)

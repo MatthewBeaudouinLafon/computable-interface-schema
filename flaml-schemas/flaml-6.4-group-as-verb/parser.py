@@ -57,7 +57,7 @@ class dpower(Enum):
   # eg. compound term relations
   QUESTION = enum.auto()
 
-
+# -- Declarations
 def declare(interp: list, source: str, relation: rel, target: str, power: dpower, verbose=False):
   """
   Declares an edge in the graph by appending it to interp.
@@ -84,14 +84,41 @@ def get_declaration_target(edge: tuple) -> str:
 def get_declaration_power(edge: tuple) -> dpower:
   return edge[3]
 
-def print_edge(edge: tuple):
-  source = get_declaration_source(edge)
-  relation = get_declaration_relation(edge).name
-  target = get_declaration_target(edge)
-  power = get_declaration_power(edge)
+def update_declaration_power(edge: tuple, power: dpower):
+  assert type(power) is dpower, f'Type Error: expected `dpower`, got `{type(power)}` instead.'
+  return (edge[0], edge[1], edge[2], power)
+
+"""
+Substitute the instance-placeholder with the instance name. In the case of an alias, this
+function treats each node of the alias independently.
+"""
+def sub_inst_name_in_node(node: str, instance_name: str):
+  # eg. node='@/timeline', instance_name='videos.in-editor = editors/videos'
+  if '@' not in node:
+    return node
+  
+  new_names = []
+  for individual_name in instance_name.split(' = '):
+    new_names.append(node.replace('@', individual_name))
+
+  return ' = '.join(new_names)
+
+"""
+Given a declaration from a type-declaration, where the instance's name is labeled `@`,
+return the declaration for that instance (ie. by substituting the @ with the instance name)
+"""
+def substitute_instance_name_in_decl(edge: tuple, instance_name: str):
+  assert type(instance_name) is str, f'Type Error: expected `str`, got `{type(instance_name)}` instead.'
+  return (sub_inst_name_in_node(edge[0], instance_name), edge[1], sub_inst_name_in_node(edge[2], instance_name), edge[3])
+
+def print_declaration(decl: tuple):
+  source = get_declaration_source(decl)
+  relation = get_declaration_relation(decl).name
+  target = get_declaration_target(decl)
+  power = get_declaration_power(decl)
 
   power = ''
-  match get_declaration_power(edge):
+  match get_declaration_power(decl):
     case dpower.STRONG:
       power = 'S'
     case dpower.WEAK:
@@ -103,7 +130,7 @@ def print_edge(edge: tuple):
 
 def print_interp(interp: list):
   for declaration in interp:
-    print_edge(declaration)
+    print_declaration(declaration)
 
 # --- Parse spec
 def incrementally_aggregate(array: list, symbol: str):
@@ -201,12 +228,12 @@ def parse_compound_object(statement: str, parent: str, interp: list):
     # a/c -GROUP-> a/c/f
 
     # Get the first term (before `.` or `/`)
-    first_dot_term = re.match(r'(^\([\w\-]+\) )?[\w\-]+', phrase)
+    first_dot_term = re.match(r'(^\([\w\-]+\) )?[\w\-@]+', phrase)
     assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
 
     # Add every term following a `/`
     leading_dot_terms = [first_dot_term.group()] + \
-      list(map(lambda x: x[1:], re.findall(r'\/[\w\-]+', phrase)))
+      list(map(lambda x: x[1:], re.findall(r'\/[\w\-@]+', phrase)))
 
     # 3. Parse `/` relations.
     # Aggregate terms incrementally
@@ -275,12 +302,6 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   # Syntax for attribute maps
   if statement[-3:] == " <>":
     statement = statement[:-3] # trim mapping syntax
-
-  # Syntax for defining new types
-  if str(statement[:3]) == "def":
-    print(' '*depth+"definition:", statement)
-    # TODO: finish
-    return None
   
   # Parse `and` statement and recurse on each phrase
   if ' and ' in statement:
@@ -300,7 +321,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     return statement_without_types
       
   # Syntax for instantiation eg. (linear) alphabetical
-  if type_match := re.match(r'^\((?P<type>[\w\-]+)\) (?P<instance>[\w\-\.\/>]+)', statement):
+  if type_match := re.match(r'^\((?P<type>[\w\-]+)\) (?P<instance>[\w\-\.\/>@]+)', statement):
     # extract type=`type` and instance='thingy.xyz' in `(type) thingy.xyz`.
     # NOTE: ?P<instance> captures compound statements like a.b->c/d
     # NOTE: the match will fail if it doesn't get both. So if you only provide 
@@ -315,9 +336,8 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
       extracted_instance = parent + extracted_instance
 
     # TYPE relation only applies to the first part of a compound phrase, so we grab that with a regex.
-    first_instance_word = re.match(r'^[\w\-\/]+', extracted_instance.split('->')[0]).group()
+    first_instance_word = extracted_instance.split('->')[0]
     declare(interp=interp, source=extracted_type, relation=rel.TYPE, target=first_instance_word, power=dpower.STRONG)
-    # statement = re.sub(r'^\([\w\-]+\) ', '', statement)  # remove type before returning
     statement = extracted_instance
 
   should_declare_parent_foreach = False
@@ -325,6 +345,9 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     # TODO: If this is in a instantiation, then it should be a dpower.QUESTION. If it's in a group_foreach,
     #       then it should be dpower.STRONG.
     should_declare_parent_foreach = True
+  
+  if statement[0] == '.':
+    statement = parent + statement
 
   # Compound objects have these characters.
   if '.' in statement or '->' in statement or '/' in statement:
@@ -439,7 +462,12 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         # TODO: figure out if this is necessary.
         assert False, f"Value condition not met. That's weird. value={value}"
         # parse_dict(value, parent=parsed_key, interp=interp, depth=depth+1)
-    
+
+    elif key[:4] == 'def ':
+      # Skip type definitions, since that's handled separately.
+      # TODO: maybe this should error if it's too deep?
+      continue
+
     # 2. If the key starts with /, then it declares: parent/key -mapto-> value.
     elif key[0] == '/':
       # TODO: this is also used to map between structures, which is... meh
@@ -562,6 +590,66 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
     return parse_str(list(statement.keys())[0], parent=key_parent, interp=[], depth=depth)
   return
 
+def parse_type_definitions(spec, verbose=False):
+  assert type(spec) is list, 'Top level of YAML specification must be a list.'
+  instance_name = '@'  # This is used in place of the instance-name
+  interp_dict = {}  # {str(type_name): [type_interp]}
+
+  for statement in spec:
+    type_interp = []
+    # Ignore anything that's not a top level definition
+    # NOTE: This approach silently ignores type definitions that are inline.
+    #       These aren't supported anyway, but it'd be nice to error on them.
+    if type(statement) is not dict:
+      continue
+
+    assert len(statement.keys()) == 1, f'Found multiple keys in a type definition dict: {list(statement.keys())}'
+    assert len(statement.values()) == 1, f'Found multiple values in a type definition dict: {list(statement.values())}'
+    type_def_key, type_def_content = list(statement.keys())[0], list(statement.values())[0]
+    
+    if type_def_key[:4] != 'def ':
+      continue
+    assert type(type_def_content) is dict, f'Contents of type definition should be a dict, got this instead: {type_def_content}'
+
+    # NOTE: This will intentionally not match `def (my-type) my-instance`
+    re_res = re.match(r'^def \((?P<type>[\w\-]+)\)$', type_def_key)
+    assert re_res is not None, f'Failed to find type name in supposed type definition: `{statement}`'
+    type_name = re_res.group('type')
+
+    if verbose:
+      print(f'Declaring type: ({type_name})')
+
+    # At this point we know that we're in a type definition, so anything wrong
+    # should assert a failure.
+    type_relations = type_def_content.keys()
+    for relation in type_relations:
+      assert type(relation) is str, f'Type Error: Expected str, got `{type(relation)}` instead from `{relation}`.'
+      parsed_rel = parse_relation(relation)
+      assert parsed_rel in (rel.GROUP_FOREACH, rel.TBD), f'Invalid relation: {relation}'
+      # TODO: Process subgroups and arguments, somehow
+
+      # Parse Group_foreach contents
+      if parsed_rel == rel.GROUP_FOREACH:
+        group_foreach_content = type_def_content[relation]
+        if type(group_foreach_content) is str:
+          parse_str(group_foreach_content, parent=instance_name, interp=type_interp, depth=2)
+        elif type(group_foreach_content) is list:
+          parse_list(group_foreach_content, key_parent=instance_name, val_parent=instance_name, interp=type_interp, depth=2)
+        else:
+          assert False, f'Type Error: group_foreach_content should be str or list, got `{type(group_foreach_content)}` instead.'
+    
+    # Make all of the relations weak so that the compiler can decide which edges are useful.
+    weakened_type_interp = []
+    for declaration in type_interp:
+      weak_declaration = update_declaration_power(declaration, dpower.WEAK)
+      weakened_type_interp.append(weak_declaration)
+
+    # Add to result dict
+    interp_dict[type_name] = weakened_type_interp
+  
+  return interp_dict
+
+
 def make_relations(spec, verbose=False):
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
 
@@ -576,5 +664,6 @@ def make_relations(spec, verbose=False):
   return interp
 
 if __name__ == '__main__':
-  spec = spec_from_file('calendar.yaml')
+  spec = spec_from_file('video-editor.yaml')
+  parse_type_definitions(spec, verbose=True)
   make_relations(spec, verbose=True)

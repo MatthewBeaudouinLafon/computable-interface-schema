@@ -41,9 +41,22 @@
 - def (gui):
     group foreach:
       - /encoding:
-          subset: .vstack, .hstack, .cluster, .canvas, .color
+          subset:
+            - (linear) /encoding.hwrap
+            - (linear) /encoding.vwrap
+            - (linear) /encoding.vstack
+            - (linear) /encoding.hstack
+            - /encoding.cluster
+            - (2D) /encoding.canvas
+            - /encoding.color
       - /marks:
-          subset: .points, .hlines, .vlines, .rectangles, .icons, .text
+          subset:
+            - marks.points
+            - marks.hlines
+            - marks.vlines
+            - marks.rectangles
+            - marks.icons
+            - marks.text
 
 - def (reader):
     group foreach:
@@ -55,28 +68,28 @@
 # Action
 - def (action):
     subgroup: navigate
-- def (navigate)
+# - def (navigate)
 
 # Input Devices (super tentative)
-- def (mouse):
-    group foreach:
-      - /position->gui/marks.points
-      - (action) click:
-          triggers: /position->gui/marks.points->action # hit testing
-      - (action) drag-start:
-          triggers: /position->gui/marks.points->action
-      - (action) drag-end:
-          triggers: /position->gui/marks.points->action
-      - (action) drag: #2D somehow
+# - def (mouse):
+#     group foreach:
+#   - /position->gui/marks.points
+#   - (action) click:
+#       triggers: /position->gui/marks.points->action # hit testing
+#   - (action) drag-start:
+#       triggers: /position->gui/marks.points->action
+#   - (action) drag-end:
+#       triggers: /position->gui/marks.points->action
+# #   - (action) drag: #2D somehow
 
-- def (key):
-    group foreach:
-      - (action) click
-      - (action) down
-      - (action) up
+# - def (key):
+#     group foreach:
+#       - (action) click
+#       - (action) down
+#       - (action) up
 
-- def (keyboard):
-    group foreach:
-      - (key) keys:
-          - subset: .arrows, .modifiers
-      - (action) arrows: #2D somehow
+# - def (keyboard):
+#     group foreach:
+#       - (key) keys:
+#           - subset: .arrows, .modifiers
+#       - (action) arrows: #2D somehow
