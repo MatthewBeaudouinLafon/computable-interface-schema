@@ -600,7 +600,16 @@ def parse_type_definitions(spec, verbose=False):
     # Ignore anything that's not a top level definition
     # NOTE: This approach silently ignores type definitions that are inline.
     #       These aren't supported anyway, but it'd be nice to error on them.
-    if type(statement) is not dict:
+    if type(statement) is str and statement[:4] == 'def ':
+      re_res = re.match(r'^def \((?P<type>[\w\-]+)\)$', statement)
+      assert re_res is not None, f'Failed to find type name in supposed type definition: `{statement}`'
+      type_name = re_res.group('type')
+      if verbose:
+        print(f'Declaring type: ({type_name})')
+      interp_dict[type_name] = []
+      continue
+
+    elif type(statement) is not dict:
       continue
 
     assert len(statement.keys()) == 1, f'Found multiple keys in a type definition dict: {list(statement.keys())}'
@@ -609,6 +618,7 @@ def parse_type_definitions(spec, verbose=False):
     
     if type_def_key[:4] != 'def ':
       continue
+
     assert type(type_def_content) is dict, f'Contents of type definition should be a dict, got this instead: {type_def_content}'
 
     # NOTE: This will intentionally not match `def (my-type) my-instance`

@@ -66,9 +66,12 @@
           subset: .spoken
 
 # Action
-- def (action):
-    subgroup: navigate
-# - def (navigate)
+- def (action)
+#     subgroup: move
+# - def (move):
+#     arguments: /trajector, /substrate, /structure
+#     updates: /trajector covers /substrate
+#     directions: /structure
 
 # Input Devices (super tentative)
 # - def (mouse):

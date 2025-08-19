@@ -504,6 +504,15 @@ class TestTypeDeclarations:
                     ('linear', rel.TYPE, '@/timeline', dpower.WEAK),
                     ('@/timeline', rel.AFFECTS, '@/images', dpower.WEAK),
                   ])
+  
+  def test_no_interp_definition(self):
+    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+- def (action)
+"""))
+    
+    res_interp = type_interps.get('action', None)
+    assert type_interps.get('action', None) is not None
+    assert type(res_interp) is list and len(res_interp) == 0
 
 
 class TestSpecParser:
