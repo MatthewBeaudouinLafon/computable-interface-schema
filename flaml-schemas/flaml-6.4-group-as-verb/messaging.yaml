@@ -6,18 +6,23 @@
           groups: messages
 
 - (gui) chat-view:
-    /marks: conversations.active->messages
-    /encoding.vstack:
+    /marks <>: conversations.active->messages
+    /encoding.vstack <>:
       (linear) time:
-        affects: conversations.active->messages, conversations
+        affects: messages, conversations
 
 - (gui) convo-view:
-    /marks.text: conversations
-    /encoding.cluster:
+    /marks.text <>: conversations
+    /encoding.cluster <>:
       pin:
         groups: conversations
-    /encoding.vstack: time
+    /encoding.vstack <>: time
 
+- (action) send-message:
+    create: conversations.active->messages
+
+- (action) select-conversation:
+    update: conversations.active subsets conversations
 ---
 # Slack
 - channels:
@@ -33,11 +38,21 @@
     affects: messages
 
 - (gui) channel-view:
-    /encoding.vstack:
+    /encoding.vstack <>:
       (linear) alphabetical:
         affects: channels
-    /encoding.cluster:
+    /encoding.cluster <>:
       channel-type:
         groups: channels
         subgroups: channels.dm, channels.!dm
-    /marks: channels
+    /marks <>: channels
+
+- (gui) chat-view:
+    /marks.text <>: channels.active->messages
+    /encoding.vstack <>: time
+
+- (action) send-message:
+    create: channels.active
+
+- (action) select-channel:
+    update: channels.active subset channels

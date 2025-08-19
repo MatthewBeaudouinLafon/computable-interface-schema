@@ -1,8 +1,4 @@
 # Google Calendar
-# - thing:
-#     group foreach:
-#       - /attribute
-
 - (gui) week-view:
     /marks.hline <>: weeks.active->timestamps
     /marks.rectangles <>: weeks.active->events
@@ -15,3 +11,13 @@
 - (gui) mini-month-view:
     /marks.text <>: months.selected->days
     /marks.hwrap <>: time
+
+- (action) create-event:
+    create: events
+
+- (action) delete-event:
+    delete: events
+
+- (action) move-event:
+    update: time covers events
+    directions: time

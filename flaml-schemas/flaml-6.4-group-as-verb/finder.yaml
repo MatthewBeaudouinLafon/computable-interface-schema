@@ -11,20 +11,37 @@
     - /depth-order:
         affects: items
 
+- (action) create-file:
+    create: files
+- (action) delete-file:
+    delete: files
+- (action) move-file:
+    update: file-system affects files
+
+- (action) create-folder:
+    create: folders
+- (action) delete-folder:
+    delete: folders
+
 - (gui) list-view:
-    /marks.text: folder.active->items
-    /encoding.vstack:
+    /marks.text <>: folders.active->items
+    /encoding.vstack <>:
       (linear) alphabetical:
         affects: items
 
 - (gui) file-type-list-view:
-    /marks.text: folder.active->items
-    /encoding.cluster:
+    /marks.text <>: folders.active->items
+    /encoding.cluster <>:
 
 - folders.in-selected-path =: items.selected->paths->folders
 - (gui) column-view:
-    - /mark.text: folders.in-selected-path->items
-      /encoding.cluster: folders.in-selected-path
-      /encoding.vstack: alphabetical
-    - /mark: folders.in-selected-path
-      /encoding.hstack: file-system/depth-order
+    - /mark.text <>: folders.in-selected-path->items
+      /encoding.cluster <>: folders.in-selected-path
+      /encoding.vstack <>: alphabetical
+    - /mark <>: folders.in-selected-path
+      /encoding.hstack <>: file-system/depth-order
+
+- (action) select-folder:
+    update: folders.active subset folders
+- (action) nav-in-folder:
+    update: items.active subset items

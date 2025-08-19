@@ -72,7 +72,17 @@
 - (view-type) my-view:
     /marks.mark-type: object-expression
     /encoding.encoding-type: structure-expression
-# TODO: actions
+
+# Actions. They are also groups, although like structures they have their own set of relations.
+# Relation expression = object-expression relation object-expression
+- (action) my-action:
+    # CRUD actions indicate what is changed
+    create: object-expression
+    update: object-expression, relation-expression
+    delete: object-expression
+
+    # directions indicate the "shape" of the actions.
+    directions: structure-expression
 
 - notes:
     - when I do a `group foreach`, how do I talk about just the items in the group? Using /thing works, but it's not quite right when you have already defined the thing

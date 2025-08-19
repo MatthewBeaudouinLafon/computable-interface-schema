@@ -17,3 +17,8 @@
       pin:
         groups: conversations
     /encoding.vstack <>: time
+# - (action) send-message:
+#     create: conversations.active->messages
+
+# - (action) select-conversation:
+#     update: conversations.active subsets conversations
