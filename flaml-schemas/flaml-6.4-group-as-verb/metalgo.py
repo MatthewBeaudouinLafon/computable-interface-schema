@@ -6,6 +6,7 @@ target domain (dexter). This is to avoid confusion with source and targets of
 edges in individual graphs.
 
 """
+import enum
 import networkx as nx
 import compiler
 import pprint
@@ -25,6 +26,18 @@ import pprint
 # )
 
 Analogy = tuple[dict[str, str]]
+class Hand(enum.Enum):
+  SINISTER = enum.auto()
+  DEXTER = enum.auto()
+
+def parse_side(input: str):
+  match input:
+    case 'sinister':
+      return Hand.SINISTER
+    case 'dexter':
+      return Hand.DEXTER
+  
+  assert False, f'Invalid Side: expected `sinister` or `dexter`, got `{input}` instead.'
 
 """
 Create a new analogy object.
@@ -59,14 +72,16 @@ Insert edges to analogy object.
 """
 def add_analogous_edges(
   analogy: Analogy,
-  sinister_edge: tuple[str, str] | None,
-  dexter_edge: tuple[str, str] | None,
+  sinister_edge: tuple[str, str, int] | None,
+  dexter_edge: tuple[str, str, int] | None,
 ):
   # If either side is deleted, just leave it out of the analogy. This might not
   # be ideal, because we won't be able to distinguish between deleted edges and
   # edges that never existed.
   if sinister_edge is None or dexter_edge is None:
     return
+  
+  assert len(sinister_edge) == 3 and len(dexter_edge) == 3, f'Edges are malformed, should have length 3. {sinister_edge=}, {dexter_edge=}'
 
   # NOTE: this doesn't include the edge type, but we may want to eventually.
   analogy[1][sinister_edge] = dexter_edge
@@ -98,6 +113,24 @@ def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # Returns None if there is no analogous edge. This might be because the source,
   # edge doesn't exist, or it is "deleted" in the analogy.
   return analogy[1].get(sinister_edge, None)
+
+def get_analogy_nodes(analogy: Analogy, side: Hand):
+  match side:
+    case Hand.SINISTER:
+      return analogy[0].keys()
+    case Hand.DEXTER:
+      return analogy[0].values()
+    case None:
+      return analogy[0].items()
+
+def get_analogy_edges(analogy: Analogy, side: Hand):
+  match side:
+    case Hand.SINISTER:
+      return analogy[1].keys()
+    case Hand.DEXTER:
+      return analogy[1].values()
+    case None:
+      return analogy[1].items()
 
 
 # Checkers
@@ -149,8 +182,8 @@ def node_subst_cost(n1, n2):
   # NOTE: is this even necessary if the edges wouldn't match anyway? 
   # I think it speeds up the algo significantly, since you can avoid pairing nodes
   # and complexity depends way more on nodes.
-  if n1.get('ilk') == n2.get('ilk'):
-    return 1
+  
+  # Otherwise, deemphasize this pairing by maximizing costs.
   return MAX_COST
 
 """
@@ -182,9 +215,9 @@ def edge_diff_cost(edge):
   # return 1
   match edge.get('relation'):
     case 'GROUP_FOREACH':
-      return 100
+      return 1
  
-  return 10
+  return 1
 
 """
 Compute analogy. This can terminate on its own, but it'll stop at the timeout
@@ -228,17 +261,17 @@ def compute_analogy(
       if lhs is not None:
         # NOTE: the last unpacked item is used by the multigraph to keep track
         # of different edges, so we don't need it.
-        edge_lhs, edge_rhs, _ = lhs
-        lhs = f"{edge_lhs} ~ {edge_rhs}"
-        sinister_edge = (edge_lhs, edge_rhs)
+        edge_src, edge_trg, edge_key = lhs
+        lhs = f"{edge_src} ~ {edge_trg}"
+        sinister_edge = (edge_src, edge_trg, edge_key)
 
       dexter_edge = None
       if rhs is not None:
         # NOTE: the last unpacked item is used by the multigraph to keep track
         # of different edges, so we don't need it.s
-        edge_lhs, edge_rhs, _ = rhs
-        rhs = f"{edge_lhs} ~ {edge_rhs}"
-        dexter_edge = (edge_lhs, edge_rhs)
+        edge_src, edge_trg, edge_key = rhs
+        rhs = f"{edge_src} ~ {edge_trg}"
+        dexter_edge = (edge_src, edge_trg, edge_key)
 
       add_analogous_edges(analogy, sinister_edge, dexter_edge)
 
@@ -246,6 +279,152 @@ def compute_analogy(
       print_analogy(analogy)
 
   return analogy, cost
+
+"""
+Create an analogy based off a pairing of nodes.
+Basically finds all of the edges to make the analogy work. This is useful to get calculate it's hypothetical cost.
+"""
+def analogy_from_node_pairing(node_pairing: dict[str, str], sinister: nx.MultiDiGraph, dexter: nx.MultiDiGraph) -> Analogy:
+  result = new_analogy()
+  for sini, dex in node_pairing.items():
+    add_analogous_nodes(result, sini, dex)
+
+  analogy_sinister_nodes = node_pairing.keys()
+  for sinister_edge in sinister.edges(keys=True):
+    sinister_source, sinister_target, _ = sinister_edge
+
+    if sinister_source not in analogy_sinister_nodes or sinister_target not in analogy_sinister_nodes:
+      # source or target is not part of the analogy
+      continue
+
+    dexter_source = node_pairing.get(sinister_source, None)
+    dexter_target = node_pairing.get(sinister_target, None)
+    if dexter_source is None or dexter_target is None:
+      # sinister source or dexter doesn't have a dexter
+      continue
+
+    # print(f'sinister: {sinister_source} -{sinister_relation}-> {sinister_target}')
+    # print(f'dexter  : {dexter_source} -????????-> {dexter_target}')
+
+    dexter_edges = dexter[dexter_source].get(dexter_target)
+    if dexter_edges is None:
+      # dexter doesn't have a matching edge
+      continue
+      
+    if len(dexter_edges.keys()) > 1:
+      # oops this is a multi-edge
+      print('WARNING: dexter has a multi-edge, we just picked the first one. edges:', dexter_edges)
+    
+    dexter_edge_key = 0
+    add_analogous_edges(result, sinister_edge, (dexter_source, dexter_target, dexter_edge_key))
+  
+  return result
+
+"""
+Calculate the cost of a given analogy.
+"""
+def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.MultiDiGraph, itemized=False, verbose=False) -> int:
+  cost = 0
+  def vprint(*args):
+    if verbose:
+      print(*args)
+
+  # node deletion
+  node_deletion_cost = 0
+  for node in sinister.nodes():
+    if not is_node_in_sinister(analogy, node):
+      res = node_diff_cost(sinister[node])
+      vprint(f'Deleted ({res}): {node}')
+      node_deletion_cost += res
+  
+  if itemized or verbose:
+    print('---- Node deletion cost:', node_deletion_cost)
+  vprint()
+  cost += node_deletion_cost
+
+  # node insertion
+  node_insertion_cost = 0
+  for node in dexter.nodes():
+    if not is_node_in_dexter(analogy, node):
+      res = node_diff_cost(dexter[node])
+      vprint(f'Inserted ({res}): {node}')
+      node_insertion_cost += res
+  
+  if itemized or verbose:
+    print('---- Node insertion cost:', node_insertion_cost)
+  vprint()
+  cost += node_insertion_cost
+
+  # node substitution
+  # loop through analogy
+  node_substitution_cost = 0
+  for sinister_node, dexter_node in get_analogy_nodes(analogy, side=None):
+    res = node_subst_cost(sinister.nodes[sinister_node], dexter.nodes[dexter_node])
+    vprint(f'Substitution ({res:3>}): {sinister_node} ==> {dexter_node}')
+    vprint(f'                  {str(sinister.nodes[sinister_node])} ==> {str(dexter.nodes[dexter_node])}')
+    node_substitution_cost += res
+
+  if itemized or verbose:
+    print('---- Node substitution cost:', node_substitution_cost)
+  vprint()
+  cost += node_substitution_cost
+
+  # remainding dexter nodes. 
+  # They are unmatched and not inserted. They would be deleted in the reverse analogy.
+  remaining_dexter_nodes = set(dexter.nodes) - set(get_analogy_nodes(analogy, Hand.DEXTER))
+
+  for dexter_node in remaining_dexter_nodes:
+    vprint('Remaining dexter node:', dexter_node)
+  vprint('---- Remaining node cost: 0 (always)')
+  vprint()
+
+  # edge deletion
+  edge_deletion_cost = 0
+  for edge in sinister.edges(keys=True):
+    if not is_edge_in_sinister(analogy, edge):
+      res = edge_diff_cost(sinister.edges[edge])
+      vprint(f'Deleted edge ({res}): {edge[:2]}')
+      edge_deletion_cost += res
+  
+  if itemized or verbose:
+    print('---- Edge Deletion cost:', edge_deletion_cost)
+  vprint()
+  cost += edge_deletion_cost
+
+  # edge insertion
+  edge_insertion_cost = 0
+  for edge in dexter.edges(keys=True):
+    if not is_edge_in_dexter(analogy, edge):
+      res = edge_diff_cost(dexter.edges[edge])
+      vprint(f'Inserted edge ({res}): {edge[:2]}')
+      edge_insertion_cost += res
+  
+  if itemized or verbose:
+    print('---- Edge Deletion cost:', edge_insertion_cost)
+  vprint()
+  cost += edge_insertion_cost
+
+  # edge substitution
+  edge_substition_cost = 0
+  for sinister_edge, dexter_edge in get_analogy_edges(analogy, side=None):
+    res = edge_subst_cost(sinister.edges[sinister_edge], dexter.edges[dexter_edge])
+    sinister_relation = sinister.edges[sinister_edge].get('relation')
+    dexter_relation = dexter.edges[dexter_edge].get('relation')
+    vprint(f'Substitution ({res}): {sinister_edge[0]} -{sinister_relation}-> {sinister_edge[1]}')
+    vprint(f'              ==> {dexter_edge[0]} -{dexter_relation}-> {dexter_edge[1]}')
+    vprint(f'')
+    edge_substition_cost += res
+
+  if itemized or verbose:
+    print('---- Edge substitution cost:', edge_substition_cost)
+  vprint()
+  cost += edge_substition_cost
+
+
+  if itemized or verbose:
+    print(f'------------------\nTotal Cost: {cost}\n')
+  return cost
+  
 
 # --- Show analogies as mermaid diagrams
 def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str):
@@ -344,14 +523,17 @@ if __name__ == '__main__':
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  # sinister_name = 'imessage'
-  # dexter_name = 'slack'
-  sinister_name = 'calendar'
-  dexter_name = 'video-editor'
+  sinister_name = 'imessage'
+  dexter_name = 'slack'
+  # dexter_name = 'imessage'
+  # sinister_name = 'calendar'
+  # dexter_name = 'video-editor'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
-  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
+  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=1*60, verbose=True)
+
+  calculate_cost(analogy, sinister_graph, dexter_graph, verbose=True)
 
   # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')
   # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')

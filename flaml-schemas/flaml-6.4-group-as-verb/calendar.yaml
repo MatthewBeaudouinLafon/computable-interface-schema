@@ -10,14 +10,13 @@
 
 - (gui) mini-month-view:
     /marks.text <>: months.selected->days
-    /marks.hwrap <>: time
+    /encoding.hwrap <>: time
+# - (action) create-event:
+#     create: events
 
-- (action) create-event:
-    create: events
+# - (action) delete-event:
+#     delete: events
 
-- (action) delete-event:
-    delete: events
-
-- (action) move-event:
-    update: time covers events
-    directions: time
+# - (action) move-event:
+#     update: time covers events
+#     directions: time

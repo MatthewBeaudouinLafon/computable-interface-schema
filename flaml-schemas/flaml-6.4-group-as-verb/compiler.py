@@ -274,6 +274,27 @@ def compile_interp(interp: list, type_interps: dict, verbose=False):
 
   return combined_graph
 
+# ---- Presenting Results ----
+# --- Printing Graphs
+def print_graph(graph: nx.MultiDiGraph):
+  assert type(graph) is nx.MultiDiGraph
+  nodes = graph.nodes().data()
+  edges = graph.edges.data()
+  print(f'-- {len(nodes)} nodes, {len(edges)} edges')
+  print('-- Nodes')
+  for node in nodes:
+    name, attr = node
+    type_name = attr.get('type')
+    type_name = '' if type_name is None else f'({type_name}) '
+    print(type_name+name)
+  
+  print('-- Edges')
+  for edge in edges:
+    source, target, attr = edge
+    relation = attr.get('relation')
+    print(f'{source} -{relation}-> {target}')
+
+# --- Mermaid Visualization ---
 def mermaid_graph_core(
     graph: nx.MultiDiGraph,
     should_color_node: callable,

@@ -56,3 +56,17 @@
 
 - (action) select-channel:
     update: channels.active subset channels
+# Hopeful analogy
+# {'chat-view': 'chat-view',
+#  'chat-view/encoding.vstack': 'chat-view/encoding.vstack',
+#  'chat-view/marks': 'chat-view/marks.text',
+#  'conversations': 'channels',
+#  'conversations.active->messages': 'channels.active->messages',
+#  'convo-view': 'channel-view',
+#  'convo-view/encoding.cluster': 'channel-view/encoding.cluster',
+#  'convo-view/encoding.vstack': 'channel-view/encoding.vstack',
+#  'convo-view/marks.text': 'channel-view/marks',
+#  'messages': 'messages',
+#  'people': 'people',
+#  'pin': 'channel-type',
+#  'time': 'time'}
