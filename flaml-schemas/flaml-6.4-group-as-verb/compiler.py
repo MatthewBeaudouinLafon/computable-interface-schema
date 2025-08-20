@@ -10,6 +10,7 @@ argp = argparse.ArgumentParser(
                     prog='Interface Schema Compiler',
                     description='Prints mermaid diagram for provided files. Default is calendar.yaml.')
 argp.add_argument('filenames', action='append')
+argp.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
 
 # --- Helpers
 """
@@ -19,7 +20,19 @@ def lookup_alias(alias_registry: dict[str, str], name: str):
   return alias_registry.get(name, name)  # return name if it wasn't found in the registry
 
 # --- Compile
-def make_type_registry_extension(type_registry: dict[str, list], type_interps: dict[str, list], valid_nodes: list[str], get_alias: callable):
+"""
+Construct an extension to a type_registry based on type_interps.
+type_interps declares a bunch of stuff. This include declaring an instance of something else.
+When that happens, we want to add that instantiation to the type_registry.
+
+For example, if we define (gui) view and gui declares (linear) /encoding.vstack,
+we want to infer that view/encoding.vstack is also (linear).
+
+Inputs:
+type_registry = {instance_name: type_name}
+type_interps  = {type_name: [type_declarations]}
+"""
+def make_type_registry_extension(type_registry: dict[str, str], type_interps: dict[str, list], valid_nodes: list[str], get_alias: callable):
   # Find type and add instances when used, including when nested
   if len(type_registry.keys()) == 0:  # base case
     return {}
@@ -44,6 +57,35 @@ def make_type_registry_extension(type_registry: dict[str, list], type_interps: d
   return type_registry_extension | make_type_registry_extension(type_registry_extension, type_interps, valid_nodes, get_alias)
 
 
+"""
+Expand type_interp with the parent's type_interp. type_interp is modified in place.
+For example, (presentation) is (gui)'s parent, so we add (presentation)'s interp to (gui)'s interp.
+
+Input:
+type_interps_lists: {type_name: [type_declarations]}
+type_parents      : nx.digraph where edges are (type->parent)
+"""
+def expand_type_interps(type_interps_lists: dict[str, list], type_parents: nx.digraph, verbose=False):
+  nodes_with_parents = type_parents.nodes()
+  for type_name, type_interp in type_interps_lists.items():
+    if type_name not in nodes_with_parents:
+      # Type does not have a parent.
+      continue
+
+    parents_list = nx.descendants(type_parents, type_name)
+    for parent_name in parents_list:
+      if parent_name not in type_interps_lists.keys():
+        # This type was probably not defined with declarations eg. (structure)
+        continue
+    
+      if verbose:
+        print(f'extending ({type_name}) with ({parent_name})')
+      type_interps_lists[type_name].extend(type_interps_lists[parent_name])
+  
+  # DEBUG
+  # pprint.pprint(type_interps_lists)
+
+
 def compile(file_path: str, verbose=False):
   spec = parser.spec_from_file(file_path)
   std_spec = parser.spec_from_file('standard.yaml')
@@ -52,18 +94,19 @@ def compile(file_path: str, verbose=False):
     print('\n--- Parsing spec ---')
     parser.print_interp(interp)
   
-  # TODO: combine with standard.yaml type definitions
   if verbose:
     print('\n--- Parsing standard library ---')
-  standard_type_interps = parser.parse_type_definitions(std_spec, verbose)
+  standard_type_interps, standard_type_parents = parser.parse_type_definitions(std_spec, verbose)
 
   if verbose:
     print('\n--- Parsing spec types ---')
-  type_interps = standard_type_interps | parser.parse_type_definitions(spec, verbose)
+  type_interps, type_parents = parser.parse_type_definitions(spec, verbose)
+  type_interps = type_interps | standard_type_interps
+  type_parents = type_parents | standard_type_parents
   
-  return compile_interp(interp, type_interps, verbose=verbose)
+  return compile_interp(interp, type_interps, type_parents, verbose=verbose)
 
-def compile_interp(interp: list, type_interps: dict, verbose=False):
+def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dict[str,str], verbose=False):
   """
   Takes a list of interpreted relations (from the parser) and produces a networkx
   MultiGraph which represents this list. It also applies various transitive rules
@@ -170,9 +213,15 @@ def compile_interp(interp: list, type_interps: dict, verbose=False):
     [nx.MultiDiGraph(graph) for graph in graphs.values()]
   ).nodes()
 
+  # Add parent declarations to type declarations
+  type_ancestry = nx.DiGraph([(type_name, type_parent_name) for type_name, type_parent_name in type_parents.items()])
+  assert nx.is_directed_acyclic_graph(type_ancestry), f'Type ancestry graph contains a cycle. {type_ancestry=}'
+  expand_type_interps(type_interps, type_ancestry, verbose=verbose)
+
   # Find type and add instances when used, including when nested
   type_registry = type_registry | make_type_registry_extension(type_registry, type_interps, strong_nodes, get_alias)
 
+  # Add declaration from type to instances
   for spec_inst_name, spec_type_name in type_registry.items():
     type_interp = type_interps.get(spec_type_name, None)
     assert type_interp is not None, f'Type `{spec_type_name}` was used with `{spec_inst_name}` but not declared.'
@@ -356,5 +405,5 @@ if __name__ == '__main__':
       print(f'Skipping `{spec_file}` because it does not exist.')
       continue
 
-    test_graph = compile(spec_file, verbose=False)
+    test_graph = compile(spec_file, verbose=args.verbose)
     mermaid_graph(test_graph, verbose=True)

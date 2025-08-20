@@ -26,7 +26,7 @@
     # PARSE: SRC:ID=subset-expression REL:subset TRG:ID=object-name
     subgroups: subset-expression # subset of the affected objects
 
-- def (derivable-group):
+- def (derivable-group) extends (existing-group): # derivable-group is a subtype/subset of existing-group
     # PARSE: ID=argument-name
     arguments: any-expression # arguments are prefixed with $.
 

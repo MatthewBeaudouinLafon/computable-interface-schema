@@ -447,7 +447,7 @@ class TestRecursiveDescent:
 
 class TestTypeDeclarations:
   def test_basic(self):
-    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
     group foreach:
       - /timestamps
@@ -460,9 +460,26 @@ class TestTypeDeclarations:
                   [
                     ('@', rel.GROUP_FOREACH, '@/timestamps', dpower.WEAK),
                   ])
+
+  def test_basic_extension(self):
+    type_interps, type_parents = parser.parse_type_definitions(parser.spec_from_string("""
+- def (gui) extends (presentation):
+    group foreach:
+      - /marks
+"""))
+    
+    interp = type_interps.get('gui', None)
+    assert interp is not None
+
+    assert type_parents.get('gui', None) == 'presentation'
+
+    assert compare_interp(interp, 
+                  [
+                    ('@', rel.GROUP_FOREACH, '@/marks', dpower.WEAK),
+                  ])
   
   def test_multiple(self):
-    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (linear):
     group foreach:
       - /first
@@ -487,7 +504,7 @@ class TestTypeDeclarations:
                   ])
 
   def test_depth(self):
-    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
     group foreach:
       - (linear) /timeline:
@@ -506,7 +523,7 @@ class TestTypeDeclarations:
                   ])
   
   def test_no_interp_definition(self):
-    type_interps = parser.parse_type_definitions(parser.spec_from_string("""
+    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (action)
 """))
     

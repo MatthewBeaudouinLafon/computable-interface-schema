@@ -1,12 +1,9 @@
 # Structures
-- def (structure):
-    subgroup: digraph
+- def (structure)
 
-- def (digraph):
-    subgroup: tree, 2D, 3D, ND
+- def (digraph) extends (structure)
 
-- def (tree):
-    subgroup: linear
+- def (tree) extends (digraph):
     group foreach:
       - /root
       - /leaves
@@ -15,17 +12,17 @@
       - (linear) breadth-first-search-order
       - (linear) depth-order
 
-- def (linear):
+- def (linear) extends (tree):
     group foreach:
       - /first =: /root
       - /last =: /leaves
 
-- def (2D):
+- def (2D) extends (structure):
     group foreach:
       - (linear) x-axis
       - (linear) y-axis
 
-- def (3D):
+- def (3D) extends (structure):
     group foreach:
       - (linear) x-axis
       - (linear) y-axis
@@ -36,9 +33,11 @@
 
 # Views
 - def (presentation):
-    subgroups: gui, reader
+    group foreach:
+      - (structure) /encoding:
+          affects: /marks
 
-- def (gui):
+- def (gui) extends (presentation):
     group foreach:
       - /encoding:
           subset:
@@ -58,7 +57,7 @@
             - marks.icons
             - marks.text
 
-- def (reader):
+- def (reader) extends (presentation):
     group foreach:
       - /encoding:
           subset: .order

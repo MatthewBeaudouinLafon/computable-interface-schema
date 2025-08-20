@@ -590,28 +590,70 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
     return parse_str(list(statement.keys())[0], parent=key_parent, interp=[], depth=depth)
   return
 
-def parse_type_definitions(spec, verbose=False):
+"""
+Parse a string like `def (linear) extends (structure)`, where the extension is optional.
+                           ^-type           ^-parent
+Return None if it doesn't match
+"""
+def parse_type_def_str(statement: str, verbose=False) -> tuple[str|None, str|None]:
+  # NOTE: This will intentionally not match `def (my-type) my-instance`
+  assert isinstance(statement, str), f'Type Error: expected str, got {type(statement)} instead from {statement}'
+  if statement[:4] != 'def ':
+    return (None, None)
+
+  re_res = re.match(r'^def \((?P<type>[\w\-]+)\) extends \((?P<parent>[\w\-]+)\)$', statement)
+  parent_type_name = None
+  if re_res is not None: # match succeeds
+    parent_type_name = re_res.group('parent')
+    type_name = re_res.group('type')
+    return (type_name, parent_type_name)
+
+  else: # match fails
+    re_res = re.match(r'^def \((?P<type>[\w\-]+)\)$', statement)
+    if re_res is None:  # second match fails
+      return (None, None)
+    
+    type_name = re_res.group('type')
+    return (type_name, None)
+
+"""
+Parses spec for type declaration eg. - def (linear) extends (structure): group foreach: etc...
+Returns a dictionary listing the relations declared in each type declaration:
+{ type_name: [ declaration_in_type_declaration ] }
+And a dictionary for type parenthood:
+{ type_name: parent }
+
+Any attribute declaration is prefixed with @ as a placeholder for the instance name.
+"""
+def parse_type_definitions(spec, verbose=False) -> tuple:
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
   instance_name = '@'  # This is used in place of the instance-name
   interp_dict = {}  # {str(type_name): [type_interp]}
+  parent_dict = {}  # {str(type_name): str(parent_type_name)}
 
   for statement in spec:
     type_interp = []
     # Ignore anything that's not a top level definition
     # NOTE: This approach silently ignores type definitions that are inline.
     #       These aren't supported anyway, but it'd be nice to error on them.
-    if type(statement) is str and statement[:4] == 'def ':
-      re_res = re.match(r'^def \((?P<type>[\w\-]+)\)$', statement)
-      assert re_res is not None, f'Failed to find type name in supposed type definition: `{statement}`'
-      type_name = re_res.group('type')
-      if verbose:
-        print(f'Declaring type: ({type_name})')
+    if type(statement) is str:
+      type_name, parent_type_name = parse_type_def_str(statement, verbose)
+      if type_name is None:
+        continue
+
       interp_dict[type_name] = []
+      if parent_type_name is not None:
+        interp_dict[parent_type_name] = []
+      
+      if verbose:
+        print_parent = '' if parent_type_name is None else f' with parent: ({parent_type_name})'
+        print(f'Declaring type: ({type_name})' + print_parent)
       continue
 
     elif type(statement) is not dict:
       continue
 
+    # statement is dict
     assert len(statement.keys()) == 1, f'Found multiple keys in a type definition dict: {list(statement.keys())}'
     assert len(statement.values()) == 1, f'Found multiple values in a type definition dict: {list(statement.values())}'
     type_def_key, type_def_content = list(statement.keys())[0], list(statement.values())[0]
@@ -621,16 +663,24 @@ def parse_type_definitions(spec, verbose=False):
 
     assert type(type_def_content) is dict, f'Contents of type definition should be a dict, got this instead: {type_def_content}'
 
-    # NOTE: This will intentionally not match `def (my-type) my-instance`
-    re_res = re.match(r'^def \((?P<type>[\w\-]+)\)$', type_def_key)
-    assert re_res is not None, f'Failed to find type name in supposed type definition: `{statement}`'
-    type_name = re_res.group('type')
+    type_name, parent_type_name = parse_type_def_str(type_def_key, verbose)
+    assert type_name is not None, f'Failed to find type name in supposed type definition: `{statement}`'
 
     if verbose:
-      print(f'Declaring type: ({type_name})')
+      print_parent = '' if parent_type_name is None else f' with parent: ({parent_type_name})'
+      print(f'Declaring type: ({type_name})' + print_parent)
 
     # At this point we know that we're in a type definition, so anything wrong
     # should assert a failure.
+    
+    # Assign parents
+    if parent_type_name is not None:
+      parent_dict[type_name] = parent_type_name
+
+      if verbose:
+        print(f'({type_name}) has parent ({parent_type_name})')
+
+    # Construct the list of interps
     type_relations = type_def_content.keys()
     for relation in type_relations:
       assert type(relation) is str, f'Type Error: Expected str, got `{type(relation)}` instead from `{relation}`.'
@@ -657,7 +707,7 @@ def parse_type_definitions(spec, verbose=False):
     # Add to result dict
     interp_dict[type_name] = weakened_type_interp
   
-  return interp_dict
+  return interp_dict, parent_dict
 
 
 def make_relations(spec, verbose=False):
