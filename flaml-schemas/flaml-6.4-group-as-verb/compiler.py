@@ -18,28 +18,6 @@ Find an alias if it exists.
 def lookup_alias(alias_registry: dict[str, str], name: str):
   return alias_registry.get(name, name)  # return name if it wasn't found in the registry
 
-"""
-Convert a relation to source ilk.
-If an object is the source to a relation, it implies that the source is of a
-certain ilk.
-NOTE: let's assume that there must be a single ilk and see if we run into trouble.
-"""
-def convert_relation_to_ilk(relation: rel):
-  match relation:
-    case rel.MAPTO | rel.SUBSET | rel.ALIAS | rel.TBD | rel.GROUP | rel.GROUP_FOREACH:
-      return None
-    
-    # TODO: this will collide with affects for linear etc. so need to think it through
-    # case rel.GROUP | rel.GROUP_FOREACH:
-    #   return 'group'
-
-    case rel.AFFECTS | rel.COVERS:
-      return 'structure'
-    
-    case rel.TYPE:
-      return 'type-definition'
-  assert False, f'Relation has not matching ilk. {relation=}'
-
 # --- Compile
 def make_type_registry_extension(type_registry: dict[str, list], type_interps: dict[str, list], valid_nodes: list[str], get_alias: callable):
   # Find type and add instances when used, including when nested
@@ -108,8 +86,6 @@ def compile_interp(interp: list, type_interps: dict, verbose=False):
     graphs[relation_enum] = nx.DiGraph()
   
   type_registry = {}  # node: type
-  ilk_registry = {}   # node: ilk
-  
 
   # --- Alias Pass.
   vprint('\n-- Alias Pass')
@@ -179,14 +155,6 @@ def compile_interp(interp: list, type_interps: dict, verbose=False):
 
     vprint(f'{source} -{relation.name}-> {target}')
     rel_graph = graphs[relation]
-
-    # Add Ilk to the node
-    # NOTE: ilk is added to the graph after compose_all to avoid
-    # losing attributes to the graph composition.
-    source_ilk = convert_relation_to_ilk(relation)
-    if source_ilk is not None:
-      assert ilk_registry.get(source) is None or ilk_registry.get(source) == source_ilk, f'Node already has an ilk (node={source}, ilk={ilk_registry.get(source)}) cannot give it another ilk (ilk={source_ilk})'
-      ilk_registry[source] = source_ilk
 
     # Finally add edge
     rel_graph.add_edge(source, target, relation=relation.name)
@@ -265,12 +233,6 @@ def compile_interp(interp: list, type_interps: dict, verbose=False):
   for node, node_type in type_registry.items():
     vprint(f'({node_type}) {node}')
     combined_graph.add_node(node, type=node_type)
-  
-  # - Assign ilk
-  vprint('- Assign Ilks')
-  for node, node_ilk in ilk_registry.items():
-    vprint(f'<{node_ilk}> {node}')
-    combined_graph.add_node(node, ilk=node_ilk)
 
   return combined_graph
 

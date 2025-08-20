@@ -174,14 +174,6 @@ def node_subst_cost(n1, n2):
     # TODO: check that they're both standard library types
     return 1
   # TODO: do "type" "casting" for things like linear->tree
-
-  # Ilks are structures, groups, and type definitions.
-  # NOTE: Simple objects aren't labeled yet. 
-  #       Presumably None => objects, but not 100% sure.
-
-  # NOTE: is this even necessary if the edges wouldn't match anyway? 
-  # I think it speeds up the algo significantly, since you can avoid pairing nodes
-  # and complexity depends way more on nodes.
   
   # Otherwise, deemphasize this pairing by maximizing costs.
   return MAX_COST
@@ -456,7 +448,6 @@ def mermaid_analogy_only(analogy: Analogy):
   id_dict = {}  # {graph_node_id: number_id}
 
   for s_node, d_node in analogy[0].items():
-    # TODO: add ilk to get the right shape
     node_id = f"{s_node} <> {d_node}"
     id_dict[node_id] = id_gen
     ret += f"{pad}{id_gen}[{node_id}]\n"
