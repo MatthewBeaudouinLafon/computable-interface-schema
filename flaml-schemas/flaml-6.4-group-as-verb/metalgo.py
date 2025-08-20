@@ -148,7 +148,6 @@ def is_edge_in_dexter(analogy: Analogy, edge) -> bool:
 
 
 def print_analogy(analogy: Analogy):
-  # TODO: take the graphs as parameters to list the insertions and deletions
   print("- nodes")
   for sinister_node, dexter_node in analogy[0].items():
     print(f"{sinister_node:>30} <=> {dexter_node:<30}")
@@ -320,6 +319,21 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   def vprint(*args):
     if verbose:
       print(*args)
+
+  if itemized or verbose:
+    vprint('-------- Cost breakdown')
+  
+  vprint('-- Nodes in analogy / nodes in graph:')
+  num_analogy_nodes = len(get_analogy_nodes(analogy, None))
+  vprint(f'sinister: {num_analogy_nodes} / {len(sinister.nodes())}')
+  vprint(f'dexter: {num_analogy_nodes} / {len(dexter.nodes())}')
+
+
+  vprint('\n-- Edges in analogy / edges in graph:')
+  num_analogy_edges = len(get_analogy_edges(analogy, None))
+  vprint(f'sinister: {num_analogy_edges} / {len(sinister.edges())}')
+  vprint(f'dexter  : {num_analogy_edges} / {len(dexter.edges())}')
+  vprint()
 
   # node deletion
   node_deletion_cost = 0
@@ -522,7 +536,7 @@ if __name__ == '__main__':
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
-  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=1*60, verbose=True)
+  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=0.5*60, verbose=True)
 
   calculate_cost(analogy, sinister_graph, dexter_graph, verbose=True)
 
