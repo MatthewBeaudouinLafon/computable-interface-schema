@@ -97,6 +97,7 @@ def compile(file_path: str, verbose=False):
   if verbose:
     print('\n--- Parsing standard library ---')
   standard_type_interps, standard_type_parents = parser.parse_type_definitions(std_spec, verbose)
+  standard_types = set(standard_type_interps.keys())
 
   if verbose:
     print('\n--- Parsing spec types ---')
@@ -104,9 +105,9 @@ def compile(file_path: str, verbose=False):
   type_interps = type_interps | standard_type_interps
   type_parents = type_parents | standard_type_parents
   
-  return compile_interp(interp, type_interps, type_parents, verbose=verbose)
+  return compile_interp(interp, type_interps, type_parents, standard_types, verbose=verbose)
 
-def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dict[str,str], verbose=False):
+def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dict[str,str], standard_types: set[str], verbose=False):
   """
   Takes a list of interpreted relations (from the parser) and produces a networkx
   MultiGraph which represents this list. It also applies various transitive rules
@@ -268,9 +269,8 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
   # TODO: first need to figure out when question declarations are made and
   #       figure out how `def` stuff will work.
 
-
   # --- Combine Graphs.
-  vprint('-- Combine Graphs')
+  vprint('\n-- Combine Graphs')
   # NOTE: if multiple graphs use the same node-attribute, then compose_all will
   # use the last one. Seems like a footgun to me!
   combined_graph = nx.compose_all(
@@ -282,13 +282,76 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
   for node, node_type in type_registry.items():
     vprint(f'({node_type}) {node}')
     combined_graph.add_node(node, type=node_type)
+  
+  # - Assign whether type is from standard library or not
+  vprint('- Assign whether type is standard')
+  for node_name, attr in combined_graph.nodes(data=True):
+    is_standard = False
+    type_name = attr.get('type', None)
+    if type_name is not None and type_name in standard_types:
+      is_standard = True
+    combined_graph.add_node(node_name, is_standard=is_standard)
+    
+
+  for node, node_type in type_registry.items():
+    # vprint(f'({node_type}) {node}')
+    is_standard = node_type in standard_types
+    combined_graph.add_node(node, is_standard=is_standard)
+
+  # - Assign Layer
+  # We tag nodes depending on whether they are in the conceptual, presentation,
+  # or behavior layer. They are mutually exclusive, and depend entirely on type.
+  vprint('\n- Assign Layer')
+
+  # First pass assigns layer based on type.
+  # print_graph(type_ancestry) # TODO: RM
+  for node_name, attr in combined_graph.nodes(data=True):
+    type_name = attr.get('type')
+    node_layer = 'conceptual'
+    if type_name is None or type_name not in type_ancestry.nodes:
+      # no type and no parents
+      pass
+    else:
+      is_presentation_layer = type_name == 'presentation' or 'presentation' in nx.descendants(type_ancestry, type_name)
+      is_action_layer = type_name == 'action' or 'action' in nx.descendants(type_ancestry, type_name)
+      assert not (is_presentation_layer and is_action_layer), f'Error: `({type_name}) {node_name}` is somehow both in the presentation and action layer. \n          nodes:{type_ancestry.nodes}\n          edges:{type_ancestry.edges}'
+
+      node_layer = 'conceptual'
+      if is_presentation_layer:
+        node_layer = 'presentation'
+      elif is_action_layer:
+        node_layer = 'action'
+    
+    # DEBUG
+    # vprint(f'({type_name}) {node_name} => {node_layer}')
+    combined_graph.add_node(node_name, layer=node_layer)
+
+  # Second pass looks at the items that are grouped by presentation and action items.
+  for node_name, attr in combined_graph.nodes(data=True):
+    node_layer = attr.get('layer')
+    if node_layer == 'conceptual':
+      continue
+
+    if node_name not in graphs[rel.GROUP_FOREACH].nodes():
+      continue
+
+    for grouped_node in nx.descendants(graphs[rel.GROUP_FOREACH], node_name):
+      combined_graph.add_node(grouped_node, layer=node_layer)
+      # DEBUG
+      # vprint(f'converting {grouped_node} to {node_layer} layer')
+  
+  if verbose:
+    for node_name, attr in combined_graph.nodes(data=True):
+      type_name = attr.get('type')
+      node_layer = attr.get('layer')
+      type_str = f'({type_name}) ' if type_name is not None else ''
+      vprint(f'{node_layer}: {type_str}{node_name}')
 
   return combined_graph
 
 # ---- Presenting Results ----
 # --- Printing Graphs
 def print_graph(graph: nx.MultiDiGraph):
-  assert type(graph) is nx.MultiDiGraph
   nodes = graph.nodes().data()
   edges = graph.edges.data()
   print(f'-- {len(nodes)} nodes, {len(edges)} edges')
@@ -376,8 +439,8 @@ def mermaid_graph(
   mermaid = "flowchart LR\n"
   mermaid_core, _ = mermaid_graph_core(
     graph,
-    should_color_edge=None,
-    should_color_node=None,
+    should_color_edge=should_color_node,
+    should_color_node=should_color_edge,
     pad = '  ',
     start_index=0
   )

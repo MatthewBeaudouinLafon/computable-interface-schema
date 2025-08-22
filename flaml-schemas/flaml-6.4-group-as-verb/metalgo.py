@@ -168,14 +168,30 @@ MAX_COST = 100
 """
 Cost incurred from making an analogy between two nodes.
 """
-def node_subst_cost(n1, n2):    
-  if n1.get('type') == n2.get('type'):
-    # TODO: check that they're both standard library types
-    return 1
-  # TODO: do "type" "casting" for things like linear->tree
+def node_subst_cost(n1, n2): 
+  cost = 1
+
+  n1_type = n1.get('type')
+  n1_is_standard = n1.get('is_standard')
+
+  n2_type = n2.get('type')
+  n2_is_standard = n2.get('is_standard')
+
+  if n1_is_standard or n2_is_standard:
+    # TODO: do "type" "casting" for things like linear->tree
+    if n1_type == n2_type:
+      pass # same (standard) type, no cost
+    else:
+      cost += 3 # different type, there's a cost
+  else:
+    pass # ignore type if they're both custom
   
+  if n1.get('layer') != n2.get('layer'):
+    cost = MAX_COST
+
   # Otherwise, deemphasize this pairing by maximizing costs.
-  return MAX_COST
+  return cost
+
 
 """
 Cost of inserting or deleting a node
@@ -326,13 +342,13 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   vprint('-- Nodes in analogy / nodes in graph:')
   num_analogy_nodes = len(get_analogy_nodes(analogy, None))
   vprint(f'sinister: {num_analogy_nodes} / {len(sinister.nodes())}')
-  vprint(f'dexter: {num_analogy_nodes} / {len(dexter.nodes())}')
+  vprint(f'  dexter: {num_analogy_nodes} / {len(dexter.nodes())}')
 
 
   vprint('\n-- Edges in analogy / edges in graph:')
   num_analogy_edges = len(get_analogy_edges(analogy, None))
   vprint(f'sinister: {num_analogy_edges} / {len(sinister.edges())}')
-  vprint(f'dexter  : {num_analogy_edges} / {len(dexter.edges())}')
+  vprint(f'  dexter: {num_analogy_edges} / {len(dexter.edges())}')
   vprint()
 
   # node deletion
@@ -366,7 +382,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   node_substitution_cost = 0
   for sinister_node, dexter_node in get_analogy_nodes(analogy, side=None):
     res = node_subst_cost(sinister.nodes[sinister_node], dexter.nodes[dexter_node])
-    vprint(f'Substitution ({res:3>}): {sinister_node} ==> {dexter_node}')
+    vprint(f'Substitution ({res}): {sinister_node} ==> {dexter_node}')
     vprint(f'                  {str(sinister.nodes[sinister_node])} ==> {str(dexter.nodes[dexter_node])}')
     node_substitution_cost += res
 
@@ -454,34 +470,29 @@ def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str
   
   return compiler.mermaid_graph(graph, should_color_node=is_node_in_analogy, should_color_edge=is_edge_in_analogy, verbose=True)
 
-def mermaid_analogy_only(analogy: Analogy):
-  pad = "  "
-  ret = "flowchart LR\n"
+def graph_from_analogy(analogy: Analogy, side: Hand):
+  analogy_graph = nx.MultiDiGraph()
 
-  id_gen = 0    # generated id for each node
-  id_dict = {}  # {graph_node_id: number_id}
+  nodes = get_analogy_nodes(analogy, side)
+  edges = get_analogy_edges(analogy, side)
 
-  for s_node, d_node in analogy[0].items():
-    node_id = f"{s_node} <> {d_node}"
-    id_dict[node_id] = id_gen
-    ret += f"{pad}{id_gen}[{node_id}]\n"
+  for node in nodes:
+    analogy_graph.add_node(node)
 
-    id_gen += 1
+  for edge in edges:
+    analogy_graph.add_edge(*edge)
 
-  for s_edge, d_edge in analogy[1].items():
-    s_src, s_trg = s_edge
-    d_src, d_trg = d_edge
+  return analogy_graph
 
-    src = f"{s_src} <> {d_src}"
-    trg = f"{s_trg} <> {d_trg}"
 
-    src_id = id_dict.get(src)
-    trg_id = id_dict.get(trg)
+"""
+Mermaid graph representing the subgraph outlined by the analogy, labeled in terms of the given side.
+"""
+# TODO: maybe pass None to label nodes with the analogy pairing.
+def mermaid_analogy_only(analogy: Analogy, side: Hand):
+  analogy_graph = graph_from_analogy(analogy, side)
+  return compiler.mermaid_graph(analogy_graph)
 
-    # TODO: tag with relation
-    ret += f"{pad}{src_id} --> {trg_id}\n"
-
-  return ret
 
 def mermaid_analogy_with_graphs(analogy: Analogy,
                                 sinister_name: str, sinister_graph: nx.MultiDiGraph,
@@ -528,15 +539,16 @@ if __name__ == '__main__':
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  sinister_name = 'imessage'
-  dexter_name = 'slack'
+  # sinister_name = 'imessage'
+  # dexter_name = 'slack'
   # dexter_name = 'imessage'
-  # sinister_name = 'calendar'
-  # dexter_name = 'video-editor'
+  sinister_name = 'calendar'
+  dexter_name = 'video-editor'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
-  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=0.5*60, verbose=True)
+
+  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=3*60, verbose=True)
 
   calculate_cost(analogy, sinister_graph, dexter_graph, verbose=True)
 
