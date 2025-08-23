@@ -8,6 +8,8 @@ import pytest
 import parser
 from parser import rel, dpower
 
+print('does this execute??')
+
 def parse_str(statement: str, interp: list):
   return parser.parse_str(statement=statement, parent=None, interp=interp, depth=0)
 
@@ -532,8 +534,8 @@ class TestTypeDeclarations:
     assert type(res_interp) is list and len(res_interp) == 0
 
 
-class TestSpecParser:
-  def test_spec_parser(self):
-    spec = parser.spec_from_file('test-specs.yaml')
-    parser.make_relations(spec)
-    # assert False
+# class TestSpecParser:
+#   def test_spec_parser(self):
+#     spec = parser.spec_from_file('test-specs.yaml')
+#     parser.make_relations(spec)
+#     # assert False

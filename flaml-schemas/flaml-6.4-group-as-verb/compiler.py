@@ -88,6 +88,9 @@ def expand_type_interps(type_interps_lists: dict[str, list], type_parents: nx.di
 
 def compile(file_path: str, verbose=False):
   spec = parser.spec_from_file(file_path)
+  return compile_spec(spec, verbose)
+
+def compile_spec(spec: list, verbose=False):
   std_spec = parser.spec_from_file('standard.yaml')
   interp = parser.make_relations(spec)
   if verbose:

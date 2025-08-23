@@ -103,6 +103,12 @@ def flip_analogy(analogy: Analogy) -> Analogy:
   
   return reverse
 
+def copy_analogy(analogy: Analogy) -> Analogy:
+  return (
+    analogy[0].copy(),
+    analogy[1].copy(),
+  )
+
 # Getters
 def get_analogous_node(analogy: Analogy, sinister_node: str):
   # Returns None if there is no analogous node. This might be because the source,
@@ -114,7 +120,7 @@ def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # edge doesn't exist, or it is "deleted" in the analogy.
   return analogy[1].get(sinister_edge, None)
 
-def get_analogy_nodes(analogy: Analogy, side: Hand):
+def get_analogy_nodes(analogy: Analogy, side: Hand|None):
   match side:
     case Hand.SINISTER:
       return analogy[0].keys()
@@ -157,6 +163,48 @@ def print_analogy(analogy: Analogy):
     lhs = f"{sinister_node[0]} ~ {sinister_node[1]}"
     rhs = f"{dexter_node[0]} ~ {dexter_node[1]}"
     print(f"{lhs:>50} <=> {rhs:<50}")
+
+"""
+Returns the differences in node matches between the analogies.
+Recto and Verso should be two analogies for the same pair of specs.
+"""
+def compare_analogies(recto: Analogy, verso: Analogy, verbose=False):
+  def vprint(*args):
+    if verbose:
+      print(*args)
+
+  changes = []
+  recto_nodes = set(get_analogy_nodes(recto, None))
+  verso_nodes = set(get_analogy_nodes(verso, None))
+  unchanged_nodes = recto_nodes & verso_nodes
+  
+  for pair in recto_nodes - unchanged_nodes:
+    vprint('deleted node', pair)
+    changes.append(('deleted node', pair))
+  
+  for pair in verso_nodes - unchanged_nodes:
+    vprint('  added node', pair)
+    changes.append(('  added node', pair))
+  
+  recto_edges = set(get_analogy_edges(recto, None))
+  verso_edges = set(get_analogy_edges(verso, None))
+  unchanged_edges = recto_edges & verso_edges
+
+  for pair in recto_edges - unchanged_edges:
+    vprint('deleted edge', pair)
+    changes.append(('deleted edge', pair))
+  
+  for pair in verso_edges - unchanged_edges:
+    vprint('  added edge', pair)
+    changes.append(('  added edge', pair))
+  
+  return changes
+
+"""
+Are the analogies the same, at least within a threshold?
+"""
+def check_analogy_match(recto: Analogy, verso: Analogy):
+  pass
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
@@ -539,11 +587,11 @@ if __name__ == '__main__':
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  # sinister_name = 'imessage'
-  # dexter_name = 'slack'
+  sinister_name = 'imessage'
+  dexter_name = 'slack'
   # dexter_name = 'imessage'
-  sinister_name = 'calendar'
-  dexter_name = 'video-editor'
+  # sinister_name = 'calendar'
+  # dexter_name = 'video-editor'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
@@ -556,6 +604,7 @@ if __name__ == '__main__':
   # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')
   print(mermaid_analogy_with_graphs(analogy, sinister_name=sinister_name, sinister_graph=sinister_graph,dexter_name=dexter_name, dexter_graph=dexter_graph))
 
+  pprint.pprint(analogy)
   # print(mermaid_analogy_with_graphs(analogy,
   #                             sinister_name='imessage', sinister_graph=sinister_graph,
   #                             dexter_name='slack', dexter_graph=dexter_graph))
