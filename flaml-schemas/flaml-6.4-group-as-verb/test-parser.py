@@ -8,8 +8,6 @@ import pytest
 import parser
 from parser import rel, dpower
 
-print('does this execute??')
-
 def parse_str(statement: str, interp: list):
   return parser.parse_str(statement=statement, parent=None, interp=interp, depth=0)
 

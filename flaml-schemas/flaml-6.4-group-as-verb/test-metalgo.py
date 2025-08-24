@@ -35,9 +35,7 @@ class TestAnalogyComparison:
     {
       ('conversations', 'messages', 0): ('channels', 'messages', 0),
       ('conversations', 'people', 0): ('channels', 'people', 0),
-      ('conversations.active->messages', 'messages', 0): ('channels.active->messages',
-                                                          'messages',
-                                                          0),
+      ('conversations.active->messages', 'messages', 0): ('channels.active->messages', 'messages', 0),
       ('people', 'messages', 0): ('people', 'messages', 0),
       ('pin', 'conversations', 0): ('channel-type', 'channels', 0),
       ('time', 'conversations', 0): ('alphabetical', 'channels', 0),
@@ -75,6 +73,7 @@ class TestIsomorphism:
     specs = get_specs()
     graph = compiler.compile_spec(specs['slack'])
     analogy, cost = metalgo.compute_analogy(graph, graph, timeout=5)
+
     for sinister_node, dexter_node in metalgo.get_analogy_nodes(analogy, None):
       assert sinister_node == dexter_node
   
@@ -82,6 +81,7 @@ class TestIsomorphism:
     specs = get_specs()
     graph = compiler.compile_spec(specs['video-editor'])
     analogy, cost = metalgo.compute_analogy(graph, graph, timeout=30)
+
     for sinister_node, dexter_node in metalgo.get_analogy_nodes(analogy, None):
       assert sinister_node == dexter_node
 
@@ -91,17 +91,44 @@ class TestSymmetry:
     slack_graph = compiler.compile_spec(specs['slack'])
     imessage_graph = compiler.compile_spec(specs['imessage'])
 
-    forward_analogy = metalgo.compute_analogy(slack_graph, imessage_graph, timeout=30)
-    reverse_analogy = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=30)
+    forward_analogy, _ = metalgo.compute_analogy(slack_graph, imessage_graph, timeout=30)
+    reverse_analogy, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=30)
+    reverse_analogy = metalgo.flip_analogy(reverse_analogy) # so both analogies go from slack to imessage
+    assert metalgo.compare_analogies(forward_analogy, reverse_analogy, True) == []
 
 
 class TestDreamAnalogies:
   def test_slack_imessage(self):
     specs = get_specs()
+    imessage_graph = compiler.compile_spec(specs['imessage'])
     slack_graph = compiler.compile_spec(specs['slack'])
-    veditor_graph = compiler.compile_spec(specs['imessage'])
 
-    cv_dream = {
+    cv_dream = ({
+      'pin': 'channel-type',
+      'people': 'people',
+      'messages': 'messages',
+      'conversations.active->messages': 'channels.active->messages',
+      'conversations': 'channels',
+      'time': 'time',
+      'chat-view': 'chat-view',
+      'chat-view/marks': 'chat-view/marks.text',
+      'chat-view/encoding.vstack': 'chat-view/encoding.vstack',
+      'convo-view': 'channel-view',
+      'convo-view/marks.text':'channel-view/marks',
+      'convo-view/encoding.vstack': 'channel-view/encoding.vstack',
+      'convo-view/encoding.cluster': 'channel-view/encoding.cluster',
+    }, {})
+
+    cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
+
+    assert metalgo.check_analogy_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
+
+  def test_slack_imessage(self):
+    specs = get_specs()
+    imessage_graph = compiler.compile_spec(specs['calendar'])
+    slack_graph = compiler.compile_spec(specs['video-editor'])
+
+    cv_dream = ({
       'weeks.active->events': 'editors/videos',
       'time': 'editors/timeline',
       'weeks.active->timestamps': 'editors/timestamps',
@@ -115,7 +142,13 @@ class TestDreamAnalogies:
       'mini-month-view/marks.text': 'media-pool/marks',
       'mini-month-view/encoding.hwrap': 'media-pool/encoding.hwrap',
       'months.selected->days': 'videos'
-    }
+    }, {})
+
+    cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
+
+    assert metalgo.check_analogy_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
+
+
 
 
 

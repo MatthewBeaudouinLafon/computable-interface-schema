@@ -168,7 +168,7 @@ def print_analogy(analogy: Analogy):
 Returns the differences in node matches between the analogies.
 Recto and Verso should be two analogies for the same pair of specs.
 """
-def compare_analogies(recto: Analogy, verso: Analogy, verbose=False):
+def compare_analogies(recto: Analogy, verso: Analogy, nodes_only=True, verbose=False):
   def vprint(*args):
     if verbose:
       print(*args)
@@ -179,12 +179,15 @@ def compare_analogies(recto: Analogy, verso: Analogy, verbose=False):
   unchanged_nodes = recto_nodes & verso_nodes
   
   for pair in recto_nodes - unchanged_nodes:
-    vprint('deleted node', pair)
+    vprint('deleted node', pair) # TODO: should probably be an enum.
     changes.append(('deleted node', pair))
   
   for pair in verso_nodes - unchanged_nodes:
     vprint('  added node', pair)
     changes.append(('  added node', pair))
+  
+  if nodes_only:
+    return changes
   
   recto_edges = set(get_analogy_edges(recto, None))
   verso_edges = set(get_analogy_edges(verso, None))
@@ -203,8 +206,17 @@ def compare_analogies(recto: Analogy, verso: Analogy, verbose=False):
 """
 Are the analogies the same, at least within a threshold?
 """
-def check_analogy_match(recto: Analogy, verso: Analogy):
-  pass
+def check_analogy_match(recto: Analogy, verso: Analogy, allowed_edits=0, nodes_only=True, verbose=False):
+  changes = compare_analogies(recto, verso, nodes_only, verbose=verbose)
+  passes = len(changes) <= allowed_edits
+  if not passes:
+    print(f'{len(changes)} changes, but only {allowed_edits} are allowed.')
+    for change in changes:
+      print(change)
+  elif verbose:
+    print(f'{len(changes)} changes, {allowed_edits} are allowed.')
+
+  return passes
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
