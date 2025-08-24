@@ -145,7 +145,7 @@ def compute_analogy(
     if verbose:
       print('---- Pruning isolated nodes')
 
-    analogy_graph = graph_from_analogy(analogy, Hand.SINISTER)
+    analogy_graph = analogylib.graph_from_analogy(analogy, Hand.SINISTER)
     for node_name in nx.isolates(analogy_graph):
       if verbose:
         print(f'pruning isolate:`{node_name}`')
@@ -155,46 +155,6 @@ def compute_analogy(
       analogylib.print_analogy(analogy)
 
   return analogy, cost
-
-"""
-Create an analogy based off a pairing of nodes.
-Basically finds all of the edges to make the analogy work. This is useful to get calculate it's hypothetical cost.
-"""
-def analogy_from_node_pairing(node_pairing: dict[str, str], sinister: nx.MultiDiGraph, dexter: nx.MultiDiGraph) -> Analogy:
-  result = analogylib.new()
-  for sini, dex in node_pairing.items():
-    analogylib.add_analogous_nodes(result, sini, dex)
-
-  analogy_sinister_nodes = node_pairing.keys()
-  for sinister_edge in sinister.edges(keys=True):
-    sinister_source, sinister_target, _ = sinister_edge
-
-    if sinister_source not in analogy_sinister_nodes or sinister_target not in analogy_sinister_nodes:
-      # source or target is not part of the analogy
-      continue
-
-    dexter_source = node_pairing.get(sinister_source, None)
-    dexter_target = node_pairing.get(sinister_target, None)
-    if dexter_source is None or dexter_target is None:
-      # sinister source or dexter doesn't have a dexter
-      continue
-
-    # print(f'sinister: {sinister_source} -{sinister_relation}-> {sinister_target}')
-    # print(f'dexter  : {dexter_source} -????????-> {dexter_target}')
-
-    dexter_edges = dexter[dexter_source].get(dexter_target)
-    if dexter_edges is None:
-      # dexter doesn't have a matching edge
-      continue
-      
-    if len(dexter_edges.keys()) > 1:
-      # oops this is a multi-edge
-      print('WARNING: dexter has a multi-edge, we just picked the first one. edges:', dexter_edges)
-    
-    dexter_edge_key = 0
-    analogylib.add_analogous_edges(result, sinister_edge, (dexter_source, dexter_target, dexter_edge_key))
-  
-  return result
 
 """
 Calculate the cost of a given analogy.
@@ -317,7 +277,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   return cost
   
 
-# --- Show analogies as mermaid diagrams
+# --- Show analogy results as mermaid diagrams
 def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str):
   # side_index = 0
   # if side
@@ -338,29 +298,6 @@ def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str
       return analogylib.is_edge_in_dexter(analogy=analogy, edge=edge)
   
   return compiler.mermaid_graph(graph, should_color_node=is_node_in_analogy, should_color_edge=is_edge_in_analogy, verbose=True)
-
-def graph_from_analogy(analogy: Analogy, side: Hand):
-  analogy_graph = nx.MultiDiGraph()
-
-  nodes = analogylib.get_nodes(analogy, side)
-  edges = analogylib.get_edges(analogy, side)
-
-  for node in nodes:
-    analogy_graph.add_node(node)
-
-  for edge in edges:
-    analogy_graph.add_edge(*edge)
-
-  return analogy_graph
-
-
-"""
-Mermaid graph representing the subgraph outlined by the analogy, labeled in terms of the given side.
-"""
-# TODO: maybe pass None to label nodes with the analogy pairing.
-def mermaid_analogy_only(analogy: Analogy, side: Hand):
-  analogy_graph = graph_from_analogy(analogy, side)
-  return compiler.mermaid_graph(analogy_graph)
 
 
 def mermaid_analogy_with_graphs(analogy: Analogy,

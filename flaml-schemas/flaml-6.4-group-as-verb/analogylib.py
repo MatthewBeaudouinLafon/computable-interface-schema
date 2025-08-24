@@ -17,6 +17,9 @@ forward_match = (
 )
 """
 import enum
+import networkx as nx
+
+import compiler
 
 Analogy = tuple[dict[str, str]]
 
@@ -222,9 +225,79 @@ def check_match(recto: Analogy, verso: Analogy, allowed_edits=0, nodes_only=True
   passes = len(changes) <= allowed_edits
   if not passes:
     print(f'{len(changes)} changes, but only {allowed_edits} are allowed.')
-    for change in changes:
-      print(change)
+    # # TODO: haven't thought through how to report this well besides making compare verbose
+    # # so it's a bit inelegant. 
+    # for change in changes:
+    #   print(change)
   elif verbose:
     print(f'{len(changes)} changes, {allowed_edits} are allowed.')
 
   return passes
+
+
+
+"""
+Create an analogy based off a pairing of nodes.
+Basically finds all of the edges to make the analogy work. This is useful to get calculate it's hypothetical cost.
+"""
+def analogy_from_node_pairing(node_pairing: dict[str, str], sinister: nx.MultiDiGraph, dexter: nx.MultiDiGraph) -> Analogy:
+  result = new()
+  for sini, dex in node_pairing.items():
+    add_analogous_nodes(result, sini, dex)
+
+  analogy_sinister_nodes = node_pairing.keys()
+  for sinister_edge in sinister.edges(keys=True):
+    sinister_source, sinister_target, _ = sinister_edge
+
+    if sinister_source not in analogy_sinister_nodes or sinister_target not in analogy_sinister_nodes:
+      # source or target is not part of the analogy
+      continue
+
+    dexter_source = node_pairing.get(sinister_source, None)
+    dexter_target = node_pairing.get(sinister_target, None)
+    if dexter_source is None or dexter_target is None:
+      # sinister source or dexter doesn't have a dexter
+      continue
+
+    # print(f'sinister: {sinister_source} -{sinister_relation}-> {sinister_target}')
+    # print(f'dexter  : {dexter_source} -????????-> {dexter_target}')
+
+    dexter_edges = dexter[dexter_source].get(dexter_target)
+    if dexter_edges is None:
+      # dexter doesn't have a matching edge
+      continue
+      
+    if len(dexter_edges.keys()) > 1:
+      # oops this is a multi-edge
+      print('WARNING: dexter has a multi-edge, we just picked the first one. edges:', dexter_edges)
+    
+    dexter_edge_key = 0
+    add_analogous_edges(result, sinister_edge, (dexter_source, dexter_target, dexter_edge_key))
+  
+  return result
+
+"""
+Greate a networkx graph from an analogy.
+"""
+def graph_from_analogy(analogy: Analogy, side: Hand):
+  analogy_graph = nx.MultiDiGraph()
+
+  nodes = get_nodes(analogy, side)
+  edges = get_edges(analogy, side)
+
+  for node in nodes:
+    analogy_graph.add_node(node)
+
+  for edge in edges:
+    analogy_graph.add_edge(*edge)
+
+  return analogy_graph
+
+
+"""
+Mermaid graph representing the subgraph outlined by the analogy, labeled in terms of the given side.
+"""
+# TODO: maybe pass None to label nodes with the analogy pairing.
+def mermaid_analogy_only(analogy: Analogy, side: Hand):
+  analogy_graph = graph_from_analogy(analogy, side)
+  return compiler.mermaid_graph(analogy_graph)
