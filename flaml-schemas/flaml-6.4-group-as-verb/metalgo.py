@@ -138,6 +138,19 @@ def compute_analogy(
 
       analogylib.add_analogous_edges(analogy, sinister_edge, dexter_edge)
 
+    # Nodes that are isolated at the end (ie. not connected to any edge) could be
+    # mapped in anyway. Their lack of connect with anything else in the analogy suggests
+    # that it's not a very structurally minded mapping.
+    # Therefore, we prune them.
+    if verbose:
+      print('---- Pruning isolated nodes')
+
+    analogy_graph = graph_from_analogy(analogy, Hand.SINISTER)
+    for node_name in nx.isolates(analogy_graph):
+      if verbose:
+        print(f'pruning isolate:`{node_name}`')
+      analogylib.remove_node(analogy, node_name)
+
     if verbose:
       analogylib.print_analogy(analogy)
 

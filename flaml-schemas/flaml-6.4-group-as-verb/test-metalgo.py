@@ -133,7 +133,7 @@ class TestDreamAnalogies:
     veditor_graph = compiler.compile_spec(specs['video-editor'])
 
     cv_dream = ({
-      'weeks.active->events': 'editors/videos',
+      'events': 'editors/videos',
       'time': 'editors/timeline',
       'weeks.active->timestamps': 'editors/timestamps',
       'week-view': 'editors/view',

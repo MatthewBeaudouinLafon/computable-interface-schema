@@ -67,6 +67,12 @@ def add_analogous_nodes(
   analogy[0][sinister_node] = dexter_node
 
 
+def remove_node(analogy: Analogy, node_name: str, side=Hand.SINISTER):
+  assert isinstance(side, Hand), f'Type Error. Expected `Hand`, got `{type(side)}` instead from `{side}`.'
+  assert side != Hand.DEXTER, 'Removing Dexter nodes is not supported yet. If you see this, time to do it!'
+
+  analogy[0].pop(node_name)
+
 """
 Insert edges to analogy object.
 """
@@ -86,6 +92,11 @@ def add_analogous_edges(
   # NOTE: this doesn't include the edge type, but we may want to eventually.
   analogy[1][sinister_edge] = dexter_edge
 
+def remove_edge(analogy: Analogy, edge_name: str, side=Hand.SINISTER):
+  assert isinstance(side, Hand), f'Type Error. Expected `Hand`, got `{type(side)}` instead from `{side}`.'
+  assert side != Hand.DEXTER, 'Removing Dexter edges is not supported yet. If you see this, time to do it!'
+
+  analogy[1].pop(edge_name)
 
 """
 Reverse the source (sinister) and target (dexter) domain.
