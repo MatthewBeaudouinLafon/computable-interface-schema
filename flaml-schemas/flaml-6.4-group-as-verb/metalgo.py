@@ -7,216 +7,12 @@ edges in individual graphs.
 
 """
 import enum
-import networkx as nx
-import compiler
 import pprint
 
-# ----- Match Representation
-# forward_match = (
-#   # nodes
-#   {
-#     sinister_node: dexter_node
-#   },
-
-#   # edges
-#   {
-#     (sinister_source_node, sinister_target_node):  # sinister edge
-#       (dexter_source_node, dexter_target_node)     # dexter edge
-#   }
-# )
-
-Analogy = tuple[dict[str, str]]
-class Hand(enum.Enum):
-  SINISTER = enum.auto()
-  DEXTER = enum.auto()
-
-def parse_side(input: str):
-  match input:
-    case 'sinister':
-      return Hand.SINISTER
-    case 'dexter':
-      return Hand.DEXTER
-  
-  assert False, f'Invalid Side: expected `sinister` or `dexter`, got `{input}` instead.'
-
-"""
-Create a new analogy object.
-"""
-def new_analogy() -> Analogy:
-  return (
-    # nodes
-    # eg. sinister_node: dexter_node
-    {},
-    # edges
-    {},
-  )
-
-
-"""
-Insert nodes to analogy object.
-"""
-def add_analogous_nodes(
-  analogy: Analogy, sinister_node: str | None, dexter_node: str | None
-):
-  # If either side is deleted, just leave it out of the analogy. This might not
-  # be ideal, because we won't be able to distinguish between deleted nodes and
-  # nodes that never existed.
-  if sinister_node is None or dexter_node is None:
-    return
-
-  analogy[0][sinister_node] = dexter_node
-
-
-"""
-Insert edges to analogy object.
-"""
-def add_analogous_edges(
-  analogy: Analogy,
-  sinister_edge: tuple[str, str, int] | None,
-  dexter_edge: tuple[str, str, int] | None,
-):
-  # If either side is deleted, just leave it out of the analogy. This might not
-  # be ideal, because we won't be able to distinguish between deleted edges and
-  # edges that never existed.
-  if sinister_edge is None or dexter_edge is None:
-    return
-  
-  assert len(sinister_edge) == 3 and len(dexter_edge) == 3, f'Edges are malformed, should have length 3. {sinister_edge=}, {dexter_edge=}'
-
-  # NOTE: this doesn't include the edge type, but we may want to eventually.
-  analogy[1][sinister_edge] = dexter_edge
-
-
-"""
-Reverse the source (sinister) and target (dexter) domain.
-ie. sinister->dexter, dexter->sinister
-"""
-def flip_analogy(analogy: Analogy) -> Analogy:
-  reverse = new_analogy()
-
-  # nodes
-  for sinister_node, dexter_node in analogy[0].items():
-    add_analogous_nodes(reverse, dexter_node, sinister_node)
-
-  for sinister, dexter in analogy[1].items():
-    add_analogous_edges(reverse, dexter, sinister)
-  
-  return reverse
-
-def copy_analogy(analogy: Analogy) -> Analogy:
-  return (
-    analogy[0].copy(),
-    analogy[1].copy(),
-  )
-
-# Getters
-def get_analogous_node(analogy: Analogy, sinister_node: str):
-  # Returns None if there is no analogous node. This might be because the source,
-  # node doesn't exist, or it is "deleted" in the analogy.
-  return analogy[0].get(sinister_node, None)
-
-def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
-  # Returns None if there is no analogous edge. This might be because the source,
-  # edge doesn't exist, or it is "deleted" in the analogy.
-  return analogy[1].get(sinister_edge, None)
-
-def get_analogy_nodes(analogy: Analogy, side: Hand|None):
-  match side:
-    case Hand.SINISTER:
-      return analogy[0].keys()
-    case Hand.DEXTER:
-      return analogy[0].values()
-    case None:
-      return analogy[0].items()
-
-def get_analogy_edges(analogy: Analogy, side: Hand):
-  match side:
-    case Hand.SINISTER:
-      return analogy[1].keys()
-    case Hand.DEXTER:
-      return analogy[1].values()
-    case None:
-      return analogy[1].items()
-
-
-# Checkers
-def is_node_in_sinister(analogy: Analogy, node_id) -> bool:
-  return analogy[0].get(node_id, None) is not None
-
-def is_node_in_dexter(analogy: Analogy, node_id) -> bool:
-  return node_id in analogy[0].values()
-
-def is_edge_in_sinister(analogy: Analogy, edge) -> bool:
-  return analogy[1].get(edge, None) is not None
-
-def is_edge_in_dexter(analogy: Analogy, edge) -> bool:
-  return edge in analogy[1].values()
-
-
-def print_analogy(analogy: Analogy):
-  print("- nodes")
-  for sinister_node, dexter_node in analogy[0].items():
-    print(f"{sinister_node:>30} <=> {dexter_node:<30}")
-
-  print("\n- edges")
-  for sinister_node, dexter_node in analogy[1].items():
-    lhs = f"{sinister_node[0]} ~ {sinister_node[1]}"
-    rhs = f"{dexter_node[0]} ~ {dexter_node[1]}"
-    print(f"{lhs:>50} <=> {rhs:<50}")
-
-"""
-Returns the differences in node matches between the analogies.
-Recto and Verso should be two analogies for the same pair of specs.
-"""
-def compare_analogies(recto: Analogy, verso: Analogy, nodes_only=True, verbose=False):
-  def vprint(*args):
-    if verbose:
-      print(*args)
-
-  changes = []
-  recto_nodes = set(get_analogy_nodes(recto, None))
-  verso_nodes = set(get_analogy_nodes(verso, None))
-  unchanged_nodes = recto_nodes & verso_nodes
-  
-  for pair in recto_nodes - unchanged_nodes:
-    vprint('deleted node', pair) # TODO: should probably be an enum.
-    changes.append(('deleted node', pair))
-  
-  for pair in verso_nodes - unchanged_nodes:
-    vprint('  added node', pair)
-    changes.append(('  added node', pair))
-  
-  if nodes_only:
-    return changes
-  
-  recto_edges = set(get_analogy_edges(recto, None))
-  verso_edges = set(get_analogy_edges(verso, None))
-  unchanged_edges = recto_edges & verso_edges
-
-  for pair in recto_edges - unchanged_edges:
-    vprint('deleted edge', pair)
-    changes.append(('deleted edge', pair))
-  
-  for pair in verso_edges - unchanged_edges:
-    vprint('  added edge', pair)
-    changes.append(('  added edge', pair))
-  
-  return changes
-
-"""
-Are the analogies the same, at least within a threshold?
-"""
-def check_analogy_match(recto: Analogy, verso: Analogy, allowed_edits=0, nodes_only=True, verbose=False):
-  changes = compare_analogies(recto, verso, nodes_only, verbose=verbose)
-  passes = len(changes) <= allowed_edits
-  if not passes:
-    print(f'{len(changes)} changes, but only {allowed_edits} are allowed.')
-    for change in changes:
-      print(change)
-  elif verbose:
-    print(f'{len(changes)} changes, {allowed_edits} are allowed.')
-
-  return passes
+import networkx as nx
+import compiler
+import analogylib
+from analogylib import Analogy, Hand
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
@@ -309,9 +105,9 @@ def compute_analogy(
     #  strictly_decreasing=True,
   )
 
-  analogy = new_analogy()
+  analogy = analogylib.new()
   for ged in geds:
-    analogy = new_analogy()
+    analogy = analogylib.new()
     node_edit_path, edge_edit_path, cost = ged
 
     if verbose:
@@ -319,7 +115,7 @@ def compute_analogy(
 
     for node_edit in node_edit_path:
       lhs, rhs = node_edit
-      add_analogous_nodes(analogy, lhs, rhs)
+      analogylib.add_analogous_nodes(analogy, lhs, rhs)
 
     for edge_edit in edge_edit_path:
       lhs, rhs = edge_edit
@@ -340,10 +136,10 @@ def compute_analogy(
         rhs = f"{edge_src} ~ {edge_trg}"
         dexter_edge = (edge_src, edge_trg, edge_key)
 
-      add_analogous_edges(analogy, sinister_edge, dexter_edge)
+      analogylib.add_analogous_edges(analogy, sinister_edge, dexter_edge)
 
     if verbose:
-      print_analogy(analogy)
+      analogylib.print_analogy(analogy)
 
   return analogy, cost
 
@@ -352,9 +148,9 @@ Create an analogy based off a pairing of nodes.
 Basically finds all of the edges to make the analogy work. This is useful to get calculate it's hypothetical cost.
 """
 def analogy_from_node_pairing(node_pairing: dict[str, str], sinister: nx.MultiDiGraph, dexter: nx.MultiDiGraph) -> Analogy:
-  result = new_analogy()
+  result = analogylib.new()
   for sini, dex in node_pairing.items():
-    add_analogous_nodes(result, sini, dex)
+    analogylib.add_analogous_nodes(result, sini, dex)
 
   analogy_sinister_nodes = node_pairing.keys()
   for sinister_edge in sinister.edges(keys=True):
@@ -383,7 +179,7 @@ def analogy_from_node_pairing(node_pairing: dict[str, str], sinister: nx.MultiDi
       print('WARNING: dexter has a multi-edge, we just picked the first one. edges:', dexter_edges)
     
     dexter_edge_key = 0
-    add_analogous_edges(result, sinister_edge, (dexter_source, dexter_target, dexter_edge_key))
+    analogylib.add_analogous_edges(result, sinister_edge, (dexter_source, dexter_target, dexter_edge_key))
   
   return result
 
@@ -400,13 +196,13 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
     vprint('-------- Cost breakdown')
   
   vprint('-- Nodes in analogy / nodes in graph:')
-  num_analogy_nodes = len(get_analogy_nodes(analogy, None))
+  num_analogy_nodes = len(analogylib.get_nodes(analogy, None))
   vprint(f'sinister: {num_analogy_nodes} / {len(sinister.nodes())}')
   vprint(f'  dexter: {num_analogy_nodes} / {len(dexter.nodes())}')
 
 
   vprint('\n-- Edges in analogy / edges in graph:')
-  num_analogy_edges = len(get_analogy_edges(analogy, None))
+  num_analogy_edges = len(analogylib.get_edges(analogy, None))
   vprint(f'sinister: {num_analogy_edges} / {len(sinister.edges())}')
   vprint(f'  dexter: {num_analogy_edges} / {len(dexter.edges())}')
   vprint()
@@ -414,7 +210,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # node deletion
   node_deletion_cost = 0
   for node in sinister.nodes():
-    if not is_node_in_sinister(analogy, node):
+    if not analogylib.is_node_in_sinister(analogy, node):
       res = node_diff_cost(sinister[node])
       vprint(f'Deleted ({res}): {node}')
       node_deletion_cost += res
@@ -427,7 +223,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # node insertion
   node_insertion_cost = 0
   for node in dexter.nodes():
-    if not is_node_in_dexter(analogy, node):
+    if not analogylib.is_node_in_dexter(analogy, node):
       res = node_diff_cost(dexter[node])
       vprint(f'Inserted ({res}): {node}')
       node_insertion_cost += res
@@ -440,7 +236,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # node substitution
   # loop through analogy
   node_substitution_cost = 0
-  for sinister_node, dexter_node in get_analogy_nodes(analogy, side=None):
+  for sinister_node, dexter_node in analogylib.get_nodes(analogy, side=None):
     res = node_subst_cost(sinister.nodes[sinister_node], dexter.nodes[dexter_node])
     vprint(f'Substitution ({res}): {sinister_node} ==> {dexter_node}')
     vprint(f'                  {str(sinister.nodes[sinister_node])} ==> {str(dexter.nodes[dexter_node])}')
@@ -453,7 +249,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
 
   # remainding dexter nodes. 
   # They are unmatched and not inserted. They would be deleted in the reverse analogy.
-  remaining_dexter_nodes = set(dexter.nodes) - set(get_analogy_nodes(analogy, Hand.DEXTER))
+  remaining_dexter_nodes = set(dexter.nodes) - set(analogylib.get_nodes(analogy, Hand.DEXTER))
 
   for dexter_node in remaining_dexter_nodes:
     vprint('Remaining dexter node:', dexter_node)
@@ -463,7 +259,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # edge deletion
   edge_deletion_cost = 0
   for edge in sinister.edges(keys=True):
-    if not is_edge_in_sinister(analogy, edge):
+    if not analogylib.is_edge_in_sinister(analogy, edge):
       res = edge_diff_cost(sinister.edges[edge])
       vprint(f'Deleted edge ({res}): {edge[:2]}')
       edge_deletion_cost += res
@@ -476,7 +272,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # edge insertion
   edge_insertion_cost = 0
   for edge in dexter.edges(keys=True):
-    if not is_edge_in_dexter(analogy, edge):
+    if not analogylib.is_edge_in_dexter(analogy, edge):
       res = edge_diff_cost(dexter.edges[edge])
       vprint(f'Inserted edge ({res}): {edge[:2]}')
       edge_insertion_cost += res
@@ -488,7 +284,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
 
   # edge substitution
   edge_substition_cost = 0
-  for sinister_edge, dexter_edge in get_analogy_edges(analogy, side=None):
+  for sinister_edge, dexter_edge in analogylib.get_edges(analogy, side=None):
     res = edge_subst_cost(sinister.edges[sinister_edge], dexter.edges[dexter_edge])
     sinister_relation = sinister.edges[sinister_edge].get('relation')
     dexter_relation = dexter.edges[dexter_edge].get('relation')
@@ -517,24 +313,24 @@ def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str
   def is_node_in_analogy(node):
     assert type(node) is str, f'Type Error: expected `str`, got `{type(node)}` instead. {node=}'
     if side == 'sinister':
-      return is_node_in_sinister(analogy=analogy, node_id=node)
+      return analogylib.is_node_in_sinister(analogy=analogy, node_id=node)
     elif side == 'dexter':
-      return is_node_in_dexter(analogy=analogy, node_id=node)
+      return analogylib.is_node_in_dexter(analogy=analogy, node_id=node)
 
   def is_edge_in_analogy(edge):
     assert type(edge) is tuple, f'Type Error: expected `tuple`, got `{type(edge)}` instead. {edge=}'
     if side == 'sinister':
-      return is_edge_in_sinister(analogy=analogy, edge=edge)
+      return analogylib.is_edge_in_sinister(analogy=analogy, edge=edge)
     elif side == 'dexter':
-      return is_edge_in_dexter(analogy=analogy, edge=edge)
+      return analogylib.is_edge_in_dexter(analogy=analogy, edge=edge)
   
   return compiler.mermaid_graph(graph, should_color_node=is_node_in_analogy, should_color_edge=is_edge_in_analogy, verbose=True)
 
 def graph_from_analogy(analogy: Analogy, side: Hand):
   analogy_graph = nx.MultiDiGraph()
 
-  nodes = get_analogy_nodes(analogy, side)
-  edges = get_analogy_edges(analogy, side)
+  nodes = analogylib.get_nodes(analogy, side)
+  edges = analogylib.get_edges(analogy, side)
 
   for node in nodes:
     analogy_graph.add_node(node)
@@ -563,8 +359,8 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
   mermaid += f'{pad}subgraph {sinister_name}\n'
   sinister_merm, sinister_ids = compiler.mermaid_graph_core(
     sinister_graph,
-    should_color_node=lambda node: is_node_in_sinister(analogy=analogy, node_id=node),
-    should_color_edge=lambda edge: is_edge_in_sinister(analogy=analogy, edge=edge),
+    should_color_node=lambda node: analogylib.is_node_in_sinister(analogy=analogy, node_id=node),
+    should_color_edge=lambda edge: analogylib.is_edge_in_sinister(analogy=analogy, edge=edge),
     pad='  ',
     start_index=0
   )
@@ -576,8 +372,8 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
   mermaid += f'{pad}subgraph {dexter_name}\n'
   dexter_merm, dexter_ids = compiler.mermaid_graph_core(
     dexter_graph,
-    should_color_node=lambda node: is_node_in_dexter(analogy=analogy, node_id=node),
-    should_color_edge=lambda edge: is_edge_in_dexter(analogy=analogy, edge=edge),
+    should_color_node=lambda node: analogylib.is_node_in_dexter(analogy=analogy, node_id=node),
+    should_color_edge=lambda edge: analogylib.is_edge_in_dexter(analogy=analogy, edge=edge),
     pad='  ',
     start_index=max_sinister_id + 1
   )

@@ -5,6 +5,8 @@ import pprint
 
 import parser
 import compiler
+import analogylib
+from analogylib import Analogy, Hand
 import metalgo
 
 def get_specs():
@@ -40,7 +42,7 @@ class TestAnalogyComparison:
       ('pin', 'conversations', 0): ('channel-type', 'channels', 0),
       ('time', 'conversations', 0): ('alphabetical', 'channels', 0),
     })
-    assert metalgo.compare_analogies(analogy, analogy, True) == []
+    assert analogylib.compare(analogy, analogy, nodes_only=False, verbose=True) == []
   
   def test_ablation(self):
     analogy = ({
@@ -60,13 +62,15 @@ class TestAnalogyComparison:
       ('time', 'conversations', 0): ('alphabetical', 'channels', 0),
     })
     
-    ablated_analogy = metalgo.copy_analogy(analogy)
+    ablated_analogy = analogylib.copy(analogy)
     ablated_analogy[0].pop('people')
-    assert metalgo.compare_analogies(analogy, ablated_analogy, True) == [('deleted node', ('people', 'people'))]
+    assert analogylib.compare(analogy, ablated_analogy, nodes_only=False, verbose=True) == [('deleted node', ('people', 'people'))]
 
-    ablated_analogy = metalgo.copy_analogy(analogy)
+    ablated_analogy = analogylib.copy(analogy)
     ablated_analogy[1].pop(('people', 'messages', 0))
-    assert metalgo.compare_analogies(analogy, ablated_analogy, True) == [('deleted edge', (('people', 'messages', 0), ('people', 'messages', 0)))]
+    analogylib.print_analogy(analogy)
+    analogylib.print_analogy(ablated_analogy)
+    assert analogylib.compare(analogy, ablated_analogy, nodes_only=False, verbose=True) == [('deleted edge', (('people', 'messages', 0), ('people', 'messages', 0)))]
 
 class TestIsomorphism:
   def test_slack_isomorphism(self):
@@ -74,7 +78,7 @@ class TestIsomorphism:
     graph = compiler.compile_spec(specs['slack'])
     analogy, cost = metalgo.compute_analogy(graph, graph, timeout=5)
 
-    for sinister_node, dexter_node in metalgo.get_analogy_nodes(analogy, None):
+    for sinister_node, dexter_node in analogylib.get_nodes(analogy, None):
       assert sinister_node == dexter_node
   
   def test_veditor_isomorphism(self):
@@ -82,7 +86,7 @@ class TestIsomorphism:
     graph = compiler.compile_spec(specs['video-editor'])
     analogy, cost = metalgo.compute_analogy(graph, graph, timeout=30)
 
-    for sinister_node, dexter_node in metalgo.get_analogy_nodes(analogy, None):
+    for sinister_node, dexter_node in analogylib.get_nodes(analogy, None):
       assert sinister_node == dexter_node
 
 class TestSymmetry:
@@ -93,8 +97,8 @@ class TestSymmetry:
 
     forward_analogy, _ = metalgo.compute_analogy(slack_graph, imessage_graph, timeout=30)
     reverse_analogy, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=30)
-    reverse_analogy = metalgo.flip_analogy(reverse_analogy) # so both analogies go from slack to imessage
-    assert metalgo.compare_analogies(forward_analogy, reverse_analogy, True) == []
+    reverse_analogy = analogylib.flip(reverse_analogy) # so both analogies go from slack to imessage
+    assert analogylib.compare(forward_analogy, reverse_analogy, nodes_only=False, verbose=True) == []
 
 
 class TestDreamAnalogies:
@@ -121,12 +125,12 @@ class TestDreamAnalogies:
 
     cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
 
-    assert metalgo.check_analogy_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
+    assert analogylib.check_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
 
-  def test_slack_imessage(self):
+  def test_cal_veditor(self):
     specs = get_specs()
-    imessage_graph = compiler.compile_spec(specs['calendar'])
-    slack_graph = compiler.compile_spec(specs['video-editor'])
+    calendar_graph = compiler.compile_spec(specs['calendar'])
+    veditor_graph = compiler.compile_spec(specs['video-editor'])
 
     cv_dream = ({
       'weeks.active->events': 'editors/videos',
@@ -144,14 +148,6 @@ class TestDreamAnalogies:
       'months.selected->days': 'videos'
     }, {})
 
-    cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
+    cv_metalgo, _ = metalgo.compute_analogy(calendar_graph, veditor_graph, timeout=60)
 
-    assert metalgo.check_analogy_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
-
-
-
-
-
-if __name__ == "__main__":
-  # pprint.pprint(test_specs())
-  print('waaaa')
+    assert analogylib.check_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
