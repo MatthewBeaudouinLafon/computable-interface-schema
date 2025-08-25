@@ -38,8 +38,8 @@
     /encoding.vstack:
       (linear) page-order: # huge action candidate
         affects: pages
-
-- notes:
-    - I wrote all of the spec for a single page, and now I want to make a bunch of pages.
-      - verdict. Yep, you can just kind of wrap it easily. You don't even need to prefix everything with /, you can just use ->
-      - so maybe the / is not even necessary...
+#
+# - $notes:
+#     - I wrote all of the spec for a single page, and now I want to make a bunch of pages.
+#       - verdict. Yep, you can just kind of wrap it easily. You don't even need to prefix everything with /, you can just use ->
+#       - so maybe the / is not even necessary...

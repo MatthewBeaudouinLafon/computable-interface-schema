@@ -43,6 +43,7 @@ class rel(Enum):
   UPDATE = enum.auto()      # if the update applies to a set
   UPDATE_SRC = enum.auto()  # if the update applies to a relation
   UPDATE_TRG = enum.auto()  # if the update applies to a relation
+  DIRECTION = enum.auto()
 
   # type
   TYPE = enum.auto()
@@ -310,15 +311,6 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   if statement[-3:] == " <>":
     statement = statement[:-3] # trim mapping syntax
   
-  # Syntax for target relation (eg. update: A.selected subset> A)
-  if prepare_target_relation_statement(statement) is not None:
-    # NOTE: this relies on having removed <> previously
-    # HACK: this is needed for parse_list, so that it can pass the whole statement
-    # back to parse_dict. We can't just parse these kinds of statement in here
-    # because we need to know both the parent (for compound statements) and the
-    # inflicting action for the declarations. This is not very pretty.
-    return statement
-  
   # Parse `and` statement and recurse on each phrase
   if ' and ' in statement:
     and_splits = statement.split(' and ')
@@ -355,6 +347,15 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     first_instance_word = extracted_instance.split('->')[0]
     declare(interp=interp, source=extracted_type, relation=rel.TYPE, target=first_instance_word, power=dpower.STRONG)
     statement = extracted_instance
+  
+  # Syntax for target relation (eg. update: A.selected subset> A)
+  if prepare_target_relation_statement(statement) is not None:
+    # NOTE: this relies on having removed <> previously
+    # HACK: this is needed for parse_list, so that it can pass the whole statement
+    # back to parse_dict. We can't just parse these kinds of statement in here
+    # because we need to know both the parent (for compound statements) and the
+    # inflicting action for the declarations. This is not very pretty.
+    return statement
 
   should_declare_parent_foreach = False
   if statement[0] == '/':
@@ -389,7 +390,7 @@ def parse_relation(statement: str) -> rel|None:
     return rel.MAPTO
   elif statement in ('alias'):
     return rel.ALIAS
-  elif statement in ('subset', '.'):
+  elif statement in ('subset', 'subsets', '.'):
     return rel.SUBSET
   elif statement in ('affects'):
     return rel.AFFECTS
@@ -405,6 +406,8 @@ def parse_relation(statement: str) -> rel|None:
     return rel.DELETE
   elif statement in ('update'):
     return rel.UPDATE
+  elif statement in ('directions'):
+    return rel.DIRECTION
   elif statement in ('subgroups'):
     print('TODO: How do subgroups work??')
     return rel.TBD
@@ -551,14 +554,21 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
       elif type(value) is dict:
         parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
+      elif type(value) is list:
+        # eg. thing <>: one, two
+        parsed_value = parse_list(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
       else:
-        # NOTE: I don't think this is ever a list
         assert False, f"Value condition not met. That's weird. {value=}"
 
       if relation is not None:
         # NOTE: the value and key are intentionally flipped for `/` expressions (a quirk of the DSL)
         # This only matters for MAPTO, but ALIAS is a symmetric relation anyway.
-        declare(interp=interp, source=parsed_value, relation=relation, target=parsed_key, power=dpower.STRONG)
+        if isinstance(parsed_value, str):
+          declare(interp=interp, source=parsed_value, relation=relation, target=parsed_key, power=dpower.STRONG)
+        elif isinstance(parsed_value, list):
+          for pval in parsed_value:
+            declare(interp=interp, source=pval, relation=relation, target=parsed_key, power=dpower.STRONG)
+
 
     # Syntax for alias relations
     elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
@@ -656,19 +666,22 @@ def prepare_target_relation_statement(statement: str):
     # print(f'Expected a relation> string, got a mapping (<>) string: {statement}')
 
   split = statement.split(' ')
-  if len(split) != 3:
-    # print(f'Expected this statement two split into 3 (on space): {statement}')
+  if len(split) == 1:
     return None
+  
+
+  # At this point we know it's *supposed* to be an action term, so we switch to asserts.
+  assert len(split) == 3, f'Expected relation statement two split into 3 (on space): {statement}'
+  
+  assert 'and' not in split, f'Expected `relation>` statement, got an `and` statement: {statement}'
+  # and statements and relation statements don't mix, so if there's an and it's
+  # not a relation statement
   
   relation = split[1]
-  if relation[-1] != '>':
-    # print(f'Expected `relation>` in the statement: {statement}')
-    return None
+  assert relation[-1] == '>', f'Expected `relation>` in the statement: {statement}'
   
   relation = relation[:-1]
-  if parse_relation(relation) is None:
-    # print(f'`relation>` is not a relation in: {statement}')
-    return None
+  assert parse_relation(relation) is not None, f'`relation>` is not a relation in: {statement}'
   # NOTE: we don't actually use the relation, but we could do something with it (eg. tag it as an attribute somewhere)
 
   return (split[0], relation, split[2])

@@ -24,8 +24,10 @@
 - (gui) chat-view:
     /marks.text <>: channels.active->messages
     /encoding.vstack <>: time
-# - (action) send-message:
-#     create: channels.active
 
-# - (action) select-channel:
-#     update: channels.active subset channels
+- (action) send-message:
+    create: channels.active->messages
+    directions: time
+
+- (action) select-channel:
+    update: channels.active subset> channels

@@ -42,6 +42,6 @@
       /encoding.hstack <>: file-system/depth-order
 
 - (action) select-folder:
-    update: folders.active subset folders
+    update: folders.active subset> folders
 - (action) nav-in-folder:
-    update: items.active subset items
+    update: items.active subset> items

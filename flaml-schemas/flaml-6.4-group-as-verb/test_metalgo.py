@@ -121,6 +121,9 @@ class TestDreamAnalogies:
       'convo-view/marks.text':'channel-view/marks',
       'convo-view/encoding.vstack': 'channel-view/encoding.vstack',
       'convo-view/encoding.cluster': 'channel-view/encoding.cluster',
+      'send-message': 'send-message',
+      'select-conversation': 'select-channel',
+      'conversations.active': 'channels.active'
     }, {})
 
     cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
@@ -145,7 +148,10 @@ class TestDreamAnalogies:
       'mini-month-view': 'media-pool',
       'mini-month-view/marks.text': 'media-pool/marks',
       'mini-month-view/encoding.hwrap': 'media-pool/encoding.hwrap',
-      'months.selected->days': 'videos'
+      'timestamps.now': 'editors/timestamps.playhead',
+      'time-passing': 'play',
+      'move-event': 'move-video',
+      'events.selected': 'editors/videos.selected',
     }, {})
 
     cv_metalgo, _ = metalgo.compute_analogy(calendar_graph, veditor_graph, timeout=60)

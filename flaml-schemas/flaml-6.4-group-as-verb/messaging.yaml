@@ -22,7 +22,7 @@
     create: conversations.active->messages
 
 - (action) select-conversation:
-    update: conversations.active subsets conversations
+    update: conversations.active subsets> conversations
 ---
 # Slack
 - channels:
@@ -55,7 +55,7 @@
     create: channels.active
 
 - (action) select-channel:
-    update: channels.active subset channels
+    update: channels.active subset> channels
 # Hopeful analogy
 # {'chat-view': 'chat-view',
 #  'chat-view/encoding.vstack': 'chat-view/encoding.vstack',

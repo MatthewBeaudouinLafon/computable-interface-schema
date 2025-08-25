@@ -6,28 +6,49 @@
           /first =: /images.first
           /backwards:
             affects: /images
+
 - (video) videos
+
 - editors:
     group foreach: # feels redundant if there's just one (but there could be more!!)
       # - /videos =: videos.in-editor
+
       - (video) /videos:
           /timestamps <>: /timestamps
           /timeline <>: /timeline
+
       - (linear) /timeline:
           affects: /timestamps
           covers: /videos
+
       - (gui) /view:
-          /marks.vline <>: /timestamps
-          /marks.rectangles <>: /videos
+          /marks.vline <>:
+            - /timestamps
+            - (action) /move-playhead:
+                update: /timestamps.playhead subset> /timestamps
+          /marks.rectangles <>:
+            - /videos
+            - (action) select-video:
+                update: /videos.selected subset> /videos
           /encoding.hstack <>: /timeline
           /encoding.cluster <>:
             /tracks:
               groups: /videos
+
+      - (action) play:
+          update: /timestamps.playhead subset> /timestamps
+          directions: /timeline
+
+      - (action) move-video:
+          update: /timeline covers> /videos.selected
+          direction: /timeline
+
 - (gui) media-pool:
     /marks <>: videos
     /encoding.hwrap <>:
       (linear) sort-order:
         affects: videos
+
 - def (video-player):
     arguments: (video) /video, /playhead
     group foreach:

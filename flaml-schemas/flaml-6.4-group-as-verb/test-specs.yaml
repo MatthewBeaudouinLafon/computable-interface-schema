@@ -1,6 +1,6 @@
 # This file provides a list of specifications for testing purposes
-# ios messages
 - $name: imessage
+# ios messages
 - conversations:
     group foreach:
       - messages
@@ -20,11 +20,13 @@
         groups: conversations
     /encoding.vstack <>: time
 
-# - (action) send-message:
-#     create: conversations.active->messages
+- (action) send-message:
+    create: conversations.active->messages
+    directions: time
 
-# - (action) select-conversation:
-#     update: conversations.active subsets conversations
+- (action) select-conversation:
+    update: conversations.active subsets> conversations
+
 ---
 # Slack
 - $name: slack
@@ -54,11 +56,12 @@
     /marks.text <>: channels.active->messages
     /encoding.vstack <>: time
 
-# - (action) send-message:
-#     create: channels.active
+- (action) send-message:
+    create: channels.active->messages
+    directions: time
 
-# - (action) select-channel:
-#     update: channels.active subset channels
+- (action) select-channel:
+    update: channels.active subset> channels
 
 ---
 - $name: calendar
@@ -75,15 +78,20 @@
 - (gui) mini-month-view:
     /marks.text <>: months.selected->days
     /encoding.hwrap <>: time
-# - (action) create-event:
-#     create: events
 
-# - (action) delete-event:
-#     delete: events
+- (action) create-event:
+    create: events
 
-# - (action) move-event:
-#     update: time covers events
-#     directions: time
+- (action) delete-event:
+    delete: events
+
+- (action) move-event:
+    update: time covers> events.selected
+    directions: time
+
+- (action) time-passing:
+    update: timestamps.now subset> timestamps
+    directions: time
 
 ---
 - $name: video-editor
@@ -95,28 +103,49 @@
           /first =: /images.first
           /backwards:
             affects: /images
+
 - (video) videos
+
 - editors:
     group foreach: # feels redundant if there's just one (but there could be more!!)
-      # - /videos =: videos.in-editor
+      - /videos =: videos.in-editor
+
       - (video) /videos:
           /timestamps <>: /timestamps
           /timeline <>: /timeline
+
       - (linear) /timeline:
           affects: /timestamps
           covers: /videos
+
       - (gui) /view:
-          /marks.vline <>: /timestamps
-          /marks.rectangles <>: /videos
+          /marks.vline <>:
+            - /timestamps
+            - (action) /move-playhead:
+                update: /timestamps.playhead subset> /timestamps
+          /marks.rectangles <>:
+            - /videos
+            - (action) /select-video:
+                update: /videos.selected subset> /videos
           /encoding.hstack <>: /timeline
           /encoding.cluster <>:
             /tracks:
               groups: /videos
+
+      - (action) play:
+          update: /timestamps.playhead subset> /timestamps
+          directions: /timeline
+
+      - (action) move-video:
+          update: /timeline covers> /videos.selected
+          direction: /timeline
+
 - (gui) media-pool:
     /marks <>: videos
     /encoding.hwrap <>:
       (linear) sort-order:
         affects: videos
+
 - def (video-player):
     arguments: (video) /video, /playhead
     group foreach:
@@ -136,3 +165,4 @@
 
 - (video-player) media-preview:
     /video =: videos.selected
+    # what happens to the playhead?

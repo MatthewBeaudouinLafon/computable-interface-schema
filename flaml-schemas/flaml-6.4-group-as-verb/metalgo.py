@@ -148,7 +148,8 @@ def compute_analogy(
     analogy_graph = analogylib.graph_from_analogy(analogy, Hand.SINISTER)
     for node_name in nx.isolates(analogy_graph):
       if verbose:
-        print(f'pruning isolate:`{node_name}`')
+        dexter_node_name = analogylib.get_analogous_node(analogy, node_name)
+        print(f'pruning isolate: {node_name:>30} <=> {dexter_node_name:<30}')
       analogylib.remove_node(analogy, node_name)
 
     if verbose:
