@@ -37,6 +37,13 @@ class rel(Enum):
   AFFECTS = enum.auto()
   COVERS = enum.auto()
 
+  # actions
+  CREATE = enum.auto()
+  DELETE = enum.auto()
+  UPDATE = enum.auto()      # if the update applies to a set
+  UPDATE_SRC = enum.auto()  # if the update applies to a relation
+  UPDATE_TRG = enum.auto()  # if the update applies to a relation
+
   # type
   TYPE = enum.auto()
 
@@ -303,6 +310,15 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
   if statement[-3:] == " <>":
     statement = statement[:-3] # trim mapping syntax
   
+  # Syntax for target relation (eg. update: A.selected subset> A)
+  if prepare_target_relation_statement(statement) is not None:
+    # NOTE: this relies on having removed <> previously
+    # HACK: this is needed for parse_list, so that it can pass the whole statement
+    # back to parse_dict. We can't just parse these kinds of statement in here
+    # because we need to know both the parent (for compound statements) and the
+    # inflicting action for the declarations. This is not very pretty.
+    return statement
+  
   # Parse `and` statement and recurse on each phrase
   if ' and ' in statement:
     and_splits = statement.split(' and ')
@@ -383,6 +399,12 @@ def parse_relation(statement: str) -> rel|None:
     return rel.GROUP
   elif statement in ('groups foreach', 'group foreach'):
     return rel.GROUP_FOREACH
+  elif statement in ('create'):
+    return rel.CREATE
+  elif statement in ('delete'):
+    return rel.DELETE
+  elif statement in ('update'):
+    return rel.UPDATE
   elif statement in ('subgroups'):
     print('TODO: How do subgroups work??')
     return rel.TBD
@@ -445,19 +467,27 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         value = value.split(',')  # becomes a list
 
       if type(value) is str:
-        # Since this is the value, we just pass val_parent as parent.
-        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+        if prepare_target_relation_statement(value) is not None:
+          # parse as a target_relation (eg. update: a.sub subset> a), if that doesn't work deal with it as a string
+          parse_target_relation(value, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False)
+        else:
+          # Since this is the value, we just pass val_parent as parent.
+          parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
 
-        # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
-        declare(interp=interp, source=key_parent, relation=relation, target=parsed_value, power=dpower.STRONG)
+          # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
+          declare(interp=interp, source=key_parent, relation=relation, target=parsed_value, power=dpower.STRONG)
       elif type(value) is list:
         # if the value is a list, then we make a relation for each item
         # NOTE: Key/val parent doesn't really matter here, parse_list will just pass it down.
         value_items = parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1)
 
         for item in value_items:
-          # parent (from key) relates to each item
-          declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.STRONG)
+          if prepare_target_relation_statement(item) is not None:
+            # parse as a target_relation (eg. update: a.sub subset> a), if that doesn't work deal with it as a string
+            parse_target_relation(item, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False)
+          else:
+            # parent (from key) relates to each item
+            declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.STRONG)
       elif type(value) is dict:
         # TODO: figure out if this is necessary.
         assert False, f"Value condition not met. That's weird. value={value}"
@@ -615,6 +645,45 @@ def parse_type_def_str(statement: str, verbose=False) -> tuple[str|None, str|Non
     
     type_name = re_res.group('type')
     return (type_name, None)
+
+def prepare_target_relation_statement(statement: str):
+  # TODO: have a verbose option for debugging
+  if '>' not in statement:
+    return None
+  
+  if '<>' in statement:
+    return None
+    # print(f'Expected a relation> string, got a mapping (<>) string: {statement}')
+
+  split = statement.split(' ')
+  if len(split) != 3:
+    # print(f'Expected this statement two split into 3 (on space): {statement}')
+    return None
+  
+  relation = split[1]
+  if relation[-1] != '>':
+    # print(f'Expected `relation>` in the statement: {statement}')
+    return None
+  
+  relation = relation[:-1]
+  if parse_relation(relation) is None:
+    # print(f'`relation>` is not a relation in: {statement}')
+    return None
+  # NOTE: we don't actually use the relation, but we could do something with it (eg. tag it as an attribute somewhere)
+
+  return (split[0], relation, split[2])
+
+"""
+Parse a string like 'items.selected subset> items'.
+"""
+def parse_target_relation(statement: str, inflicting_action: str, parent: str, interp: list, depth: int, verbose=False) -> str|None:
+  raw_source, raw_relation, raw_target = prepare_target_relation_statement(statement)
+  source = parse_str(raw_source, parent=parent, interp=interp, depth=depth+1)
+  target = parse_str(raw_target, parent=parent, interp=interp, depth=depth+1)
+
+  declare(interp=interp, source=inflicting_action, relation=rel.UPDATE_SRC, target=source, power=dpower.STRONG, verbose=verbose)
+  declare(interp=interp, source=inflicting_action, relation=rel.UPDATE_TRG, target=target, power=dpower.STRONG, verbose=verbose)
+  return statement
 
 """
 Parses spec for type declaration eg. - def (linear) extends (structure): group foreach: etc...

@@ -3,7 +3,7 @@ Test metalgo.
 Run with:
 pytest flaml-schemas/flaml-6.4-group-as-verb/test.py -rA
 """
-
+import pprint
 import pytest
 import parser
 from parser import rel, dpower
@@ -532,6 +532,96 @@ class TestTypeDeclarations:
     assert type(res_interp) is list and len(res_interp) == 0
 
 
+class TestActionDeclaration:
+  def test_basic_create(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (action) add-item:
+    create: items
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('action', rel.TYPE, 'add-item', dpower.STRONG),
+                    ('add-item', rel.CREATE, 'items', dpower.STRONG),
+                  ])
+
+  def test_basic_delete(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (action) delete-item:
+    delete: items
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('action', rel.TYPE, 'delete-item', dpower.STRONG),
+                    ('delete-item', rel.DELETE, 'items', dpower.STRONG),
+                  ])
+
+  def test_relation_action(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (action) select-item:
+    update: items.selected subset> items
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('action', rel.TYPE, 'select-item', dpower.STRONG),
+                    ('items.selected', rel.SUBSET, 'items', dpower.WEAK),
+                    ('select-item', rel.UPDATE_SRC, 'items.selected', dpower.STRONG),
+                    ('select-item', rel.UPDATE_TRG, 'items', dpower.STRONG),
+                  ])
+
+  def test_relation_list(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (action) select-item:
+    update: 
+      - items.selected subset> items
+      - undo-actions
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('action', rel.TYPE, 'select-item', dpower.STRONG),
+                    ('items.selected', rel.SUBSET, 'items', dpower.WEAK),
+                    ('select-item', rel.UPDATE_SRC, 'items.selected', dpower.STRONG),
+                    ('select-item', rel.UPDATE_TRG, 'items', dpower.STRONG),
+                    ('select-item', rel.UPDATE, 'undo-actions', dpower.STRONG),
+                  ])
+
+  def test_view_action(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- (gui) toolbar:
+    /marks <>:
+      (action) pick-tool:
+        update: tools.selected subset> tools
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('gui', rel.TYPE, 'toolbar', dpower.STRONG),
+                    ('toolbar', rel.GROUP_FOREACH, 'toolbar/marks', dpower.WEAK),
+                    ('toolbar', rel.GROUP_FOREACH, 'toolbar/marks', dpower.STRONG),
+                    ('pick-tool', rel.MAPTO, 'toolbar/marks', dpower.STRONG),
+                    ('action', rel.TYPE, 'pick-tool', dpower.STRONG),
+                    ('tools.selected', rel.SUBSET, 'tools', dpower.WEAK),
+                    ('pick-tool', rel.UPDATE_SRC, 'tools.selected', dpower.STRONG),
+                    ('pick-tool', rel.UPDATE_TRG, 'tools', dpower.STRONG),
+                  ])
+
+  def test_group_foreach_action(self):
+    interp = parser.make_relations(parser.spec_from_string("""
+- steps:
+    group foreach:
+      - (action) /press:
+          update: /states.current subset> /states
+"""))
+    assert compare_interp(interp, 
+                  [
+                    ('action', rel.TYPE, 'steps/press', dpower.STRONG),
+                    ('steps', rel.GROUP_FOREACH, 'steps/press', dpower.WEAK),
+                    ('steps', rel.GROUP_FOREACH, 'steps/states', dpower.WEAK),
+                    ('steps', rel.GROUP_FOREACH, 'steps/press', dpower.STRONG),
+                    ('steps', rel.GROUP_FOREACH, 'steps/states', dpower.STRONG),
+                    ('steps', rel.GROUP_FOREACH, 'steps/states.current', dpower.STRONG),
+                    ('steps/states.current', rel.SUBSET, 'steps/states', dpower.WEAK),
+                    ('steps/press', rel.UPDATE_SRC, 'steps/states.current', dpower.STRONG),
+                    ('steps/press', rel.UPDATE_TRG, 'steps/states', dpower.STRONG),
+                  ])
 # class TestSpecParser:
 #   def test_spec_parser(self):
 #     spec = parser.spec_from_file('test-specs.yaml')
