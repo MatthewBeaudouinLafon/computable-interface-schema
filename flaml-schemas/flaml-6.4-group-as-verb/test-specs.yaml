@@ -108,7 +108,7 @@
 
 - editors:
     group foreach: # feels redundant if there's just one (but there could be more!!)
-      - /videos =: videos.in-editor
+      # - /videos =: videos.in-editor
 
       - (video) /videos:
           /timestamps <>: /timestamps

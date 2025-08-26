@@ -6,7 +6,7 @@ of helpful functions to deal with them.
 forward_match = (
   # nodes
   {
-    sinister_node: dexter_node
+    sinister_node: (dexter_node, is_pruned)
   },
 
   # edges
@@ -18,6 +18,7 @@ forward_match = (
 """
 import enum
 import networkx as nx
+import pprint
 
 import compiler
 
@@ -49,7 +50,7 @@ Create a new analogy object.
 def new() -> Analogy:
   return (
     # nodes
-    # eg. sinister_node: dexter_node
+    # eg. sinister_node: (dexter_node, is_pruned)
     {},
     # edges
     {},
@@ -59,7 +60,7 @@ def new() -> Analogy:
 Insert nodes to analogy object.
 """
 def add_analogous_nodes(
-  analogy: Analogy, sinister_node: str | None, dexter_node: str | None
+  analogy: Analogy, sinister_node: str | None, dexter_node: str | None, is_pruned=False
 ):
   # If either side is deleted, just leave it out of the analogy. This might not
   # be ideal, because we won't be able to distinguish between deleted nodes and
@@ -67,7 +68,7 @@ def add_analogous_nodes(
   if sinister_node is None or dexter_node is None:
     return
 
-  analogy[0][sinister_node] = dexter_node
+  analogy[0][sinister_node] = (dexter_node, is_pruned)
 
 
 def remove_node(analogy: Analogy, node_name: str, side=Hand.SINISTER):
@@ -109,8 +110,9 @@ def flip(analogy: Analogy) -> Analogy:
   reverse = new()
 
   # nodes
-  for sinister_node, dexter_node in analogy[0].items():
-    add_analogous_nodes(reverse, dexter_node, sinister_node)
+  for sinister_node, dexter in analogy[0].items():
+    dexter_node, is_pruned = dexter
+    add_analogous_nodes(reverse, dexter_node, sinister_node, is_pruned=is_pruned)
 
   for sinister, dexter in analogy[1].items():
     add_analogous_edges(reverse, dexter, sinister)
@@ -123,25 +125,54 @@ def copy(analogy: Analogy) -> Analogy:
     analogy[1].copy(),
   )
 
+"""
+Takes an analogy where dexter nodes don't have is_pruned, and populates it.
+If it's already there, it will not be overwritten.
+
+This is useful for tests where I only want to write unpruned analogies.
+TODO: there should probably be a different type for this...
+"""
+def populate_is_pruned(analogy: Analogy, is_pruned=False):
+  for sinister, dexter in analogy[0].items():
+    dexter_node = None
+    node_pruned = is_pruned
+    if isinstance(dexter, str):
+      dexter_node = dexter
+    elif isinstance(dexter, tuple):
+      dexter_node,  node_pruned = dexter
+    else:
+      assert False, f'Type Error. Expected str or tuple, got {type(dexter)} from: {dexter}'
+    analogy[0][sinister] = (dexter_node, node_pruned)
+
+
 # Getters
 def get_analogous_node(analogy: Analogy, sinister_node: str):
   # Returns None if there is no analogous node. This might be because the source,
   # node doesn't exist, or it is "deleted" in the analogy.
-  return analogy[0].get(sinister_node, None)
+  dexter = analogy[0].get(sinister_node, None)
+  if dexter is None:
+    return None
+  node, is_pruned = dexter
+  return node
 
 def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # Returns None if there is no analogous edge. This might be because the source,
   # edge doesn't exist, or it is "deleted" in the analogy.
   return analogy[1].get(sinister_edge, None)
 
-def get_nodes(analogy: Analogy, side: Hand|None):
+def get_nodes(analogy: Analogy, side: Hand|None, include_pruned=False):
   match side:
     case Hand.SINISTER:
       return analogy[0].keys()
     case Hand.DEXTER:
-      return analogy[0].values()
+      dexter_side = list(analogy[0].values())
+      if include_pruned:
+        dexter_nodes = [node for node, _ in dexter_side]
+      else:
+        dexter_nodes = [node for node, is_pruned in dexter_side if not is_pruned]
+      return dexter_nodes
     case None:
-      return analogy[0].items()
+      return list(zip(get_nodes(analogy, Hand.SINISTER), get_nodes(analogy, Hand.DEXTER)))
 
 def get_edges(analogy: Analogy, side: Hand):
   match side:
@@ -158,7 +189,8 @@ def is_node_in_sinister(analogy: Analogy, node_id) -> bool:
   return analogy[0].get(node_id, None) is not None
 
 def is_node_in_dexter(analogy: Analogy, node_id) -> bool:
-  return node_id in analogy[0].values()
+  # NOTE: this uses get_nodes because dexter otherwise has is_pruned info
+  return node_id in get_nodes(analogy, side=Hand.DEXTER)
 
 def is_edge_in_sinister(analogy: Analogy, edge) -> bool:
   return analogy[1].get(edge, None) is not None
@@ -167,15 +199,19 @@ def is_edge_in_dexter(analogy: Analogy, edge) -> bool:
   return edge in analogy[1].values()
 
 
-def print_analogy(analogy: Analogy):
+def print_analogy(analogy: Analogy, show_pruned=False):
   print("- nodes")
-  for sinister_node, dexter_node in analogy[0].items():
-    print(f"{sinister_node:>30} <=> {dexter_node:<30}")
+  for sinister_node, dexter in analogy[0].items():
+    dexter_node, is_pruned = dexter
+    if not is_pruned:
+      print(f"{sinister_node:>30} <=> {dexter_node:<30}")
+    elif is_pruned and show_pruned:
+      print(f"{sinister_node:>30} <=> {dexter_node:<30}")
 
   print("\n- edges")
-  for sinister_node, dexter_node in analogy[1].items():
-    lhs = f"{sinister_node[0]} ~ {sinister_node[1]}"
-    rhs = f"{dexter_node[0]} ~ {dexter_node[1]}"
+  for sinister_edge, dexter_edge in analogy[1].items():
+    lhs = f"{sinister_edge[0]} ~ {sinister_edge[1]}"
+    rhs = f"{dexter_edge[0]} ~ {dexter_edge[1]}"
     print(f"{lhs:>50} <=> {rhs:<50}")
 
 """

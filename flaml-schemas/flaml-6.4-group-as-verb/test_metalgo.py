@@ -42,6 +42,7 @@ class TestAnalogyComparison:
       ('pin', 'conversations', 0): ('channel-type', 'channels', 0),
       ('time', 'conversations', 0): ('alphabetical', 'channels', 0),
     })
+    analogylib.populate_is_pruned(analogy)
     assert analogylib.compare(analogy, analogy, nodes_only=False, verbose=True) == []
   
   def test_ablation(self):
@@ -61,6 +62,7 @@ class TestAnalogyComparison:
       ('pin', 'conversations', 0): ('channel-type', 'channels', 0),
       ('time', 'conversations', 0): ('alphabetical', 'channels', 0),
     })
+    analogylib.populate_is_pruned(analogy)
     
     ablated_analogy = analogylib.copy(analogy)
     ablated_analogy[0].pop('people')
@@ -125,6 +127,7 @@ class TestDreamAnalogies:
       'select-conversation': 'select-channel',
       'conversations.active': 'channels.active'
     }, {})
+    analogylib.populate_is_pruned(cv_dream)
 
     cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
 
@@ -153,7 +156,8 @@ class TestDreamAnalogies:
       'move-event': 'move-video',
       'events.selected': 'editors/videos.selected',
     }, {})
+    analogylib.populate_is_pruned(cv_dream)
 
-    cv_metalgo, _ = metalgo.compute_analogy(calendar_graph, veditor_graph, timeout=60)
-
+    cv_metalgo, _ = metalgo.compute_analogy(calendar_graph, veditor_graph, timeout=1*60)
+    analogylib.print_analogy(cv_metalgo)
     assert analogylib.check_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)

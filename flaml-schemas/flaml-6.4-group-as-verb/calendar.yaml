@@ -1,7 +1,10 @@
 # Google Calendar
 - (gui) week-view:
     /marks.hline <>: weeks.active->timestamps
-    /marks.rectangles <>: weeks.active->events
+    /marks.rectangles <>:
+      - weeks.active->events
+      - (action) select-event:
+          update: events.selected subset> events
     /encoding.vstack <>:
       (linear) time:
         affects: timestamps
@@ -21,9 +24,6 @@
 - (action) move-event:
     update: time covers> events.selected
     directions: time
-
-- (action) select-event:
-    update: events.selected subset> events
 
 - (action) time-passing:
     update: timestamps.now subset> timestamps
