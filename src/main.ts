@@ -3,14 +3,15 @@ import {
   make_analogy_viewer,
   Spec,
 } from "./analogy-viewer/analogy-viewer";
+import { SpecPath } from "./analogy-viewer/viewer/viewer";
 import "./style.css";
 import { el } from "./utilities/utilities";
-import { SpecPath } from "./viewer/viewer";
 
 async function main() {
   const specs = (await (await fetch("./specs.json")).json()) as Record<
     string,
     {
+      image_names: string[]
       yaml: object;
       lookup: [string, SpecPath][];
     }
@@ -26,6 +27,7 @@ async function main() {
       name,
       yaml: specs[name].yaml,
       lookup: specs[name].lookup,
+      image_names: specs[name].image_names,
     };
   };
 

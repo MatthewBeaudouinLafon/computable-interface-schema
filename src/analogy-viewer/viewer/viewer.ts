@@ -1,11 +1,10 @@
-import { Spec } from "../analogy-viewer/analogy-viewer";
-import { vstack } from "../utilities/ui-utilities";
+import { vstack } from "../../utilities/ui-utilities";
 import {
   div,
-  does_image_exist,
   el,
-  sanitize_name,
-} from "../utilities/utilities";
+  sanitize_name
+} from "../../utilities/utilities";
+import { Spec } from "../analogy-viewer";
 import "./viewer.css";
 
 export type Viewer = {
@@ -46,26 +45,16 @@ async function render_ui_image(viewer: Viewer) {
   const get_path = (file_name: string) =>
     `./annotations/${viewer.spec.name}/${file_name}`;
 
-  const visited = new Set();
 
-  const layers = viewer.spec.lookup
+  const layers = viewer.spec.image_names
     .map((s) => {
-      const layer_name = sanitize_name(s[0]);
-      if (visited.has(layer_name)) return null;
-
+      const layer_name = sanitize_name(s)
       const path = get_path(`${layer_name}.svg`);
-      const exists = does_image_exist(path);
-
-      if (exists) {
-        visited.add(layer_name);
-        return el("img", {
-          class: "layer",
-          src: path,
-          data: [["id", layer_name]],
-        });
-      }
-
-      return null;
+      return el("img", {
+        class: "layer",
+        src: path,
+        data: [["id", layer_name]],
+      });
     })
     .filter((l) => l !== null);
 

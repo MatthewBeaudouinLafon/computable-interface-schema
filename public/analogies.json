@@ -1,1 +1,43 @@
-[{"inputs":["imessage","slack"],"analogy":{"pin":["channel-type",false],"conversations":["channels",false],"conversations.active->messages":["channels.active->messages",false],"convo-view/encoding.cluster":["channel-view/encoding.cluster",false],"convo-view/marks.text":["channel-view/marks",false],"chat-view/marks":["chat-view/marks.text",false],"time":["time",false],"convo-view/encoding.vstack":["channel-view/encoding.vstack",false],"chat-view/encoding.vstack":["chat-view/encoding.vstack",false],"conversations.active":["channels.active",false],"messages":["messages",false],"people":["people",false],"convo-view":["channel-view",false],"chat-view":["chat-view",false],"send-message":["send-message",false],"select-conversation":["select-channel",false]}},{"inputs":["calendar","video-editor"],"analogy":{"weeks.active->timestamps":["editors/timestamps",false],"week-view/marks.hline":["editors/view/marks.vline",false],"week-view/marks.rectangles":["editors/view/marks.rectangles",false],"time":["editors/timeline",false],"week-view/encoding.vstack":["editors/view/encoding.hstack",false],"days":["editors/videos",false],"week-view/encoding.cluster":["editors/view/encoding.cluster",false],"mini-month-view/marks.text":["media-pool/marks",false],"mini-month-view/encoding.hwrap":["media-pool/encoding.hwrap",false],"timestamps.now":["editors/timestamps.playhead",false],"events.selected":["editors/videos.selected",false],"week-view":["editors/view",false],"mini-month-view":["media-pool",false],"time-passing":["play",false],"move-event":["move-video",false]}}]
+[
+  {
+    "inputs": ["imessage", "slack"],
+    "analogy": {
+      "pin": ["channel-type", false],
+      "conversations": ["channels", false],
+      "conversations.active->messages": ["channels.active->messages", false],
+      "convo-view/encoding.cluster": ["channel-view/encoding.cluster", false],
+      "convo-view/marks.text": ["channel-view/marks", false],
+      "chat-view/marks": ["chat-view/marks.text", false],
+      "time": ["time", false],
+      "convo-view/encoding.vstack": ["channel-view/encoding.vstack", false],
+      "chat-view/encoding.vstack": ["chat-view/encoding.vstack", false],
+      "conversations.active": ["channels.active", false],
+      "messages": ["messages", false],
+      "people": ["people", false],
+      "convo-view": ["channel-view", false],
+      "chat-view": ["chat-view", false],
+      "send-message": ["send-message", false],
+      "select-conversation": ["select-channel", false]
+    }
+  },
+  {
+    "inputs": ["calendar", "video-editor"],
+    "analogy": {
+      "weeks.active->timestamps": ["editors/timestamps", false],
+      "week-view/marks.hline": ["editors/view/marks.vline", false],
+      "week-view/marks.rectangles": ["editors/view/marks.rectangles", false],
+      "time": ["editors/timeline", false],
+      "week-view/encoding.vstack": ["editors/view/encoding.hstack", false],
+      "days": ["editors/videos", false],
+      "week-view/encoding.cluster": ["editors/view/encoding.cluster", false],
+      "mini-month-view/marks.text": ["media-pool/marks", false],
+      "mini-month-view/encoding.hwrap": ["media-pool/encoding.hwrap", false],
+      "timestamps.now": ["editors/timestamps.playhead", false],
+      "events.selected": ["editors/videos.selected", false],
+      "week-view": ["editors/view", false],
+      "mini-month-view": ["media-pool", false],
+      "time-passing": ["play", false],
+      "move-event": ["move-video", false]
+    }
+  }
+]

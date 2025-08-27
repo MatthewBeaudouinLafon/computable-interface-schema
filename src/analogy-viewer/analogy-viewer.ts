@@ -6,6 +6,7 @@ import {
   sanitize_name,
   svg,
 } from "../utilities/utilities";
+import "./analogy-viewer.css";
 import {
   find_node_by,
   make_viewer,
@@ -13,13 +14,13 @@ import {
   SpecPath,
   Viewer,
   ViewNode,
-} from "../viewer/viewer";
-import "./analogy-viewer.css";
+} from "./viewer/viewer";
 
 export type Spec = {
   name: string;
   yaml: object;
   lookup: [string, SpecPath][];
+  image_names: string[]
 };
 
 export type Analogy = {

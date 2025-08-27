@@ -1,1 +1,1016 @@
-{"imessage":{"yaml":[{"conversations":{"group foreach":["messages",{"people":{"groups":"messages"}}]}},{"(gui) chat-view":{"/marks <>":"conversations.active->messages","/encoding.vstack <>":{"(linear) time":{"affects":"messages, conversations"}}}},{"(gui) convo-view":{"/marks.text <>":"conversations","/encoding.cluster <>":{"pin":{"groups":"conversations"}},"/encoding.vstack <>":"time"}},{"(action) send-message":{"create":"conversations.active->messages","directions":"time"}},{"(action) select-conversation":{"update":"conversations.active subsets> conversations"}}],"lookup":[["conversations",[0,["__KEY","conversations"]]],["group foreach",[0,"conversations",["__KEY","group foreach"]]],["messages",[0,"conversations","group foreach",0]],["people",[0,"conversations","group foreach",1,["__KEY","people"]]],["groups",[0,"conversations","group foreach",1,"people",["__KEY","groups"]]],["messages",[0,"conversations","group foreach",1,"people","groups"]],["chat-view",[1,["__KEY","(gui) chat-view"]]],["chat-view/marks",[1,"(gui) chat-view",["__KEY","/marks <>"]]],["conversations.active->messages",[1,"(gui) chat-view","/marks <>"]],["chat-view/encoding.vstack",[1,"(gui) chat-view",["__KEY","/encoding.vstack <>"]]],["time",[1,"(gui) chat-view","/encoding.vstack <>",["__KEY","(linear) time"]]],["affects",[1,"(gui) chat-view","/encoding.vstack <>","(linear) time",["__KEY","affects"]]],["messages",[1,"(gui) chat-view","/encoding.vstack <>","(linear) time","affects",0]],["conversations",[1,"(gui) chat-view","/encoding.vstack <>","(linear) time","affects",1]],["convo-view",[2,["__KEY","(gui) convo-view"]]],["convo-view/marks.text",[2,"(gui) convo-view",["__KEY","/marks.text <>"]]],["conversations",[2,"(gui) convo-view","/marks.text <>"]],["convo-view/encoding.cluster",[2,"(gui) convo-view",["__KEY","/encoding.cluster <>"]]],["pin",[2,"(gui) convo-view","/encoding.cluster <>",["__KEY","pin"]]],["groups",[2,"(gui) convo-view","/encoding.cluster <>","pin",["__KEY","groups"]]],["conversations",[2,"(gui) convo-view","/encoding.cluster <>","pin","groups"]],["convo-view/encoding.vstack",[2,"(gui) convo-view",["__KEY","/encoding.vstack <>"]]],["time",[2,"(gui) convo-view","/encoding.vstack <>"]],["send-message",[3,["__KEY","(action) send-message"]]],["create",[3,"(action) send-message",["__KEY","create"]]],["conversations.active->messages",[3,"(action) send-message","create"]],["directions",[3,"(action) send-message",["__KEY","directions"]]],["time",[3,"(action) send-message","directions"]],["select-conversation",[4,["__KEY","(action) select-conversation"]]],["update",[4,"(action) select-conversation",["__KEY","update"]]],["conversations.active",[4,"(action) select-conversation","update"]],["conversations",[4,"(action) select-conversation","update"]]]},"slack":{"yaml":[{"channels":{"group foreach":["name","messages","people"]}},{"people":{"groups":"messages"}},{"(linear) time":{"affects":"messages"}},{"(gui) channel-view":{"/encoding.vstack <>":{"(linear) alphabetical":{"affects":"channels"}},"/encoding.cluster <>":{"channel-type":{"groups":"channels","subgroups":"channels.dm, channels.!dm"}},"/marks <>":"channels"}},{"(gui) chat-view":{"/marks.text <>":"channels.active->messages","/encoding.vstack <>":"time"}},{"(action) send-message":{"create":"channels.active->messages","directions":"time"}},{"(action) select-channel":{"update":"channels.active subset> channels"}}],"lookup":[["channels",[0,["__KEY","channels"]]],["group foreach",[0,"channels",["__KEY","group foreach"]]],["name",[0,"channels","group foreach",0]],["messages",[0,"channels","group foreach",1]],["people",[0,"channels","group foreach",2]],["people",[1,["__KEY","people"]]],["groups",[1,"people",["__KEY","groups"]]],["messages",[1,"people","groups"]],["time",[2,["__KEY","(linear) time"]]],["affects",[2,"(linear) time",["__KEY","affects"]]],["messages",[2,"(linear) time","affects"]],["channel-view",[3,["__KEY","(gui) channel-view"]]],["channel-view/encoding.vstack",[3,"(gui) channel-view",["__KEY","/encoding.vstack <>"]]],["alphabetical",[3,"(gui) channel-view","/encoding.vstack <>",["__KEY","(linear) alphabetical"]]],["affects",[3,"(gui) channel-view","/encoding.vstack <>","(linear) alphabetical",["__KEY","affects"]]],["channels",[3,"(gui) channel-view","/encoding.vstack <>","(linear) alphabetical","affects"]],["channel-view/encoding.cluster",[3,"(gui) channel-view",["__KEY","/encoding.cluster <>"]]],["channel-type",[3,"(gui) channel-view","/encoding.cluster <>",["__KEY","channel-type"]]],["groups",[3,"(gui) channel-view","/encoding.cluster <>","channel-type",["__KEY","groups"]]],["channels",[3,"(gui) channel-view","/encoding.cluster <>","channel-type","groups"]],["subgroups",[3,"(gui) channel-view","/encoding.cluster <>","channel-type",["__KEY","subgroups"]]],["channels.dm",[3,"(gui) channel-view","/encoding.cluster <>","channel-type","subgroups",0]],["channels.!dm",[3,"(gui) channel-view","/encoding.cluster <>","channel-type","subgroups",1]],["channel-view/marks",[3,"(gui) channel-view",["__KEY","/marks <>"]]],["channels",[3,"(gui) channel-view","/marks <>"]],["chat-view",[4,["__KEY","(gui) chat-view"]]],["chat-view/marks.text",[4,"(gui) chat-view",["__KEY","/marks.text <>"]]],["channels.active->messages",[4,"(gui) chat-view","/marks.text <>"]],["chat-view/encoding.vstack",[4,"(gui) chat-view",["__KEY","/encoding.vstack <>"]]],["time",[4,"(gui) chat-view","/encoding.vstack <>"]],["send-message",[5,["__KEY","(action) send-message"]]],["create",[5,"(action) send-message",["__KEY","create"]]],["channels.active->messages",[5,"(action) send-message","create"]],["directions",[5,"(action) send-message",["__KEY","directions"]]],["time",[5,"(action) send-message","directions"]],["select-channel",[6,["__KEY","(action) select-channel"]]],["update",[6,"(action) select-channel",["__KEY","update"]]],["channels.active",[6,"(action) select-channel","update"]],["channels",[6,"(action) select-channel","update"]]]},"calendar":{"yaml":[{"(gui) week-view":{"/marks.hline <>":"weeks.active->timestamps","/marks.rectangles <>":"weeks.active->events","/encoding.vstack <>":{"(linear) time":{"affects":"timestamps","covers":"events, days, weeks, months"}},"/encoding.cluster <>":"days"}},{"(gui) mini-month-view":{"/marks.text <>":"months.selected->days","/encoding.hwrap <>":"time"}},{"(action) create-event":{"create":"events"}},{"(action) delete-event":{"delete":"events"}},{"(action) move-event":{"update":"time covers> events.selected","directions":"time"}},{"(action) time-passing":{"update":"timestamps.now subset> timestamps","directions":"time"}}],"lookup":[["week-view",[0,["__KEY","(gui) week-view"]]],["week-view/marks.hline",[0,"(gui) week-view",["__KEY","/marks.hline <>"]]],["weeks.active->timestamps",[0,"(gui) week-view","/marks.hline <>"]],["week-view/marks.rectangles",[0,"(gui) week-view",["__KEY","/marks.rectangles <>"]]],["weeks.active->events",[0,"(gui) week-view","/marks.rectangles <>"]],["week-view/encoding.vstack",[0,"(gui) week-view",["__KEY","/encoding.vstack <>"]]],["time",[0,"(gui) week-view","/encoding.vstack <>",["__KEY","(linear) time"]]],["affects",[0,"(gui) week-view","/encoding.vstack <>","(linear) time",["__KEY","affects"]]],["timestamps",[0,"(gui) week-view","/encoding.vstack <>","(linear) time","affects"]],["covers",[0,"(gui) week-view","/encoding.vstack <>","(linear) time",["__KEY","covers"]]],["events",[0,"(gui) week-view","/encoding.vstack <>","(linear) time","covers",0]],["days",[0,"(gui) week-view","/encoding.vstack <>","(linear) time","covers",1]],["weeks",[0,"(gui) week-view","/encoding.vstack <>","(linear) time","covers",2]],["months",[0,"(gui) week-view","/encoding.vstack <>","(linear) time","covers",3]],["week-view/encoding.cluster",[0,"(gui) week-view",["__KEY","/encoding.cluster <>"]]],["days",[0,"(gui) week-view","/encoding.cluster <>"]],["mini-month-view",[1,["__KEY","(gui) mini-month-view"]]],["mini-month-view/marks.text",[1,"(gui) mini-month-view",["__KEY","/marks.text <>"]]],["months.selected->days",[1,"(gui) mini-month-view","/marks.text <>"]],["mini-month-view/encoding.hwrap",[1,"(gui) mini-month-view",["__KEY","/encoding.hwrap <>"]]],["time",[1,"(gui) mini-month-view","/encoding.hwrap <>"]],["create-event",[2,["__KEY","(action) create-event"]]],["create",[2,"(action) create-event",["__KEY","create"]]],["events",[2,"(action) create-event","create"]],["delete-event",[3,["__KEY","(action) delete-event"]]],["delete",[3,"(action) delete-event",["__KEY","delete"]]],["events",[3,"(action) delete-event","delete"]],["move-event",[4,["__KEY","(action) move-event"]]],["update",[4,"(action) move-event",["__KEY","update"]]],["time",[4,"(action) move-event","update"]],["events.selected",[4,"(action) move-event","update"]],["directions",[4,"(action) move-event",["__KEY","directions"]]],["time",[4,"(action) move-event","directions"]],["time-passing",[5,["__KEY","(action) time-passing"]]],["update",[5,"(action) time-passing",["__KEY","update"]]],["timestamps.now",[5,"(action) time-passing","update"]],["timestamps",[5,"(action) time-passing","update"]],["directions",[5,"(action) time-passing",["__KEY","directions"]]],["time",[5,"(action) time-passing","directions"]]]},"video-editor":{"yaml":[{"def (video)":{"group foreach":["/timestamps->/images",{"(linear) /timeline":{"affects":"/images","/first =":"/images.first","/backwards":{"affects":"/images"}}}]}},"(video) videos",{"editors":{"group foreach":[{"(video) /videos":{"/timestamps <>":"/timestamps","/timeline <>":"/timeline"}},{"(linear) /timeline":{"affects":"/timestamps","covers":"/videos"}},{"(gui) /view":{"/marks.vline <>":["/timestamps",{"(action) /move-playhead":{"update":"/timestamps.playhead subset> /timestamps"}}],"/marks.rectangles <>":["/videos",{"(action) /select-video":{"update":"/videos.selected subset> /videos"}}],"/encoding.hstack <>":"/timeline","/encoding.cluster <>":{"/tracks":{"groups":"/videos"}}}},{"(action) play":{"update":"/timestamps.playhead subset> /timestamps","directions":"/timeline"}},{"(action) move-video":{"update":"/timeline covers> /videos.selected","direction":"/timeline"}}]}},{"(gui) media-pool":{"/marks <>":"videos","/encoding.hwrap <>":{"(linear) sort-order":{"affects":"videos"}}}},{"def (video-player)":{"arguments":"(video) /video, /playhead","group foreach":[{"(gui) image-view":{"/marks.image <>":"video/images.current"}},{"(gui) scrubber-view":{"/marks.points <>":"video/timestamps","/marks.icon <>":"playhead->video/timestamps","/encoding.hstack <>":"video/timeline"}},{"(gui) view":{"/marks <>":"image-view and scrubber-view","/encoding.vstack <>":"_"}}]}},{"(video-player) timeline-preview":{"/video =":"editors/composited-video","/playhead =":"editors.current/timestamps.playhead"}},{"(video-player) media-preview":{"/video =":"videos.selected"}}],"lookup":[["def (video)",[0,["__KEY","def (video)"]]],["videos",[1]],["editors",[2,["__KEY","editors"]]],["group foreach",[2,"editors",["__KEY","group foreach"]]],["editors/videos",[2,"editors","group foreach",0,["__KEY","(video) /videos"]]],["editors/videos/timestamps",[2,"editors","group foreach",0,"(video) /videos",["__KEY","/timestamps <>"]]],["editors/timestamps",[2,"editors","group foreach",0,"(video) /videos","/timestamps <>"]],["editors/videos/timeline",[2,"editors","group foreach",0,"(video) /videos",["__KEY","/timeline <>"]]],["editors/timeline",[2,"editors","group foreach",0,"(video) /videos","/timeline <>"]],["editors/timeline",[2,"editors","group foreach",1,["__KEY","(linear) /timeline"]]],["affects",[2,"editors","group foreach",1,"(linear) /timeline",["__KEY","affects"]]],["editors/timestamps",[2,"editors","group foreach",1,"(linear) /timeline","affects"]],["covers",[2,"editors","group foreach",1,"(linear) /timeline",["__KEY","covers"]]],["editors/videos",[2,"editors","group foreach",1,"(linear) /timeline","covers"]],["editors/view",[2,"editors","group foreach",2,["__KEY","(gui) /view"]]],["editors/view/marks.vline",[2,"editors","group foreach",2,"(gui) /view",["__KEY","/marks.vline <>"]]],["editors/timestamps",[2,"editors","group foreach",2,"(gui) /view","/marks.vline <>",0]],["editors/move-playhead",[2,"editors","group foreach",2,"(gui) /view","/marks.vline <>",1,["__KEY","(action) /move-playhead"]]],["update",[2,"editors","group foreach",2,"(gui) /view","/marks.vline <>",1,"(action) /move-playhead",["__KEY","update"]]],["editors/timestamps.playhead",[2,"editors","group foreach",2,"(gui) /view","/marks.vline <>",1,"(action) /move-playhead","update"]],["editors/timestamps",[2,"editors","group foreach",2,"(gui) /view","/marks.vline <>",1,"(action) /move-playhead","update"]],["editors/view/marks.rectangles",[2,"editors","group foreach",2,"(gui) /view",["__KEY","/marks.rectangles <>"]]],["editors/videos",[2,"editors","group foreach",2,"(gui) /view","/marks.rectangles <>",0]],["editors/select-video",[2,"editors","group foreach",2,"(gui) /view","/marks.rectangles <>",1,["__KEY","(action) /select-video"]]],["update",[2,"editors","group foreach",2,"(gui) /view","/marks.rectangles <>",1,"(action) /select-video",["__KEY","update"]]],["editors/videos.selected",[2,"editors","group foreach",2,"(gui) /view","/marks.rectangles <>",1,"(action) /select-video","update"]],["editors/videos",[2,"editors","group foreach",2,"(gui) /view","/marks.rectangles <>",1,"(action) /select-video","update"]],["editors/view/encoding.hstack",[2,"editors","group foreach",2,"(gui) /view",["__KEY","/encoding.hstack <>"]]],["editors/timeline",[2,"editors","group foreach",2,"(gui) /view","/encoding.hstack <>"]],["editors/view/encoding.cluster",[2,"editors","group foreach",2,"(gui) /view",["__KEY","/encoding.cluster <>"]]],["editors/tracks",[2,"editors","group foreach",2,"(gui) /view","/encoding.cluster <>",["__KEY","/tracks"]]],["groups",[2,"editors","group foreach",2,"(gui) /view","/encoding.cluster <>","/tracks",["__KEY","groups"]]],["editors/videos",[2,"editors","group foreach",2,"(gui) /view","/encoding.cluster <>","/tracks","groups"]],["play",[2,"editors","group foreach",3,["__KEY","(action) play"]]],["update",[2,"editors","group foreach",3,"(action) play",["__KEY","update"]]],["editors/timestamps.playhead",[2,"editors","group foreach",3,"(action) play","update"]],["editors/timestamps",[2,"editors","group foreach",3,"(action) play","update"]],["directions",[2,"editors","group foreach",3,"(action) play",["__KEY","directions"]]],["editors/timeline",[2,"editors","group foreach",3,"(action) play","directions"]],["move-video",[2,"editors","group foreach",4,["__KEY","(action) move-video"]]],["update",[2,"editors","group foreach",4,"(action) move-video",["__KEY","update"]]],["editors/timeline",[2,"editors","group foreach",4,"(action) move-video","update"]],["editors/videos.selected",[2,"editors","group foreach",4,"(action) move-video","update"]],["direction",[2,"editors","group foreach",4,"(action) move-video",["__KEY","direction"]]],["editors/timeline",[2,"editors","group foreach",4,"(action) move-video","direction"]],["media-pool",[3,["__KEY","(gui) media-pool"]]],["media-pool/marks",[3,"(gui) media-pool",["__KEY","/marks <>"]]],["videos",[3,"(gui) media-pool","/marks <>"]],["media-pool/encoding.hwrap",[3,"(gui) media-pool",["__KEY","/encoding.hwrap <>"]]],["sort-order",[3,"(gui) media-pool","/encoding.hwrap <>",["__KEY","(linear) sort-order"]]],["affects",[3,"(gui) media-pool","/encoding.hwrap <>","(linear) sort-order",["__KEY","affects"]]],["videos",[3,"(gui) media-pool","/encoding.hwrap <>","(linear) sort-order","affects"]],["def (video-player)",[4,["__KEY","def (video-player)"]]],["timeline-preview",[5,["__KEY","(video-player) timeline-preview"]]],["timeline-preview/video",[5,"(video-player) timeline-preview",["__KEY","/video ="]]],["editors/composited-video",[5,"(video-player) timeline-preview","/video ="]],["timeline-preview/playhead",[5,"(video-player) timeline-preview",["__KEY","/playhead ="]]],["editors.current/timestamps.playhead",[5,"(video-player) timeline-preview","/playhead ="]],["media-preview",[6,["__KEY","(video-player) media-preview"]]],["media-preview/video",[6,"(video-player) media-preview",["__KEY","/video ="]]],["videos.selected",[6,"(video-player) media-preview","/video ="]]]}}
+{
+  "imessage": {
+    "image_names": ["chat-view", "conversations.active->messages", "conversations", "convo-view", "pin", "time"],
+    "yaml": [
+      {
+        "conversations": {
+          "group foreach": ["messages", { "people": { "groups": "messages" } }]
+        }
+      },
+      {
+        "(gui) chat-view": {
+          "/marks <>": "conversations.active->messages",
+          "/encoding.vstack <>": {
+            "(linear) time": { "affects": "messages, conversations" }
+          }
+        }
+      },
+      {
+        "(gui) convo-view": {
+          "/marks.text <>": "conversations",
+          "/encoding.cluster <>": { "pin": { "groups": "conversations" } },
+          "/encoding.vstack <>": "time"
+        }
+      },
+      {
+        "(action) send-message": {
+          "create": "conversations.active->messages",
+          "directions": "time"
+        }
+      },
+      {
+        "(action) select-conversation": {
+          "update": "conversations.active subsets> conversations"
+        }
+      }
+    ],
+    "lookup": [
+      ["conversations", [0, ["__KEY", "conversations"]]],
+      ["group foreach", [0, "conversations", ["__KEY", "group foreach"]]],
+      ["messages", [0, "conversations", "group foreach", 0]],
+      ["people", [0, "conversations", "group foreach", 1, ["__KEY", "people"]]],
+      [
+        "groups",
+        [0, "conversations", "group foreach", 1, "people", ["__KEY", "groups"]]
+      ],
+      [
+        "messages",
+        [0, "conversations", "group foreach", 1, "people", "groups"]
+      ],
+      ["chat-view", [1, ["__KEY", "(gui) chat-view"]]],
+      ["chat-view/marks", [1, "(gui) chat-view", ["__KEY", "/marks <>"]]],
+      ["conversations.active->messages", [1, "(gui) chat-view", "/marks <>"]],
+      [
+        "chat-view/encoding.vstack",
+        [1, "(gui) chat-view", ["__KEY", "/encoding.vstack <>"]]
+      ],
+      [
+        "time",
+        [
+          1,
+          "(gui) chat-view",
+          "/encoding.vstack <>",
+          ["__KEY", "(linear) time"]
+        ]
+      ],
+      [
+        "affects",
+        [
+          1,
+          "(gui) chat-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          ["__KEY", "affects"]
+        ]
+      ],
+      [
+        "messages",
+        [
+          1,
+          "(gui) chat-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "affects",
+          0
+        ]
+      ],
+      [
+        "conversations",
+        [
+          1,
+          "(gui) chat-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "affects",
+          1
+        ]
+      ],
+      ["convo-view", [2, ["__KEY", "(gui) convo-view"]]],
+      [
+        "convo-view/marks.text",
+        [2, "(gui) convo-view", ["__KEY", "/marks.text <>"]]
+      ],
+      ["conversations", [2, "(gui) convo-view", "/marks.text <>"]],
+      [
+        "convo-view/encoding.cluster",
+        [2, "(gui) convo-view", ["__KEY", "/encoding.cluster <>"]]
+      ],
+      [
+        "pin",
+        [2, "(gui) convo-view", "/encoding.cluster <>", ["__KEY", "pin"]]
+      ],
+      [
+        "groups",
+        [
+          2,
+          "(gui) convo-view",
+          "/encoding.cluster <>",
+          "pin",
+          ["__KEY", "groups"]
+        ]
+      ],
+      [
+        "conversations",
+        [2, "(gui) convo-view", "/encoding.cluster <>", "pin", "groups"]
+      ],
+      [
+        "convo-view/encoding.vstack",
+        [2, "(gui) convo-view", ["__KEY", "/encoding.vstack <>"]]
+      ],
+      ["time", [2, "(gui) convo-view", "/encoding.vstack <>"]],
+      ["send-message", [3, ["__KEY", "(action) send-message"]]],
+      ["create", [3, "(action) send-message", ["__KEY", "create"]]],
+      [
+        "conversations.active->messages",
+        [3, "(action) send-message", "create"]
+      ],
+      ["directions", [3, "(action) send-message", ["__KEY", "directions"]]],
+      ["time", [3, "(action) send-message", "directions"]],
+      ["select-conversation", [4, ["__KEY", "(action) select-conversation"]]],
+      ["update", [4, "(action) select-conversation", ["__KEY", "update"]]],
+      ["conversations.active", [4, "(action) select-conversation", "update"]],
+      ["conversations", [4, "(action) select-conversation", "update"]]
+    ]
+  },
+  "slack": {
+    "image_names": ["alphabetical", "channel-type", "channel-view", "channels.active->messages", "channels", "chat-view", "time"],
+    "yaml": [
+      { "channels": { "group foreach": ["name", "messages", "people"] } },
+      { "people": { "groups": "messages" } },
+      { "(linear) time": { "affects": "messages" } },
+      {
+        "(gui) channel-view": {
+          "/encoding.vstack <>": {
+            "(linear) alphabetical": { "affects": "channels" }
+          },
+          "/encoding.cluster <>": {
+            "channel-type": {
+              "groups": "channels",
+              "subgroups": "channels.dm, channels.!dm"
+            }
+          },
+          "/marks <>": "channels"
+        }
+      },
+      {
+        "(gui) chat-view": {
+          "/marks.text <>": "channels.active->messages",
+          "/encoding.vstack <>": "time"
+        }
+      },
+      {
+        "(action) send-message": {
+          "create": "channels.active->messages",
+          "directions": "time"
+        }
+      },
+      {
+        "(action) select-channel": {
+          "update": "channels.active subset> channels"
+        }
+      }
+    ],
+    "lookup": [
+      ["channels", [0, ["__KEY", "channels"]]],
+      ["group foreach", [0, "channels", ["__KEY", "group foreach"]]],
+      ["name", [0, "channels", "group foreach", 0]],
+      ["messages", [0, "channels", "group foreach", 1]],
+      ["people", [0, "channels", "group foreach", 2]],
+      ["people", [1, ["__KEY", "people"]]],
+      ["groups", [1, "people", ["__KEY", "groups"]]],
+      ["messages", [1, "people", "groups"]],
+      ["time", [2, ["__KEY", "(linear) time"]]],
+      ["affects", [2, "(linear) time", ["__KEY", "affects"]]],
+      ["messages", [2, "(linear) time", "affects"]],
+      ["channel-view", [3, ["__KEY", "(gui) channel-view"]]],
+      [
+        "channel-view/encoding.vstack",
+        [3, "(gui) channel-view", ["__KEY", "/encoding.vstack <>"]]
+      ],
+      [
+        "alphabetical",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.vstack <>",
+          ["__KEY", "(linear) alphabetical"]
+        ]
+      ],
+      [
+        "affects",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.vstack <>",
+          "(linear) alphabetical",
+          ["__KEY", "affects"]
+        ]
+      ],
+      [
+        "channels",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.vstack <>",
+          "(linear) alphabetical",
+          "affects"
+        ]
+      ],
+      [
+        "channel-view/encoding.cluster",
+        [3, "(gui) channel-view", ["__KEY", "/encoding.cluster <>"]]
+      ],
+      [
+        "channel-type",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          ["__KEY", "channel-type"]
+        ]
+      ],
+      [
+        "groups",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          "channel-type",
+          ["__KEY", "groups"]
+        ]
+      ],
+      [
+        "channels",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          "channel-type",
+          "groups"
+        ]
+      ],
+      [
+        "subgroups",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          "channel-type",
+          ["__KEY", "subgroups"]
+        ]
+      ],
+      [
+        "channels.dm",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          "channel-type",
+          "subgroups",
+          0
+        ]
+      ],
+      [
+        "channels.!dm",
+        [
+          3,
+          "(gui) channel-view",
+          "/encoding.cluster <>",
+          "channel-type",
+          "subgroups",
+          1
+        ]
+      ],
+      ["channel-view/marks", [3, "(gui) channel-view", ["__KEY", "/marks <>"]]],
+      ["channels", [3, "(gui) channel-view", "/marks <>"]],
+      ["chat-view", [4, ["__KEY", "(gui) chat-view"]]],
+      [
+        "chat-view/marks.text",
+        [4, "(gui) chat-view", ["__KEY", "/marks.text <>"]]
+      ],
+      ["channels.active->messages", [4, "(gui) chat-view", "/marks.text <>"]],
+      [
+        "chat-view/encoding.vstack",
+        [4, "(gui) chat-view", ["__KEY", "/encoding.vstack <>"]]
+      ],
+      ["time", [4, "(gui) chat-view", "/encoding.vstack <>"]],
+      ["send-message", [5, ["__KEY", "(action) send-message"]]],
+      ["create", [5, "(action) send-message", ["__KEY", "create"]]],
+      ["channels.active->messages", [5, "(action) send-message", "create"]],
+      ["directions", [5, "(action) send-message", ["__KEY", "directions"]]],
+      ["time", [5, "(action) send-message", "directions"]],
+      ["select-channel", [6, ["__KEY", "(action) select-channel"]]],
+      ["update", [6, "(action) select-channel", ["__KEY", "update"]]],
+      ["channels.active", [6, "(action) select-channel", "update"]],
+      ["channels", [6, "(action) select-channel", "update"]]
+    ]
+  },
+  "calendar": {
+    "image_names": [],
+    "yaml": [
+      {
+        "(gui) week-view": {
+          "/marks.hline <>": "weeks.active->timestamps",
+          "/marks.rectangles <>": "weeks.active->events",
+          "/encoding.vstack <>": {
+            "(linear) time": {
+              "affects": "timestamps",
+              "covers": "events, days, weeks, months"
+            }
+          },
+          "/encoding.cluster <>": "days"
+        }
+      },
+      {
+        "(gui) mini-month-view": {
+          "/marks.text <>": "months.selected->days",
+          "/encoding.hwrap <>": "time"
+        }
+      },
+      { "(action) create-event": { "create": "events" } },
+      { "(action) delete-event": { "delete": "events" } },
+      {
+        "(action) move-event": {
+          "update": "time covers> events.selected",
+          "directions": "time"
+        }
+      },
+      {
+        "(action) time-passing": {
+          "update": "timestamps.now subset> timestamps",
+          "directions": "time"
+        }
+      }
+    ],
+    "lookup": [
+      ["week-view", [0, ["__KEY", "(gui) week-view"]]],
+      [
+        "week-view/marks.hline",
+        [0, "(gui) week-view", ["__KEY", "/marks.hline <>"]]
+      ],
+      ["weeks.active->timestamps", [0, "(gui) week-view", "/marks.hline <>"]],
+      [
+        "week-view/marks.rectangles",
+        [0, "(gui) week-view", ["__KEY", "/marks.rectangles <>"]]
+      ],
+      ["weeks.active->events", [0, "(gui) week-view", "/marks.rectangles <>"]],
+      [
+        "week-view/encoding.vstack",
+        [0, "(gui) week-view", ["__KEY", "/encoding.vstack <>"]]
+      ],
+      [
+        "time",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          ["__KEY", "(linear) time"]
+        ]
+      ],
+      [
+        "affects",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          ["__KEY", "affects"]
+        ]
+      ],
+      [
+        "timestamps",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "affects"
+        ]
+      ],
+      [
+        "covers",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          ["__KEY", "covers"]
+        ]
+      ],
+      [
+        "events",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "covers",
+          0
+        ]
+      ],
+      [
+        "days",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "covers",
+          1
+        ]
+      ],
+      [
+        "weeks",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "covers",
+          2
+        ]
+      ],
+      [
+        "months",
+        [
+          0,
+          "(gui) week-view",
+          "/encoding.vstack <>",
+          "(linear) time",
+          "covers",
+          3
+        ]
+      ],
+      [
+        "week-view/encoding.cluster",
+        [0, "(gui) week-view", ["__KEY", "/encoding.cluster <>"]]
+      ],
+      ["days", [0, "(gui) week-view", "/encoding.cluster <>"]],
+      ["mini-month-view", [1, ["__KEY", "(gui) mini-month-view"]]],
+      [
+        "mini-month-view/marks.text",
+        [1, "(gui) mini-month-view", ["__KEY", "/marks.text <>"]]
+      ],
+      ["months.selected->days", [1, "(gui) mini-month-view", "/marks.text <>"]],
+      [
+        "mini-month-view/encoding.hwrap",
+        [1, "(gui) mini-month-view", ["__KEY", "/encoding.hwrap <>"]]
+      ],
+      ["time", [1, "(gui) mini-month-view", "/encoding.hwrap <>"]],
+      ["create-event", [2, ["__KEY", "(action) create-event"]]],
+      ["create", [2, "(action) create-event", ["__KEY", "create"]]],
+      ["events", [2, "(action) create-event", "create"]],
+      ["delete-event", [3, ["__KEY", "(action) delete-event"]]],
+      ["delete", [3, "(action) delete-event", ["__KEY", "delete"]]],
+      ["events", [3, "(action) delete-event", "delete"]],
+      ["move-event", [4, ["__KEY", "(action) move-event"]]],
+      ["update", [4, "(action) move-event", ["__KEY", "update"]]],
+      ["time", [4, "(action) move-event", "update"]],
+      ["events.selected", [4, "(action) move-event", "update"]],
+      ["directions", [4, "(action) move-event", ["__KEY", "directions"]]],
+      ["time", [4, "(action) move-event", "directions"]],
+      ["time-passing", [5, ["__KEY", "(action) time-passing"]]],
+      ["update", [5, "(action) time-passing", ["__KEY", "update"]]],
+      ["timestamps.now", [5, "(action) time-passing", "update"]],
+      ["timestamps", [5, "(action) time-passing", "update"]],
+      ["directions", [5, "(action) time-passing", ["__KEY", "directions"]]],
+      ["time", [5, "(action) time-passing", "directions"]]
+    ]
+  },
+  "video-editor": {
+    "image_names": [],
+    "yaml": [
+      {
+        "def (video)": {
+          "group foreach": [
+            "/timestamps->/images",
+            {
+              "(linear) /timeline": {
+                "affects": "/images",
+                "/first =": "/images.first",
+                "/backwards": { "affects": "/images" }
+              }
+            }
+          ]
+        }
+      },
+      "(video) videos",
+      {
+        "editors": {
+          "group foreach": [
+            {
+              "(video) /videos": {
+                "/timestamps <>": "/timestamps",
+                "/timeline <>": "/timeline"
+              }
+            },
+            {
+              "(linear) /timeline": {
+                "affects": "/timestamps",
+                "covers": "/videos"
+              }
+            },
+            {
+              "(gui) /view": {
+                "/marks.vline <>": [
+                  "/timestamps",
+                  {
+                    "(action) /move-playhead": {
+                      "update": "/timestamps.playhead subset> /timestamps"
+                    }
+                  }
+                ],
+                "/marks.rectangles <>": [
+                  "/videos",
+                  {
+                    "(action) /select-video": {
+                      "update": "/videos.selected subset> /videos"
+                    }
+                  }
+                ],
+                "/encoding.hstack <>": "/timeline",
+                "/encoding.cluster <>": { "/tracks": { "groups": "/videos" } }
+              }
+            },
+            {
+              "(action) play": {
+                "update": "/timestamps.playhead subset> /timestamps",
+                "directions": "/timeline"
+              }
+            },
+            {
+              "(action) move-video": {
+                "update": "/timeline covers> /videos.selected",
+                "direction": "/timeline"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "(gui) media-pool": {
+          "/marks <>": "videos",
+          "/encoding.hwrap <>": {
+            "(linear) sort-order": { "affects": "videos" }
+          }
+        }
+      },
+      {
+        "def (video-player)": {
+          "arguments": "(video) /video, /playhead",
+          "group foreach": [
+            {
+              "(gui) image-view": { "/marks.image <>": "video/images.current" }
+            },
+            {
+              "(gui) scrubber-view": {
+                "/marks.points <>": "video/timestamps",
+                "/marks.icon <>": "playhead->video/timestamps",
+                "/encoding.hstack <>": "video/timeline"
+              }
+            },
+            {
+              "(gui) view": {
+                "/marks <>": "image-view and scrubber-view",
+                "/encoding.vstack <>": "_"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "(video-player) timeline-preview": {
+          "/video =": "editors/composited-video",
+          "/playhead =": "editors.current/timestamps.playhead"
+        }
+      },
+      { "(video-player) media-preview": { "/video =": "videos.selected" } }
+    ],
+    "lookup": [
+      ["def (video)", [0, ["__KEY", "def (video)"]]],
+      ["videos", [1]],
+      ["editors", [2, ["__KEY", "editors"]]],
+      ["group foreach", [2, "editors", ["__KEY", "group foreach"]]],
+      [
+        "editors/videos",
+        [2, "editors", "group foreach", 0, ["__KEY", "(video) /videos"]]
+      ],
+      [
+        "editors/videos/timestamps",
+        [
+          2,
+          "editors",
+          "group foreach",
+          0,
+          "(video) /videos",
+          ["__KEY", "/timestamps <>"]
+        ]
+      ],
+      [
+        "editors/timestamps",
+        [2, "editors", "group foreach", 0, "(video) /videos", "/timestamps <>"]
+      ],
+      [
+        "editors/videos/timeline",
+        [
+          2,
+          "editors",
+          "group foreach",
+          0,
+          "(video) /videos",
+          ["__KEY", "/timeline <>"]
+        ]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 0, "(video) /videos", "/timeline <>"]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 1, ["__KEY", "(linear) /timeline"]]
+      ],
+      [
+        "affects",
+        [
+          2,
+          "editors",
+          "group foreach",
+          1,
+          "(linear) /timeline",
+          ["__KEY", "affects"]
+        ]
+      ],
+      [
+        "editors/timestamps",
+        [2, "editors", "group foreach", 1, "(linear) /timeline", "affects"]
+      ],
+      [
+        "covers",
+        [
+          2,
+          "editors",
+          "group foreach",
+          1,
+          "(linear) /timeline",
+          ["__KEY", "covers"]
+        ]
+      ],
+      [
+        "editors/videos",
+        [2, "editors", "group foreach", 1, "(linear) /timeline", "covers"]
+      ],
+      [
+        "editors/view",
+        [2, "editors", "group foreach", 2, ["__KEY", "(gui) /view"]]
+      ],
+      [
+        "editors/view/marks.vline",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          ["__KEY", "/marks.vline <>"]
+        ]
+      ],
+      [
+        "editors/timestamps",
+        [2, "editors", "group foreach", 2, "(gui) /view", "/marks.vline <>", 0]
+      ],
+      [
+        "editors/move-playhead",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.vline <>",
+          1,
+          ["__KEY", "(action) /move-playhead"]
+        ]
+      ],
+      [
+        "update",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.vline <>",
+          1,
+          "(action) /move-playhead",
+          ["__KEY", "update"]
+        ]
+      ],
+      [
+        "editors/timestamps.playhead",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.vline <>",
+          1,
+          "(action) /move-playhead",
+          "update"
+        ]
+      ],
+      [
+        "editors/timestamps",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.vline <>",
+          1,
+          "(action) /move-playhead",
+          "update"
+        ]
+      ],
+      [
+        "editors/view/marks.rectangles",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          ["__KEY", "/marks.rectangles <>"]
+        ]
+      ],
+      [
+        "editors/videos",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.rectangles <>",
+          0
+        ]
+      ],
+      [
+        "editors/select-video",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.rectangles <>",
+          1,
+          ["__KEY", "(action) /select-video"]
+        ]
+      ],
+      [
+        "update",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.rectangles <>",
+          1,
+          "(action) /select-video",
+          ["__KEY", "update"]
+        ]
+      ],
+      [
+        "editors/videos.selected",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.rectangles <>",
+          1,
+          "(action) /select-video",
+          "update"
+        ]
+      ],
+      [
+        "editors/videos",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/marks.rectangles <>",
+          1,
+          "(action) /select-video",
+          "update"
+        ]
+      ],
+      [
+        "editors/view/encoding.hstack",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          ["__KEY", "/encoding.hstack <>"]
+        ]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 2, "(gui) /view", "/encoding.hstack <>"]
+      ],
+      [
+        "editors/view/encoding.cluster",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          ["__KEY", "/encoding.cluster <>"]
+        ]
+      ],
+      [
+        "editors/tracks",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/encoding.cluster <>",
+          ["__KEY", "/tracks"]
+        ]
+      ],
+      [
+        "groups",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/encoding.cluster <>",
+          "/tracks",
+          ["__KEY", "groups"]
+        ]
+      ],
+      [
+        "editors/videos",
+        [
+          2,
+          "editors",
+          "group foreach",
+          2,
+          "(gui) /view",
+          "/encoding.cluster <>",
+          "/tracks",
+          "groups"
+        ]
+      ],
+      ["play", [2, "editors", "group foreach", 3, ["__KEY", "(action) play"]]],
+      [
+        "update",
+        [2, "editors", "group foreach", 3, "(action) play", ["__KEY", "update"]]
+      ],
+      [
+        "editors/timestamps.playhead",
+        [2, "editors", "group foreach", 3, "(action) play", "update"]
+      ],
+      [
+        "editors/timestamps",
+        [2, "editors", "group foreach", 3, "(action) play", "update"]
+      ],
+      [
+        "directions",
+        [
+          2,
+          "editors",
+          "group foreach",
+          3,
+          "(action) play",
+          ["__KEY", "directions"]
+        ]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 3, "(action) play", "directions"]
+      ],
+      [
+        "move-video",
+        [2, "editors", "group foreach", 4, ["__KEY", "(action) move-video"]]
+      ],
+      [
+        "update",
+        [
+          2,
+          "editors",
+          "group foreach",
+          4,
+          "(action) move-video",
+          ["__KEY", "update"]
+        ]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 4, "(action) move-video", "update"]
+      ],
+      [
+        "editors/videos.selected",
+        [2, "editors", "group foreach", 4, "(action) move-video", "update"]
+      ],
+      [
+        "direction",
+        [
+          2,
+          "editors",
+          "group foreach",
+          4,
+          "(action) move-video",
+          ["__KEY", "direction"]
+        ]
+      ],
+      [
+        "editors/timeline",
+        [2, "editors", "group foreach", 4, "(action) move-video", "direction"]
+      ],
+      ["media-pool", [3, ["__KEY", "(gui) media-pool"]]],
+      ["media-pool/marks", [3, "(gui) media-pool", ["__KEY", "/marks <>"]]],
+      ["videos", [3, "(gui) media-pool", "/marks <>"]],
+      [
+        "media-pool/encoding.hwrap",
+        [3, "(gui) media-pool", ["__KEY", "/encoding.hwrap <>"]]
+      ],
+      [
+        "sort-order",
+        [
+          3,
+          "(gui) media-pool",
+          "/encoding.hwrap <>",
+          ["__KEY", "(linear) sort-order"]
+        ]
+      ],
+      [
+        "affects",
+        [
+          3,
+          "(gui) media-pool",
+          "/encoding.hwrap <>",
+          "(linear) sort-order",
+          ["__KEY", "affects"]
+        ]
+      ],
+      [
+        "videos",
+        [
+          3,
+          "(gui) media-pool",
+          "/encoding.hwrap <>",
+          "(linear) sort-order",
+          "affects"
+        ]
+      ],
+      ["def (video-player)", [4, ["__KEY", "def (video-player)"]]],
+      ["timeline-preview", [5, ["__KEY", "(video-player) timeline-preview"]]],
+      [
+        "timeline-preview/video",
+        [5, "(video-player) timeline-preview", ["__KEY", "/video ="]]
+      ],
+      [
+        "editors/composited-video",
+        [5, "(video-player) timeline-preview", "/video ="]
+      ],
+      [
+        "timeline-preview/playhead",
+        [5, "(video-player) timeline-preview", ["__KEY", "/playhead ="]]
+      ],
+      [
+        "editors.current/timestamps.playhead",
+        [5, "(video-player) timeline-preview", "/playhead ="]
+      ],
+      ["media-preview", [6, ["__KEY", "(video-player) media-preview"]]],
+      [
+        "media-preview/video",
+        [6, "(video-player) media-preview", ["__KEY", "/video ="]]
+      ],
+      ["videos.selected", [6, "(video-player) media-preview", "/video ="]]
+    ]
+  }
+}
