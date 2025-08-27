@@ -20,7 +20,7 @@ export type Spec = {
   name: string;
   yaml: object;
   lookup: [string, SpecPath][];
-  image_names: string[]
+  image_names: string[];
 };
 
 export type Analogy = {
@@ -189,30 +189,30 @@ function setup_connection_event_listeners(
 
   let clicked = false;
 
-  const highlight = () => {
-    [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-      el?.classList.add("highlight")
-    );
-  };
-
-  const unhighlight = (click = false) => {
-    if (clicked && !click) return;
-
-    [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-      el?.classList.remove("highlight")
-    );
-  };
-
   [to_node.frag, from_node.frag].forEach((el) => {
-    el.addEventListener("mouseenter", () => highlight());
-    el.addEventListener("mouseleave", () => unhighlight());
+    el.addEventListener("mouseenter", () => {
+      [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
+        el?.classList.add("highlight")
+      );
+    });
+
+    el.addEventListener("mouseleave", () => {
+      [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
+        el?.classList.remove("highlight")
+      );
+    });
+
     el.addEventListener("mousedown", () => {
       if (clicked) {
         clicked = false;
-        unhighlight();
+        [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
+          el?.classList.remove("pinned")
+        );
       } else {
         clicked = true;
-        highlight();
+        [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
+          el?.classList.add("pinned")
+        );
       }
     });
   });

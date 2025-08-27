@@ -1,5 +1,5 @@
 .viewer {
-  font: 12px/1.4 var(--monospace-font);
+  font: 14px/1.4 var(--monospace-font);
   line-height: 1.5;
 }
 
@@ -14,13 +14,13 @@
 
   padding: 20px 20px;
 
-  width: 400px;
+  width: 500px;
   overflow-x: scroll;
   height: fit-content;
 }
 
 .viewer-ui {
-  width: 400px;
+  width: 500px;
   display: flex;
 
   background: white;
@@ -49,11 +49,12 @@
   left: 0px;
   top: 0px;
   opacity: 0;
-  filter: hue-rotate(180deg) drop-shadow(0px 0px 5px #009fff);
-}
+  /* filter: hue-rotate(180deg) drop-shadow(0px 0px 5px #009fff); */
 
-.layer.highlight {
-  opacity: 1;
+  &.highlight,
+  &.pinned {
+    opacity: 1;
+  }
 }
 
 .v-obj-value {
@@ -110,11 +111,17 @@
   opacity: 0.7;
   cursor: pointer;
   white-space: pre;
-}
 
-.v-string.highlight {
-  opacity: 1;
-  font-weight: bold;
+  &.highlight {
+    opacity: 1;
+    font-weight: bold;
+  }
+
+  &.pinned {
+    opacity: 1;
+    font-weight: bold;
+    text-decoration: underline;
+  }
 }
 
 .v-string:not(.matched) {

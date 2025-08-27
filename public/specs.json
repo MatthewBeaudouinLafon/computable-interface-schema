@@ -1,6 +1,13 @@
 {
   "imessage": {
-    "image_names": ["chat-view", "conversations.active->messages", "conversations", "convo-view", "pin", "time"],
+    "image_names": [
+      "chat-view",
+      "conversations.active->messages",
+      "conversations",
+      "convo-view",
+      "pin",
+      "time"
+    ],
     "yaml": [
       {
         "conversations": {
@@ -143,7 +150,15 @@
     ]
   },
   "slack": {
-    "image_names": ["alphabetical", "channel-type", "channel-view", "channels.active->messages", "channels", "chat-view", "time"],
+    "image_names": [
+      "alphabetical",
+      "channel-type",
+      "channel-view",
+      "channels.active->messages",
+      "channels",
+      "chat-view",
+      "time"
+    ],
     "yaml": [
       { "channels": { "group foreach": ["name", "messages", "people"] } },
       { "people": { "groups": "messages" } },

@@ -5,13 +5,13 @@ import {
 } from "./analogy-viewer/analogy-viewer";
 import { SpecPath } from "./analogy-viewer/viewer/viewer";
 import "./style.css";
-import { el } from "./utilities/utilities";
+import { assert } from "./utilities/utilities";
 
 async function main() {
   const specs = (await (await fetch("./specs.json")).json()) as Record<
     string,
     {
-      image_names: string[]
+      image_names: string[];
       yaml: object;
       lookup: [string, SpecPath][];
     }
@@ -20,7 +20,6 @@ async function main() {
   const analogies = (await (
     await fetch("./analogies.json")
   ).json()) as Analogy[];
-
 
   const get_spec = (name: string): Spec => {
     return {
@@ -31,29 +30,20 @@ async function main() {
     };
   };
 
-  const analogy_viewer_messages = await make_analogy_viewer(
-    get_spec("imessage"),
-    get_spec("slack"),
-    analogies
-  );
+  for (const analogy_viewer_el of document.querySelectorAll("analogy-viewer")) {
+    const from = analogy_viewer_el.getAttribute("from");
+    const to = analogy_viewer_el.getAttribute("to");
+    assert(from !== null);
+    assert(to !== null);
 
-  const analogy_viewer_cv = await make_analogy_viewer(
-    get_spec("calendar"),
-    get_spec("video-editor"),
-    analogies
-  );
+    const analogy_viewer = await make_analogy_viewer(
+      get_spec(from),
+      get_spec(to),
+      analogies
+    );
 
-  const app = document.getElementById("app")!;
-
-  app.append(el("h2", { innerText: "IMessage v. Slack" }));
-  app.append(el("p", { innerText: "Huh." }));
-  app.append(analogy_viewer_messages.frag);
-
-  app.append(el("hr"));
-
-  app.append(el("h2", { innerText: "Calendar v. Video Editor" }));
-  app.append(el("p", { innerText: "Huh." }));
-  app.append(analogy_viewer_cv.frag);
+    analogy_viewer_el.append(analogy_viewer.frag);
+  }
 }
 
 async function loop() {
