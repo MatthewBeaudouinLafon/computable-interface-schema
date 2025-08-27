@@ -126,9 +126,9 @@ export function vtabs(
 export function stack(
   stack_type: "horizontal" | "vertical",
   props: ElementProps,
-  items: (string | HTMLElement)[]
+  items: (string | HTMLElement | SVGElement)[]
 ) {
-  const children: (string | HTMLElement)[] = [];
+  const children: (string | HTMLElement | SVGElement)[] = [];
 
   for (let i = 0; i < items.length - 1; i++) {
     children.push(items[i]);
@@ -141,11 +141,17 @@ export function stack(
   return ret;
 }
 
-export function hstack(props: ElementProps, items: (string | HTMLElement)[]) {
+export function hstack(
+  props: ElementProps,
+  items: (string | HTMLElement | SVGElement)[]
+) {
   return stack("horizontal", props, items);
 }
 
-export function vstack(props: ElementProps, items: (string | HTMLElement)[]) {
+export function vstack(
+  props: ElementProps,
+  items: (string | HTMLElement | SVGElement)[]
+) {
   return stack("vertical", props, items);
 }
 

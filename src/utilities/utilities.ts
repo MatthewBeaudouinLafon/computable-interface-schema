@@ -40,7 +40,7 @@ function el_helper(
     }
 
     if ("data" in props && props.data !== undefined) {
-      props.data.forEach((d) => _el.setAttribute(d[0], d[1]));
+      props.data.forEach((d) => (_el.dataset[d[0]] = d[1]));
     }
 
     if ("style" in props && props.style !== undefined) {
@@ -68,18 +68,18 @@ export function el(
 }
 
 export function svg(
-  tag: string,
-  props: ElementProps,
+  tag: "polygon",
+  props?: ElementProps,
   children?: ElementChildren
 ): SVGPolygonElement;
 export function svg(
   tag: "svg",
-  props: ElementProps,
+  props?: ElementProps,
   children?: ElementChildren
 ): SVGSVGElement;
 export function svg(
   tag: string,
-  props: ElementProps,
+  props?: ElementProps,
   children?: ElementChildren
 ): SVGElement;
 export function svg(
@@ -94,6 +94,13 @@ export function svg(
 
 export function div(props: ElementProps = {}, children: ElementChildren = []) {
   return el("div", props, children);
+}
+
+export function path(props: ElementProps = {}, d = ""): SVGPathElement {
+  const ret = svg("path", props) as SVGPathElement;
+  ret.setAttribute("d", d);
+
+  return ret;
 }
 
 export function assert_never(_never: never, message?: string): never {
@@ -181,4 +188,89 @@ export function setup_drag(
       _el.classList.remove("being-dragged");
     }
   });
+}
+
+type BBox = { x: number; y: number; width: number; height: number };
+export function get_curve_between_bbox(a: BBox, b: BBox) {
+  // b.x += 5;
+  // a.x -= 5;
+
+  const h = 2;
+
+  a.y += a.height / 2 - h;
+  a.height = h * 2;
+
+  b.y += b.height / 2 - h;
+  b.height = h * 2;
+
+  const p1 = [a.x + a.width, a.y];
+  const p2 = [(a.x + a.width + b.x) / 2, a.y];
+  const p3 = [(a.x + a.width + b.x) / 2, b.y];
+  const p4 = [b.x, b.y];
+
+  // Top
+  let d = `M ${p1[0]} ${p1[1]} C ${p2[0]} ${p2[1]}, ${p3[0]} ${p3[1]}, ${p4[0]} ${p4[1]}`;
+
+  // Bottom
+  d += `L ${p4[0]} ${p4[1] + b.height} C ${p3[0]} ${p3[1] + b.height}, ${
+    p2[0]
+  } ${p2[1] + a.height}, ${p1[0]} ${p1[1] + a.height}`;
+
+  return d;
+}
+
+export function get_curve_between_bbox_pivot(
+  a: BBox,
+  b: BBox,
+  a_pivot: number,
+  b_pivot: number
+) {
+  // b.x += 5;
+  // a.x -= 5;
+
+  const h = 1;
+
+  a.y += a.height / 2 - h;
+  a.height = h * 2;
+
+  b.y += b.height / 2 - h;
+  b.height = h * 2;
+
+  a.x += a_pivot;
+  b.x += b_pivot;
+
+  const p1 = [a.x + a.width, a.y];
+  const p2 = [(a.x + a.width + b.x) / 2, a.y];
+  const p3 = [(a.x + a.width + b.x) / 2, b.y];
+  const p4 = [b.x, b.y];
+
+  // Top
+  let d = `M ${p1[0] - a_pivot} ${p1[1] + a.height / 2} M ${p1[0]} ${p1[1]} C ${
+    p2[0]
+  } 
+${p2[1]}, ${p3[0]} ${p3[1]}, ${p4[0]} ${p4[1]} L ${p4[0] - b_pivot} ${
+    p4[1] + b.height / 2
+  }`;
+
+  // Bottom
+  d += `L ${p4[0] - b_pivot} ${p4[1] + b.height / 2} L ${p4[0]} ${
+    p4[1] + b.height
+  } C ${p3[0]} ${p3[1] + b.height}, 
+  ${p2[0]} ${p2[1] + a.height}, ${p1[0]} ${p1[1] + a.height}
+  L ${p1[0] - a_pivot} ${p1[1] + a.height / 2}`;
+
+  return d;
+}
+
+export function does_image_exist(url: string) {
+  const img = new Image();
+  img.src = url;
+  return img.height != 0;
+}
+
+export function sanitize_name(path: string) {
+  return path
+    .replaceAll("->", "_A_")
+    .replaceAll(".", "_D_")
+    .replaceAll("/", "_S_");
 }

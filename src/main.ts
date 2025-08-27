@@ -1,34 +1,25 @@
 import mermaid from "mermaid";
-import { loadPyodide, version as pyodideVersion } from "pyodide";
-import { create_editor } from "./editor/editor";
+import {
+  Analogy,
+  make_analogy_viewer,
+  Spec,
+} from "./analogy-viewer/analogy-viewer";
 import "./style.css";
-import { tabs } from "./utilities/ui-utilities";
-
-const paths = ["calendar.yaml", "video-editor.yaml"];
-
-const pyodide = await loadPyodide({
-  indexURL: `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`,
-});
-
-export function get_pyodide() {
-  return pyodide;
-}
+import { el } from "./utilities/utilities";
+import { SpecPath } from "./viewer/viewer";
 
 async function main() {
-  // Load meta algo dependencies
-  await pyodide.loadPackage("networkx");
-  await pyodide.loadPackage("pyyaml");
+  const specs = (await (await fetch("./specs.json")).json()) as Record<
+    string,
+    {
+      yaml: object;
+      lookup: [string, SpecPath][];
+    }
+  >;
 
-  const python_files = await Promise.all(
-    ["compiler.py", "parser.py"].map(async (name) => [
-      name,
-      await (await fetch(`./python-lib/${name}`)).text(),
-    ])
-  );
-
-  python_files.forEach(([name, contents]) => {
-    pyodide.FS.writeFile(`${name}`, contents);
-  });
+  const analogies = (await (
+    await fetch("./analogies.json")
+  ).json()) as Analogy[];
 
   // Mermaid styling
   mermaid.initialize({
@@ -39,23 +30,37 @@ async function main() {
     },
   });
 
-  // Load specs
-  const specs = await Promise.all(
-    paths.map(
-      async (p) =>
-        await (await fetch(`./interface-schema/specifications/${p}`)).text()
-    )
+  const get_spec = (name: string): Spec => {
+    return {
+      name,
+      yaml: specs[name].yaml,
+      lookup: specs[name].lookup,
+    };
+  };
+
+  const analogy_viewer_messages = await make_analogy_viewer(
+    get_spec("imessage"),
+    get_spec("slack"),
+    analogies
   );
 
-  const editors = specs.map((spec) => create_editor(spec));
-
-  const frag = tabs(
-    ".editor-tabs",
-    editors.map((editor, i) => [paths[i], editor.frag])
+  const analogy_viewer_cv = await make_analogy_viewer(
+    get_spec("calendar"),
+    get_spec("video-editor"),
+    analogies
   );
 
   const app = document.getElementById("app")!;
-  app.append(frag);
+
+  app.append(el("h2", { innerText: "IMessage v. Slack" }));
+  app.append(el("p", { innerText: "Huh." }));
+  app.append(analogy_viewer_messages.frag);
+
+  app.append(el("hr"));
+
+  app.append(el("h2", { innerText: "Calendar v. Video Editor" }));
+  app.append(el("p", { innerText: "Huh." }));
+  app.append(analogy_viewer_cv.frag);
 }
 
 async function loop() {

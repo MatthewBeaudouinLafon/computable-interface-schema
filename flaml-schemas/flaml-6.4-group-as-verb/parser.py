@@ -14,6 +14,12 @@ import re
 import enum
 from enum import Enum
 
+SpecPath = list[int, str, tuple[str, str | int]]
+
+
+def record_path(statement: str, interp: tuple[list, list], path: SpecPath):
+    interp[1].append([statement, path])
+
 def spec_from_file(file_path):
   real_path = Path(__file__).with_name(file_path)  # https://stackoverflow.com/a/65174822
   with open(real_path, "r") as file_handle:
@@ -66,11 +72,11 @@ class dpower(Enum):
   QUESTION = enum.auto()
 
 # -- Declarations
-def declare(interp: list, source: str, relation: rel, target: str, power: dpower, verbose=False):
+def declare(interp: tuple[list, list], source: str, relation: rel, target: str, power: dpower, verbose=False):
   """
   Declares an edge in the graph by appending it to interp.
   """
-  interp.append((source, relation, target, power))
+  interp[0].append((source, relation, target, power))
 
   pretty_relation = relation.name
 
@@ -136,7 +142,7 @@ def print_declaration(decl: tuple):
 
   print(f'({power}) {source}  -{relation}->  {target}')
 
-def print_interp(interp: list):
+def print_interp(interp: tuple[list, list]):
   for declaration in interp:
     print_declaration(declaration)
 
@@ -181,7 +187,7 @@ def validate_instance_dict(statement: str):
   {is_relation=} or {is_attribute=}'
   return is_valid
 
-def parse_compound_object(statement: str, parent: str, interp: list):
+def parse_compound_object(statement: str, parent: str, interp: tuple[list, list]):
   """
   Parses compound objects like files.selected->paths/icon.
 
@@ -290,7 +296,7 @@ def parse_compound_object(statement: str, parent: str, interp: list):
 
   return rebuilt_statement
 
-def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str:
+def parse_str(statement: str, parent: str|None, interp: tuple[list, list], depth: int, path: list[int] = []) -> str:
   """
   Parses the string and returns an identifier that the caller can use in a relation.
   NOTE: that this will clean up the statement eg. remove (type), =, etc.
@@ -326,6 +332,8 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
 
       # Each "phrase" (as in `phrase1 and phrase2`) is parsed as its own string
       parse_str(and_phrase, parent=parent, interp=interp, depth=depth+1)  # recurse on each phrase
+
+    record_path(statement, interp, path)
     return statement_without_types
       
   # Syntax for instantiation eg. (linear) alphabetical
@@ -355,6 +363,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     # back to parse_dict. We can't just parse these kinds of statement in here
     # because we need to know both the parent (for compound statements) and the
     # inflicting action for the declarations. This is not very pretty.
+    record_path(statement, interp, path)
     return statement
 
   should_declare_parent_foreach = False
@@ -379,6 +388,7 @@ def parse_str(statement: str, parent: str|None, interp: list, depth: int) -> str
     pass
 
   # TODO: validate the final string only contains the right characters.
+  record_path(statement, interp, path)
   return statement
 
 def parse_relation(statement: str) -> rel|None:
@@ -417,7 +427,7 @@ def parse_relation(statement: str) -> rel|None:
   
   return None
 
-def parse_list(statements: list, key_parent: str|None, val_parent: str|None, interp: list, depth: int):
+def parse_list(statements: list, key_parent: str|None, val_parent: str|None, interp: tuple[list, list], depth: int, path: SpecPath = []):
   """
   Parses every item in the list and returns a list of identifiers for the parent to use.
   It passes its parent down to its items.
@@ -425,15 +435,15 @@ def parse_list(statements: list, key_parent: str|None, val_parent: str|None, int
   assert type(statements) is list, f'Statements should be a list, got `{type(statements)}` instead. {statements=}'
 
   results = []
-  for statement in statements:
+  for i, statement in enumerate(statements):
     if type(statement) is str:
-      results.append(parse_str(statement, parent=val_parent, interp=interp, depth=depth+1))
+      results.append(parse_str(statement, parent=val_parent, interp=interp, depth=depth+1, path=[*path, i]))
     elif type(statement) is dict:
-      results.append(parse_dict(statement, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1))
+      results.append(parse_dict(statement, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1, path=[*path, i]))
   
   return results
 
-def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, interp: list, depth: int):
+def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, interp: tuple[list, list], depth: int, path: SpecPath = []):
   """
   Dictionaries are used in a few ways.
 
@@ -459,7 +469,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
   for key, value in statement.items():
     # TODO: validate key
     # TODO: validate value
-    parsed_key = parse_str(key, parent=key_parent, interp=interp, depth=depth+1)
+    parsed_key = parse_str(key, parent=key_parent, interp=interp, depth=depth+1, path=[*path, ("__KEY", key)],)
 
     # 1. If the key is a relation, then it declares: parent -relation-> value(s).
     relation = parse_relation(key)
@@ -472,22 +482,22 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
       if type(value) is str:
         if prepare_target_relation_statement(value) is not None:
           # parse as a target_relation (eg. update: a.sub subset> a), if that doesn't work deal with it as a string
-          parse_target_relation(value, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False)
+          parse_target_relation(value, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False, path=[*path, key])
         else:
           # Since this is the value, we just pass val_parent as parent.
-          parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+          parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
 
           # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
           declare(interp=interp, source=key_parent, relation=relation, target=parsed_value, power=dpower.STRONG)
       elif type(value) is list:
         # if the value is a list, then we make a relation for each item
         # NOTE: Key/val parent doesn't really matter here, parse_list will just pass it down.
-        value_items = parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1)
+        value_items = parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
 
         for item in value_items:
           if prepare_target_relation_statement(item) is not None:
             # parse as a target_relation (eg. update: a.sub subset> a), if that doesn't work deal with it as a string
-            parse_target_relation(item, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False)
+            parse_target_relation(item, inflicting_action=key_parent, parent=val_parent, interp=interp, depth=depth, verbose=False, path=[*path, key])
           else:
             # parent (from key) relates to each item
             declare(interp=interp, source=key_parent, relation=relation, target=item, power=dpower.STRONG)
@@ -551,12 +561,12 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
         
       parsed_value = None
       if type(value) is str:
-        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
       elif type(value) is dict:
-        parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
+        parsed_value = parse_dict(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1, path=[*path, key])
       elif type(value) is list:
         # eg. thing <>: one, two
-        parsed_value = parse_list(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1)
+        parsed_value = parse_list(value, key_parent=next_key_parent, val_parent=next_val_parent, interp=interp, depth=depth+1, path=[*path, key])
       else:
         assert False, f"Value condition not met. That's weird. {value=}"
 
@@ -574,12 +584,12 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
     elif key[-2:] == " =": # TODO: do this properly with a regex to make the space optional (see other)
       # TODO: repeated code with the alias check `elif key[0] == '/'`. Could abstract as a function?
       if type(value) is str:
-        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1)
+        parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
         declare(interp=interp, source=parsed_value, relation=rel.ALIAS, target=parsed_key, power=dpower.STRONG)
 
       elif type(value) is list:
         # NOTE: I didn't intend for this to be listable, but it's kind of cool
-        for list_parsed_value in parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1):
+        for list_parsed_value in parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1, path=[*path, key]):
           declare(interp=interp, source=parsed_key, relation=rel.ALIAS, target=list_parsed_value, power=dpower.STRONG)
 
       else:
@@ -590,7 +600,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
     # 3. If there's a single key and its value is a list/dict,
     #    then its the parent to declaration involving the items in its value.
     elif type(value) is list:
-      parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1)
+      parse_list(value, key_parent=key_parent, val_parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
     
     elif type(value) is dict:  
       # There are two scenarios in which you pass down your name as parents for children.
@@ -598,14 +608,14 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
       if rel.GROUP_FOREACH in map(lambda x: parse_relation(x), value.keys()):
         # In this case, the key is the source of the relation and one of the values is `group_foreach`
         # Therefore, the key and value parents are relation source aka parsed_key
-        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1)
+        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1, path=[*path, key])
       
       # b. you are an instance statement that's not an element of a parent
       # TODO: probably use proper regex...
       elif key[0] == '(':
         # key parent is the instance name, while val parent is the previous val parent
         # This is an intentional bifurcation of parents.
-        parse_dict(value, key_parent=parsed_key, val_parent=val_parent, interp=interp, depth=depth+1)
+        parse_dict(value, key_parent=parsed_key, val_parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
 
         # Add group_foreach edges between instance and attributes.
         for value_key in value.keys():
@@ -620,14 +630,14 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
       else:
         # If the key is just a variable name, then it's just an object with group/foreach relation
         # Just pass it down to the values as parents.
-        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1)
+        parse_dict(value, key_parent=parsed_key, val_parent=parsed_key, interp=interp, depth=depth+1, path=[*path, key])
     else:
       assert False, f"Key condition not met. That's very weird. key='{key}'"
   
   # Dictionaries that need to return an identifier always have one key.
   if len(statement.keys()) == 1:
     # NOTE: interp is [] because this key's edges was already added ot interp in the `for key, val` loop
-    return parse_str(list(statement.keys())[0], parent=key_parent, interp=[], depth=depth)
+    return parse_str(list(statement.keys())[0], parent=key_parent, interp=([], []), depth=depth)
   return
 
 """
@@ -689,10 +699,10 @@ def prepare_target_relation_statement(statement: str):
 """
 Parse a string like 'items.selected subset> items'.
 """
-def parse_target_relation(statement: str, inflicting_action: str, parent: str, interp: list, depth: int, verbose=False) -> str|None:
+def parse_target_relation(statement: str, inflicting_action: str, parent: str, interp: tuple[list, list], depth: int, verbose=False, path: SpecPath = []) -> str|None:
   raw_source, raw_relation, raw_target = prepare_target_relation_statement(statement)
-  source = parse_str(raw_source, parent=parent, interp=interp, depth=depth+1)
-  target = parse_str(raw_target, parent=parent, interp=interp, depth=depth+1)
+  source = parse_str(raw_source, parent=parent, interp=interp, depth=depth+1, path=path)
+  target = parse_str(raw_target, parent=parent, interp=interp, depth=depth+1, path=path)
 
   declare(interp=interp, source=inflicting_action, relation=rel.UPDATE_SRC, target=source, power=dpower.STRONG, verbose=verbose)
   declare(interp=interp, source=inflicting_action, relation=rel.UPDATE_TRG, target=target, power=dpower.STRONG, verbose=verbose)
@@ -774,9 +784,9 @@ def parse_type_definitions(spec, verbose=False) -> tuple:
       if parsed_rel == rel.GROUP_FOREACH:
         group_foreach_content = type_def_content[relation]
         if type(group_foreach_content) is str:
-          parse_str(group_foreach_content, parent=instance_name, interp=type_interp, depth=2)
+          parse_str(group_foreach_content, parent=instance_name, interp=(type_interp, []), depth=2)
         elif type(group_foreach_content) is list:
-          parse_list(group_foreach_content, key_parent=instance_name, val_parent=instance_name, interp=type_interp, depth=2)
+          parse_list(group_foreach_content, key_parent=instance_name, val_parent=instance_name, interp=(type_interp, []), depth=2, path=[])
         else:
           assert False, f'Type Error: group_foreach_content should be str or list, got `{type(group_foreach_content)}` instead.'
     
@@ -792,10 +802,10 @@ def parse_type_definitions(spec, verbose=False) -> tuple:
   return interp_dict, parent_dict
 
 
-def make_relations(spec, verbose=False):
+def make_relations(spec, verbose=False, ret_locations=False):
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
 
-  interp = []
+  interp = ([], [])
   parse_list(spec, key_parent=None, val_parent=None, interp=interp, depth=0)
 
   if verbose:
@@ -803,7 +813,10 @@ def make_relations(spec, verbose=False):
     print('\nresult:')
     print_interp(interp)
 
-  return interp
+  if ret_locations:
+    return interp
+
+  return interp[0]
 
 if __name__ == '__main__':
   spec = spec_from_file('video-editor.yaml')
