@@ -1,4 +1,3 @@
-import mermaid from "mermaid";
 import {
   Analogy,
   make_analogy_viewer,
@@ -21,14 +20,6 @@ async function main() {
     await fetch("./analogies.json")
   ).json()) as Analogy[];
 
-  // Mermaid styling
-  mermaid.initialize({
-    theme: "neutral",
-    flowchart: {
-      padding: 0,
-      nodeSpacing: 0,
-    },
-  });
 
   const get_spec = (name: string): Spec => {
     return {
