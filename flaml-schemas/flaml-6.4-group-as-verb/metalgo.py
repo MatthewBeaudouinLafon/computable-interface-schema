@@ -297,7 +297,54 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   if itemized or verbose:
     print(f'------------------\nTotal Cost: {cost}\n')
   return cost
+
+"""
+Computes conceptual connectivity of an analogy as measured by the number of edges
+between nodes in the conceptual layer found in the analogy. 
+
+NOTE: this does count relation> updates as 2 individual edges, which is a bit
+      distorted basically fine.
+"""
+def conceptual_connectivity(analogy: Analogy, graph: nx.MultiDiGraph, side=Hand.SINISTER, verbose=False):
+  assert isinstance(side, Hand), f'Type Error. Expected Hand, got {type(side)} instead'
+  analogy_graph = analogylib.graph_from_analogy(analogy, side)
+
+  def is_node_conceptual(node):
+    attributes = graph.nodes().get(node)
+    assert node is not None, 'how could this happen'
+
+    layer = attributes.get('layer')
+    assert layer is not None, 'how does the node not have a layer?'
+
+    if verbose and layer == 'conceptual':
+      print(f'{node}')
+
+    return layer == 'conceptual'
+
+  if verbose:
+    print('-- Conceptual Nodes in the Analogy:')
   
+  # Filter analogy nodes
+  conceptual_nodes = [node for node in analogy_graph.nodes() if is_node_conceptual(node)]
+  
+  # Filter analogy subgraph for conceptual nodes
+  conceptual_analogy_graph = analogy_graph.subgraph(conceptual_nodes)
+
+  # Get subgraph from the actual graph (with edge information)
+  conceptual_graph = graph.edge_subgraph(conceptual_analogy_graph.edges)
+  conceptual_edges = conceptual_graph.edges(data=True)
+  
+  if verbose:
+    print('\n-- Conceptual Edges in the Analogy:')
+    for source, target, attr in conceptual_edges:
+      relation = attr['relation']
+      print(f'{source} -{relation}-> {target}')
+
+    print(f'\n-- Total: {len(conceptual_edges)}')
+  
+  return len(conceptual_edges)
+  
+
 
 # --- Show analogy results as mermaid diagrams
 def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str):
