@@ -28,7 +28,7 @@ specs_image_names = {
 
 specs = get_specs()
 for [spec, yaml] in specs.items():
-    lookup = parser.make_relations(yaml, False, True)[1]
+    lookup = parser.make_relations(yaml, False)[1]
     image_names = []
     if spec in specs_image_names:
         image_names = specs_image_names[spec]

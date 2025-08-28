@@ -6,6 +6,10 @@ A YAML file looks like this:
 - source-expression:
     left-hand-side: target-expression
 # TODO: fill this out for documentation.
+
+interp (short for interpretation) is a tuple of:
+- a list of declarations         (used by the compiler for its nefarious compilation deeds)
+- a list of [statements, path]   (used by the frontend to the location of keywords in the spec)
 """
 import yaml
 from pprint import pformat
@@ -16,6 +20,8 @@ from enum import Enum
 
 SpecPath = list[int, str, tuple[str, str | int]]
 
+def new_interp():
+  return ([], [])
 
 def record_path(statement: str, interp: tuple[list, list], path: SpecPath):
     interp[1].append([statement, path])
@@ -143,7 +149,8 @@ def print_declaration(decl: tuple):
   print(f'({power}) {source}  -{relation}->  {target}')
 
 def print_interp(interp: tuple[list, list]):
-  for declaration in interp:
+  decls = interp[0]
+  for declaration in decls:
     print_declaration(declaration)
 
 # --- Parse spec
@@ -720,11 +727,11 @@ Any attribute declaration is prefixed with @ as a placeholder for the instance n
 def parse_type_definitions(spec, verbose=False) -> tuple:
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
   instance_name = '@'  # This is used in place of the instance-name
-  interp_dict = {}  # {str(type_name): [type_interp]}
+  declarations_dict = {}  # {str(type_name): [type_declarations]}
   parent_dict = {}  # {str(type_name): str(parent_type_name)}
 
   for statement in spec:
-    type_interp = []
+    type_declarations = []
     # Ignore anything that's not a top level definition
     # NOTE: This approach silently ignores type definitions that are inline.
     #       These aren't supported anyway, but it'd be nice to error on them.
@@ -733,9 +740,9 @@ def parse_type_definitions(spec, verbose=False) -> tuple:
       if type_name is None:
         continue
 
-      interp_dict[type_name] = []
+      declarations_dict[type_name] = []
       if parent_type_name is not None:
-        interp_dict[parent_type_name] = []
+        declarations_dict[parent_type_name] = []
       
       if verbose:
         print_parent = '' if parent_type_name is None else f' with parent: ({parent_type_name})'
@@ -772,7 +779,7 @@ def parse_type_definitions(spec, verbose=False) -> tuple:
       if verbose:
         print(f'({type_name}) has parent ({parent_type_name})')
 
-    # Construct the list of interps
+    # Construct the list of declarations
     type_relations = type_def_content.keys()
     for relation in type_relations:
       assert type(relation) is str, f'Type Error: Expected str, got `{type(relation)}` instead from `{relation}`.'
@@ -784,28 +791,28 @@ def parse_type_definitions(spec, verbose=False) -> tuple:
       if parsed_rel == rel.GROUP_FOREACH:
         group_foreach_content = type_def_content[relation]
         if type(group_foreach_content) is str:
-          parse_str(group_foreach_content, parent=instance_name, interp=(type_interp, []), depth=2)
+          parse_str(group_foreach_content, parent=instance_name, interp=(type_declarations, []), depth=2)
         elif type(group_foreach_content) is list:
-          parse_list(group_foreach_content, key_parent=instance_name, val_parent=instance_name, interp=(type_interp, []), depth=2, path=[])
+          parse_list(group_foreach_content, key_parent=instance_name, val_parent=instance_name, interp=(type_declarations, []), depth=2, path=[])
         else:
           assert False, f'Type Error: group_foreach_content should be str or list, got `{type(group_foreach_content)}` instead.'
     
     # Make all of the relations weak so that the compiler can decide which edges are useful.
-    weakened_type_interp = []
-    for declaration in type_interp:
+    weakened_type_decls = []
+    for declaration in type_declarations:
       weak_declaration = update_declaration_power(declaration, dpower.WEAK)
-      weakened_type_interp.append(weak_declaration)
+      weakened_type_decls.append(weak_declaration)
 
     # Add to result dict
-    interp_dict[type_name] = weakened_type_interp
+    declarations_dict[type_name] = weakened_type_decls
   
-  return interp_dict, parent_dict
+  return declarations_dict, parent_dict
 
 
-def make_relations(spec, verbose=False, ret_locations=False):
+def make_relations(spec, verbose=False):
   assert type(spec) is list, 'Top level of YAML specification must be a list.'
 
-  interp = ([], [])
+  interp = new_interp()
   parse_list(spec, key_parent=None, val_parent=None, interp=interp, depth=0)
 
   if verbose:
@@ -813,10 +820,8 @@ def make_relations(spec, verbose=False, ret_locations=False):
     print('\nresult:')
     print_interp(interp)
 
-  if ret_locations:
-    return interp
+  return interp
 
-  return interp[0]
 
 if __name__ == '__main__':
   spec = spec_from_file('video-editor.yaml')

@@ -11,12 +11,30 @@ from parser import rel, dpower
 def parse_str(statement: str, interp: list):
   return parser.parse_str(statement=statement, parent=None, interp=interp, depth=0)
 
-def compare_interp(test, expected: list[tuple], verbose=False):
-  assert type(test) == list, f'Expected list, got `{type(test)}` instead.'
+"""
+This converts a list of declarations (first half of interp) into the proper shape.
+NOTE: this function does not complete the path (second half of interp)
+
+When testing the parser we usually just want to describe the expected declarations.
+This is a convenient way to do that transparently.
+"""
+def wrap_declarations(declarations: list):
+  return (declarations, [])
+
+
+"""
+Compares a test_interp with an expected list of declarations.
+NOTE: test_interp is a proper interp, including a path.
+"""
+def compare_declarations(test_interp, expected: list, verbose=False):
+  assert type(test_interp) == tuple, f'Expected tuple, got `{type(test_interp)}` instead.'
+  assert type(test_interp[0]) == list, f'Expected list, got `{type(test_interp)}` instead.'
+  test = test_interp[0]
+
 
   # NOTE: We could check the the lenghts are the same, but then we couldn't get
   # an error telling us where the mismatch is.
-  expected_dict = dict(list(map(lambda x: (x, 0), expected)))
+  expected_dict = dict(list(map(lambda x: (x, 0), expected)))  # add key
 
   for edge in test:
     # Is the test written correctly?
@@ -39,60 +57,60 @@ def compare_interp(test, expected: list[tuple], verbose=False):
 
 class TestCompoundObjectParser:
   def test_subsets(self):
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a.b.c', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a.b.c', rel.SUBSET, 'a.b', dpower.WEAK),
                             ('a.b', rel.SUBSET, 'a', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a-b.c-d', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a-b.c-d', rel.SUBSET, 'a-b', dpower.WEAK),
                           ])
   
   def test_arrows(self):
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a->b->c', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a', rel.MAPTO, 'b', dpower.WEAK),
                             ('b', rel.MAPTO, 'c', dpower.WEAK),
                             ('a->b->c', rel.SUBSET, 'c', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a-b->c-d', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a-b', rel.MAPTO, 'c-d', dpower.WEAK),
                             ('a-b->c-d', rel.SUBSET, 'c-d', dpower.WEAK),
                           ])
     
   def test_slash(self):
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a-1/b-2/c-3', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a-1', rel.GROUP_FOREACH, 'a-1/b-2', dpower.WEAK),
                             ('a-1/b-2', rel.GROUP_FOREACH, 'a-1/b-2/c-3', dpower.WEAK),
                           ])
     
   def test_and(self):
-    interp = []
+    interp = parser.new_interp()
     parse_str('a-1 and b-2', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a-1', rel.SUBSET, 'a-1 and b-2', dpower.WEAK),
                             ('b-2', rel.SUBSET, 'a-1 and b-2', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parse_str('a and b and c and d', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a', rel.SUBSET, 'a and b and c and d', dpower.WEAK),
                             ('b', rel.SUBSET, 'a and b and c and d', dpower.WEAK),
@@ -101,9 +119,9 @@ class TestCompoundObjectParser:
                           ])
     
   def test_type(self):
-    interp = []
+    interp = parser.new_interp()
     parse_str('(a-1) b-2', interp=interp, )
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a-1', rel.TYPE, 'b-2', dpower.STRONG),
                           ])
@@ -126,9 +144,9 @@ class TestCompoundObjectParser:
       parser.validate_instance_dict(key), f'`{key}` failed'
     
   def test_imagined_compound_terms(self):
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a.b/c.d.e/f.g', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a', rel.GROUP_FOREACH, 'a/c', dpower.WEAK),
                             ('a/c', rel.GROUP_FOREACH, 'a/c/f', dpower.WEAK),
@@ -138,9 +156,9 @@ class TestCompoundObjectParser:
                             ('a/c/f.g', rel.SUBSET, 'a/c/f', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a/b->c.d/e->f/g.h', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a/b', rel.MAPTO, 'c.d/e', dpower.WEAK),
                             ('c.d/e', rel.MAPTO, 'f/g.h', dpower.WEAK),
@@ -152,9 +170,9 @@ class TestCompoundObjectParser:
                             ('a/b->c.d/e->f/g.h', rel.SUBSET, 'f/g.h', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('a.b.c->d.e.f->g.h', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a.b.c', rel.MAPTO, 'd.e.f', dpower.WEAK),
                             ('d.e.f', rel.MAPTO, 'g.h', dpower.WEAK),
@@ -166,9 +184,9 @@ class TestCompoundObjectParser:
                             ('a.b.c->d.e.f->g.h', rel.SUBSET, 'g.h', dpower.WEAK),
                           ])
 
-    interp = []
+    interp = parser.new_interp()
     parse_str('a.b and c->d and e/f', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('a.b', rel.SUBSET, 'a.b and c->d and e/f', dpower.WEAK),
                             ('a.b', rel.SUBSET, 'a', dpower.WEAK),
@@ -180,9 +198,9 @@ class TestCompoundObjectParser:
                           ])
     
 
-    interp = []
+    interp = parser.new_interp()
     parse_str('b.c/d and y.z', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('b.c/d', rel.SUBSET, 'b.c/d and y.z', dpower.WEAK),
                             ('b.c', rel.SUBSET, 'b', dpower.WEAK),
@@ -191,9 +209,9 @@ class TestCompoundObjectParser:
                             ('y.z', rel.SUBSET, 'y', dpower.WEAK),
                           ])
 
-    interp = []
+    interp = parser.new_interp()
     parse_str('(a) b.c/d and (x) y.z->w', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('b.c/d', rel.SUBSET, 'b.c/d and y.z->w', dpower.WEAK),
                             ('a', rel.TYPE, 'b.c/d', dpower.STRONG),
@@ -207,51 +225,51 @@ class TestCompoundObjectParser:
                           ])
   
   def test_realistic_compound_objects(self):
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('playhead->video/timestamps', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('playhead', rel.MAPTO, 'video/timestamps', dpower.WEAK),
                             ('video', rel.GROUP_FOREACH, 'video/timestamps', dpower.WEAK),
                             ('playhead->video/timestamps', rel.SUBSET, 'video/timestamps', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('editors.current/timestamps.playhead', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('editors', rel.GROUP_FOREACH, 'editors/timestamps', dpower.WEAK),
                             ('editors.current', rel.SUBSET, 'editors', dpower.WEAK),
                             ('editors/timestamps.playhead', rel.SUBSET, 'editors/timestamps', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('folders.in-selected-path->items', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('folders.in-selected-path', rel.MAPTO, 'items', dpower.WEAK),
                             ('folders.in-selected-path', rel.SUBSET, 'folders', dpower.WEAK),
                             ('folders.in-selected-path->items', rel.SUBSET, 'items', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parser.parse_compound_object('channels.!dm', '', interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('channels.!dm', rel.SUBSET, 'channels', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parse_str('folders and files', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('folders', rel.SUBSET, 'folders and files', dpower.WEAK),
                             ('files', rel.SUBSET, 'folders and files', dpower.WEAK),
                           ])
     
-    interp = []
+    interp = parser.new_interp()
     parse_str('chart-summary and numerical->dimension-info and numerical->interval-info', interp=interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                           [
                             ('chart-summary', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info', dpower.WEAK),
                             ('numerical->dimension-info', rel.SUBSET, 'dimension-info', dpower.WEAK),
@@ -270,7 +288,7 @@ class TestRecursiveDescent:
 - thing:
     groups: other-thing
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('thing', rel.GROUP, 'other-thing', dpower.STRONG)
                   ])
@@ -279,7 +297,7 @@ class TestRecursiveDescent:
     interp = parser.make_relations(parser.spec_from_string("""
 - (linear) alphabetical
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('linear', rel.TYPE, 'alphabetical', dpower.STRONG)
                   ])
@@ -291,9 +309,9 @@ class TestRecursiveDescent:
 - {compound_expression}
 """))
 
-    string_interp = []
+    string_interp = parser.new_interp()
     parser.parse_str(compound_expression, parent=None, interp=string_interp, depth=0)
-    assert compare_interp(file_interp,string_interp)
+    assert compare_declarations(file_interp,string_interp[0])
 
   # --- Testing recursive features
   def test_structure(self):
@@ -302,7 +320,7 @@ class TestRecursiveDescent:
     affects: people
     covers: words
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('linear', rel.TYPE, 'alphabetical', dpower.STRONG),
                     ('alphabetical', rel.AFFECTS, 'people', dpower.STRONG),
@@ -314,7 +332,7 @@ class TestRecursiveDescent:
 - (linear) alphabetical:
     /first =: a
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('linear', rel.TYPE, 'alphabetical', dpower.STRONG),
                     ('alphabetical', rel.GROUP_FOREACH, 'alphabetical/first', dpower.WEAK),
@@ -328,7 +346,7 @@ class TestRecursiveDescent:
     /marks <>: messages
     /encoding <>: time
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('gui', rel.TYPE, 'chat-view', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.STRONG),
@@ -346,7 +364,7 @@ class TestRecursiveDescent:
       - /videos
 """))
     parser.print_interp(interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),  # from group_foreach
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK)    # from compound term editors/videos
@@ -358,7 +376,7 @@ class TestRecursiveDescent:
     group foreach:
       - /videos =: videos-in-editor
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
@@ -372,7 +390,7 @@ class TestRecursiveDescent:
     group foreach:
       - /videos <>: videos-in-editor
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.WEAK),
                     ('editors', rel.GROUP_FOREACH, 'editors/videos', dpower.STRONG),
@@ -387,7 +405,7 @@ class TestRecursiveDescent:
         (linear) time:
             affects: messages
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('gui', rel.TYPE, 'chat-view', dpower.STRONG),
                     ('chat-view', rel.GROUP_FOREACH, 'chat-view/marks', dpower.WEAK),
@@ -407,7 +425,7 @@ class TestRecursiveDescent:
       - (linear) /timeline:
           affects: /timestamps
 """), verbose=True)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/timeline', dpower.WEAK),
                     ('editors', rel.GROUP_FOREACH, 'editors/timeline', dpower.STRONG),
@@ -428,7 +446,7 @@ class TestRecursiveDescent:
               groups: /videos
 """))
     parser.print_interp(interp)
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('editors', rel.GROUP_FOREACH, 'editors/view', dpower.WEAK),
                     ('editors', rel.GROUP_FOREACH, 'editors/view', dpower.STRONG),
@@ -447,39 +465,40 @@ class TestRecursiveDescent:
 
 class TestTypeDeclarations:
   def test_basic(self):
-    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
+    type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
     group foreach:
       - /timestamps
 """))
     
-    interp = type_interps.get('video', None)
-    assert interp is not None
+    decls = type_decls.get('video', None)
+    assert decls is not None
+    interp = wrap_declarations(decls)
 
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('@', rel.GROUP_FOREACH, '@/timestamps', dpower.WEAK),
                   ])
 
   def test_basic_extension(self):
-    type_interps, type_parents = parser.parse_type_definitions(parser.spec_from_string("""
+    type_decls, type_parents = parser.parse_type_definitions(parser.spec_from_string("""
 - def (gui) extends (presentation):
     group foreach:
       - /marks
 """))
-    
-    interp = type_interps.get('gui', None)
-    assert interp is not None
+    decls = type_decls.get('gui', None)
+    assert decls is not None
+    interp = wrap_declarations(decls)
 
     assert type_parents.get('gui', None) == 'presentation'
 
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('@', rel.GROUP_FOREACH, '@/marks', dpower.WEAK),
                   ])
   
   def test_multiple(self):
-    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
+    type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (linear):
     group foreach:
       - /first
@@ -489,32 +508,34 @@ class TestTypeDeclarations:
       - /root
 """))
     
-    linear_interp = type_interps.get('linear', None)
-    assert linear_interp is not None
-    assert compare_interp(linear_interp, 
+    linear_decls = type_decls.get('linear', None)
+    assert linear_decls is not None
+    linear_interp = wrap_declarations(linear_decls)
+    assert compare_declarations(linear_interp, 
                   [
                     ('@', rel.GROUP_FOREACH, '@/first', dpower.WEAK),                    
                   ])
 
-    tree_interp = type_interps.get('tree', None)
-    assert tree_interp is not None
-    assert compare_interp(tree_interp, 
+    tree_decls = type_decls.get('tree', None)
+    assert tree_decls is not None
+    tree_interp = wrap_declarations(tree_decls)
+    assert compare_declarations(tree_interp, 
                   [
                     ('@', rel.GROUP_FOREACH, '@/root', dpower.WEAK),                    
                   ])
 
   def test_depth(self):
-    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
+    type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
     group foreach:
       - (linear) /timeline:
           affects: /images
 """))
-    
-    interp = type_interps.get('video', None)
-    assert interp is not None
+    decls = type_decls.get('video', None)
+    assert decls is not None
+    interp = wrap_declarations(decls)
 
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('@', rel.GROUP_FOREACH, '@/timeline', dpower.WEAK),
                     ('@', rel.GROUP_FOREACH, '@/images', dpower.WEAK),
@@ -523,13 +544,14 @@ class TestTypeDeclarations:
                   ])
   
   def test_no_interp_definition(self):
-    type_interps, _ = parser.parse_type_definitions(parser.spec_from_string("""
+    type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (action)
 """))
     
-    res_interp = type_interps.get('action', None)
-    assert type_interps.get('action', None) is not None
-    assert type(res_interp) is list and len(res_interp) == 0
+    res_decls = type_decls.get('action', None)
+    assert type_decls.get('action', None) is not None
+    print(res_decls)
+    assert type(res_decls) is list and len(res_decls) == 0
 
 
 class TestActionDeclaration:
@@ -538,7 +560,7 @@ class TestActionDeclaration:
 - (action) add-item:
     create: items
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('action', rel.TYPE, 'add-item', dpower.STRONG),
                     ('add-item', rel.CREATE, 'items', dpower.STRONG),
@@ -549,7 +571,7 @@ class TestActionDeclaration:
 - (action) delete-item:
     delete: items
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('action', rel.TYPE, 'delete-item', dpower.STRONG),
                     ('delete-item', rel.DELETE, 'items', dpower.STRONG),
@@ -560,7 +582,7 @@ class TestActionDeclaration:
 - (action) select-item:
     update: items.selected subset> items
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('action', rel.TYPE, 'select-item', dpower.STRONG),
                     ('items.selected', rel.SUBSET, 'items', dpower.WEAK),
@@ -575,7 +597,7 @@ class TestActionDeclaration:
       - items.selected subset> items
       - undo-actions
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('action', rel.TYPE, 'select-item', dpower.STRONG),
                     ('items.selected', rel.SUBSET, 'items', dpower.WEAK),
@@ -591,7 +613,7 @@ class TestActionDeclaration:
       (action) pick-tool:
         update: tools.selected subset> tools
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('gui', rel.TYPE, 'toolbar', dpower.STRONG),
                     ('toolbar', rel.GROUP_FOREACH, 'toolbar/marks', dpower.WEAK),
@@ -610,7 +632,7 @@ class TestActionDeclaration:
       - (action) /press:
           update: /states.current subset> /states
 """))
-    assert compare_interp(interp, 
+    assert compare_declarations(interp, 
                   [
                     ('action', rel.TYPE, 'steps/press', dpower.STRONG),
                     ('steps', rel.GROUP_FOREACH, 'steps/press', dpower.WEAK),

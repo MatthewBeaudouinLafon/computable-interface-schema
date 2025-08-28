@@ -1,3 +1,13 @@
+"""
+The compiler produces a directed graph representation of a spec from a list of
+declarations.
+TODO: 'interp' should be renamed to 'declarations' or 'decls' because it now
+      also includes path information. The compiler only cares about declarations
+      so from its perspective, that's all the interp is. Not really worth the
+      rename right now, but it'd be nice "when there's time".
+
+"""
+
 import pprint
 import networkx as nx
 import parser
@@ -91,8 +101,9 @@ def compile(file_path: str, verbose=False):
   return compile_spec(spec, verbose)
 
 def compile_spec(spec: list, verbose=False):
+  # TODO: technically I should rename all "interp" decl, but that's not a priority.
   std_spec = parser.spec_from_file('standard.yaml')
-  interp = parser.make_relations(spec)
+  interp, paths = parser.make_relations(spec)
   if verbose:
     print('\n--- Parsing spec ---')
     parser.print_interp(interp)
