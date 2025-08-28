@@ -38,7 +38,7 @@
 
 .viewer-ui-image {
   width: 100%;
-  height: -moz-available;
+  height: min-content;
 
   background: white;
   border-radius: 5px;
