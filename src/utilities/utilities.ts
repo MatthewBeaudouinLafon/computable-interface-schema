@@ -195,7 +195,7 @@ export function get_curve_between_bbox(a: BBox, b: BBox) {
   // b.x += 5;
   // a.x -= 5;
 
-  const h = 2;
+  const h = 1;
 
   a.y += a.height / 2 - h;
   a.height = h * 2;
@@ -245,7 +245,7 @@ export function get_curve_between_bbox_pivot(
   const p4 = [b.x, b.y];
 
   // Top
-  let d = `M ${p1[0] - a_pivot} ${p1[1] + a.height / 2} M ${p1[0]} ${p1[1]} C ${
+  let d = `M ${p1[0] - a_pivot} ${p1[1] + a.height / 2} L ${p1[0]} ${p1[1]} C ${
     p2[0]
   } 
 ${p2[1]}, ${p3[0]} ${p3[1]}, ${p4[0]} ${p4[1]} L ${p4[0] - b_pivot} ${
@@ -273,4 +273,8 @@ export function sanitize_name(path: string) {
     .replaceAll("->", "_A_")
     .replaceAll(".", "_D_")
     .replaceAll("/", "_S_");
+}
+
+export function string_to_hue(str: string) {
+  return Math.floor(hash_code(str) * 360);
 }
