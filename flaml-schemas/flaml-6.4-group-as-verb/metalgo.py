@@ -150,7 +150,8 @@ def compute_analogy(
       if verbose:
         dexter_node_name = analogylib.get_analogous_node(analogy, node_name)
         print(f'pruning isolate: {node_name:>30} <=> {dexter_node_name:<30}')
-      analogylib.remove_node(analogy, node_name)
+
+      analogylib.set_is_pruned(analogy, node_name, True)
 
     if verbose:
       analogylib.print_analogy(analogy)
@@ -181,10 +182,26 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   vprint(f'  dexter: {num_analogy_edges} / {len(dexter.edges())}')
   vprint()
 
+  # pruned nodes
+  # NOTE: by definition, these should not have edges.
+  num_pruned = 0
+  for sinister_node, dexter_node in analogylib.get_nodes(analogy, side=None, include_pruned=True):
+    if analogylib.get_is_pruned(analogy, sinister_node, side=Hand.SINISTER):
+      num_pruned += 1
+      vprint(f'Pruned: {sinister_node}  <=>  {dexter_node}')
+  
+  if itemized or verbose:
+    # NOTE: technically this is the cost of substitution (which could depend on eg. types)
+    print('---- Node pruning (no cost):', num_pruned)
+
   # node deletion
   node_deletion_cost = 0
   for node in sinister.nodes():
-    if not analogylib.is_node_in_sinister(analogy, node):
+    if analogylib.get_is_pruned(analogy, node, side=Hand.SINISTER):
+      # Ignore cost of pruning, since in practice the algorithm will find a random vertex to match.
+      continue
+
+    elif not analogylib.is_node_in_sinister(analogy, node):
       res = node_diff_cost(sinister[node])
       vprint(f'Deleted ({res}): {node}')
       node_deletion_cost += res
@@ -197,7 +214,11 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
   # node insertion
   node_insertion_cost = 0
   for node in dexter.nodes():
-    if not analogylib.is_node_in_dexter(analogy, node):
+    if analogylib.get_is_pruned(analogy, node, side=Hand.DEXTER):
+      # Ignore cost of pruning, since in practice the algorithm will find a random vertex to match.
+      continue
+
+    elif not analogylib.is_node_in_dexter(analogy, node):
       res = node_diff_cost(dexter[node])
       vprint(f'Inserted ({res}): {node}')
       node_insertion_cost += res
@@ -346,11 +367,11 @@ if __name__ == '__main__':
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  sinister_name = 'imessage'
-  dexter_name = 'slack'
+  # sinister_name = 'imessage'
+  # dexter_name = 'slack'
   # dexter_name = 'imessage'
-  # sinister_name = 'calendar'
-  # dexter_name = 'video-editor'
+  sinister_name = 'calendar'
+  dexter_name = 'video-editor'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
@@ -361,9 +382,9 @@ if __name__ == '__main__':
 
   # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')
   # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')
-  print(mermaid_analogy_with_graphs(analogy, sinister_name=sinister_name, sinister_graph=sinister_graph,dexter_name=dexter_name, dexter_graph=dexter_graph))
+  # print(mermaid_analogy_with_graphs(analogy, sinister_name=sinister_name, sinister_graph=sinister_graph,dexter_name=dexter_name, dexter_graph=dexter_graph))
 
-  pprint.pprint(analogy)
+  # pprint.pprint(analogy)
   # print(mermaid_analogy_with_graphs(analogy,
   #                             sinister_name='imessage', sinister_graph=sinister_graph,
   #                             dexter_name='slack', dexter_graph=dexter_graph))

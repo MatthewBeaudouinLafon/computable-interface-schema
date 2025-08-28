@@ -125,6 +125,7 @@ def copy(analogy: Analogy) -> Analogy:
     analogy[1].copy(),
   )
 
+# Setters
 """
 Takes an analogy where dexter nodes don't have is_pruned, and populates it.
 If it's already there, it will not be overwritten.
@@ -132,10 +133,10 @@ If it's already there, it will not be overwritten.
 This is useful for tests where I only want to write unpruned analogies.
 TODO: there should probably be a different type for this...
 """
-def populate_is_pruned(analogy: Analogy, is_pruned=False):
+def populate_is_pruned(analogy: Analogy, default_is_pruned=False):
   for sinister, dexter in analogy[0].items():
     dexter_node = None
-    node_pruned = is_pruned
+    node_pruned = default_is_pruned
     if isinstance(dexter, str):
       dexter_node = dexter
     elif isinstance(dexter, tuple):
@@ -143,6 +144,13 @@ def populate_is_pruned(analogy: Analogy, is_pruned=False):
     else:
       assert False, f'Type Error. Expected str or tuple, got {type(dexter)} from: {dexter}'
     analogy[0][sinister] = (dexter_node, node_pruned)
+
+
+def set_is_pruned(analogy: Analogy, sinister_node: str, is_pruned: bool):
+  dexter = analogy[0].get(sinister_node, None)
+  assert dexter is not None, f'Sinister node not found: {sinister_node}'
+  dexter_node, current_is_pruned = dexter
+  analogy[0][sinister_node] = (dexter_node, is_pruned)
 
 
 # Getters
@@ -155,6 +163,21 @@ def get_analogous_node(analogy: Analogy, sinister_node: str):
   node, is_pruned = dexter
   return node
 
+def get_is_pruned(analogy: Analogy, node: str, side: Hand=Hand.SINISTER):
+  if side == Hand.SINISTER:
+    dexter = analogy[0].get(node, None)
+    if dexter is None:
+      return None
+    node, is_pruned = dexter
+    return is_pruned
+  else: # DEXTER
+    for sinister_node, dexter in analogy[0].items():
+      dexter_node, is_pruned = dexter
+      if dexter_node == node:
+        return is_pruned
+      
+    return None # dexter node
+
 def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # Returns None if there is no analogous edge. This might be because the source,
   # edge doesn't exist, or it is "deleted" in the analogy.
@@ -163,16 +186,21 @@ def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
 def get_nodes(analogy: Analogy, side: Hand|None, include_pruned=False):
   match side:
     case Hand.SINISTER:
-      return analogy[0].keys()
+      nodes = list(analogy[0].keys())
+      if include_pruned:
+        return nodes
+      return [node for node in nodes if not get_is_pruned(analogy, node)]
+    
     case Hand.DEXTER:
       dexter_side = list(analogy[0].values())
       if include_pruned:
-        dexter_nodes = [node for node, _ in dexter_side]
-      else:
-        dexter_nodes = [node for node, is_pruned in dexter_side if not is_pruned]
-      return dexter_nodes
+        return [node for node, _ in dexter_side]
+      return [node for node, is_pruned in dexter_side if not is_pruned]
+    
     case None:
-      return list(zip(get_nodes(analogy, Hand.SINISTER), get_nodes(analogy, Hand.DEXTER)))
+      return list(zip(get_nodes(analogy, Hand.SINISTER, include_pruned=include_pruned),
+                      get_nodes(analogy, Hand.DEXTER, include_pruned=include_pruned)))
+
 
 def get_edges(analogy: Analogy, side: Hand):
   match side:
