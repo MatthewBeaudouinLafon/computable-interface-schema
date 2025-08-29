@@ -14,10 +14,10 @@ import analogylib
 from analogylib import Hand
 
 spec_names = [
-  'slack',
-  'calendar',
-  'video-editor',
-  # 'finder',
+  # 'slack',
+  # 'calendar',
+  # 'video-editor',
+  'finder',
   # 'imessage',
   'figma',
   # olli/datanavigator
@@ -30,7 +30,7 @@ argp = argparse.ArgumentParser(
 # argp.add_argument('filenames', action='append')
 argp.add_argument('-t', '--timeout', help='Timeout for each analogy.')
 argp.add_argument('-o', '--outputfile', help='Where the log file is written.')
-argp.add_argument('-c', '--continue', help='File to continue from')
+argp.add_argument('-c', '--continue', help='File to continue from')  # TODO
 
 if __name__ == '__main__':
   flags = argp.parse_args()

@@ -495,6 +495,7 @@ def parse_dict(statement: dict, key_parent: str|None, val_parent: str|None, inte
           parsed_value = parse_str(value, parent=val_parent, interp=interp, depth=depth+1, path=[*path, key])
 
           # but it's the key_parent that relates to the parsed value. NGL, I'm also a bit confused.
+          # print(f'{parsed_key}: {parsed_value}')
           declare(interp=interp, source=key_parent, relation=relation, target=parsed_value, power=dpower.STRONG)
       elif type(value) is list:
         # if the value is a list, then we make a relation for each item

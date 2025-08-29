@@ -1,16 +1,48 @@
 - pages:
     group foreach:
-      - layers =: frames and shapes and text
+      - layers =: frames and shapes and text # TODO: components
       - layers:
-          groups foreach: properties
+          groups foreach: /properties
+
+      - frames:
+          mapto:
+            - (action) prototype-actions:
+                subset:
+                  (action) navigate-prototype:
+                    update: frames.active-in-prototype subset> frames
+                    directions: prototype-links
+
+      - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
+          group foreach:
+            - /cursor->pages->points # TODO: connect with standard gui. Maybe inherits from mouse?
+            - (action) /move-cursor:
+                update: pages/canvas affects> /cursor
+
+      - (2D) /canvas:
+          affects: points, active_users/cursor
+          covers: layers
 
       - (gui) canvas-view:
           /marks.points: points
+          /marks.icons: collaborators/cursor
           /marks.regions: layers
           /encoding.canvas:
-            (2D) canvas:
-              affects: points
-              covers: layers
+
+      - (digraph) prototype-links: # related to
+          affects: frames.in-prototype
+
+      - (gui) prototype-canvas-view:
+          /marks.points: points
+          /marks.regions: layers
+          /marks.icons: collaborators/cursor
+          /encoding.canvas: canvas
+          /encoding.arrows: prototype-links
+
+      - (gui) prototype-window:
+          /marks:
+            - frames.in-prototype.current
+            - frames.in-prototype.current->prototype-actions
+          /encoding.canvas: canvas
 
       - (tree) layer-hierarchy:
           affects: layers
@@ -27,14 +59,17 @@
           /encoding.hoffset: layer-hierarchy/depth-order
 
       - (gui) inspector-panel:
-          /marks: layers.selected->properties
+          /marks: layers.selected/properties
           /encoding.vstack: _
 
 - (gui) canvas-view =: pages.active->canvas-view
 - (gui) inspector-view =: pages.active->inspector-view
 
+- (gui) change-page:
+    update: pages.active subset> pages
+
 - (gui) pages-view:
-    /marks: pages
+    /marks: pages, change-page
     /encoding.vstack:
       (linear) page-order: # huge action candidate
         affects: pages

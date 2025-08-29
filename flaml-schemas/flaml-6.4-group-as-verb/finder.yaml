@@ -1,47 +1,61 @@
 # Finder
 - items =: files and folders
+- item-type:
+    subsets: file, folder
+    subgroups: files, folders
+    groups: items
 
 - (tree) file-system:
-    - affects: items
-    - covers: folders, paths
-    - /parents =: folders
-    - /leaves =: files
-    - /depth-first-search:
-        affects: items
-    - /depth-order:
-        affects: items
+    affects: items
+    covers: folders, paths
+    /parents =: folders
+    /leaves =: files
+    /depth-first-search:
+      affects: items
+    /depth-order:
+      affects: items
 
-- (action) create-file:
-    create: files
-- (action) delete-file:
-    delete: files
-- (action) move-file:
-    update: file-system affects files
-
-- (action) create-folder:
-    create: folders
-- (action) delete-folder:
-    delete: folders
-
-- (gui) list-view:
-    /marks.text <>: folders.active->items
-    /encoding.vstack <>:
-      (linear) alphabetical:
-        affects: items
-
-- (gui) file-type-list-view:
-    /marks.text <>: folders.active->items
-    /encoding.cluster <>:
-
-- folders.in-selected-path =: items.selected->paths->folders
-- (gui) column-view:
-    - /mark.text <>: folders.in-selected-path->items
-      /encoding.cluster <>: folders.in-selected-path
-      /encoding.vstack <>: alphabetical
-    - /mark <>: folders.in-selected-path
-      /encoding.hstack <>: file-system/depth-order
+- (action) create-item:
+    create: items
+- (action) delete-item:
+    delete: items
+- (action) move-item:
+    update: file-system affects> items
 
 - (action) select-folder:
     update: folders.active subset> folders
 - (action) nav-in-folder:
     update: items.active subset> items
+    directions: sort-order.selected
+
+- (linear) alphabetical:
+    affects: items
+
+- (linear) creation-time:
+    affects: items
+
+- (linear) modification-time:
+    affects: items
+
+- sort-orders =: alphabetical and creation-time and modification-time
+
+- (gui) list-view:
+    /marks.text <>: folders.active->items
+    /encoding.vstack <>: sort-order.selected
+
+- (gui) file-type-list-view:
+    /marks.text <>: folders.active->items
+    /encoding.cluster <>: item-type
+    /encoding.vstack <>: sort-order.selected
+
+- folders.in-selected-path =: items.selected->paths->folders
+- (gui) column-view:
+    /mark.text <>: folders.in-selected-path->items
+    /encoding.cluster <>: folders.in-selected-path
+    /encoding.vstack <>: sort-order.selected
+    /mark <>: folders.in-selected-path
+    /encoding.hstack <>: file-system/depth-order
+
+- (gui) grid-view:
+    /marks.text: folders.in-selected-path->items
+    /encoding.hwrap: sort-order.selected
