@@ -8,6 +8,7 @@ edges in individual graphs.
 """
 import enum
 import pprint
+import timeit
 
 import networkx as nx
 import compiler
@@ -106,6 +107,9 @@ def compute_analogy(
   )
 
   analogy = analogylib.new()
+  costs = []
+  timings = []
+  start_time = timeit.default_timer()
   for ged in geds:
     analogy = analogylib.new()
     node_edit_path, edge_edit_path, cost = ged
@@ -156,7 +160,14 @@ def compute_analogy(
     if verbose:
       analogylib.print_analogy(analogy)
 
-  return analogy, cost
+    elapsed_time = timeit.default_timer() - start_time
+    timings.append(elapsed_time)
+    costs.append(cost)
+    start_time = timeit.default_timer()
+    # NOTE: Restart here rather than at the top of the loop since the iteration
+    # is the expensive call (because geds is a generator, not a list of results)
+
+  return analogy, {'costs': costs, 'times': timings}
 
 """
 Calculate the cost of a given analogy.

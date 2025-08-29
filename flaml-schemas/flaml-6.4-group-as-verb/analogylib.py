@@ -183,6 +183,10 @@ def get_analogous_edge(analogy: Analogy, sinister_edge: tuple[str, str]):
   # edge doesn't exist, or it is "deleted" in the analogy.
   return analogy[1].get(sinister_edge, None)
 
+"""
+Get nodes from either or both sides of the analogy.
+By default, it will not include pruned nodes.
+"""
 def get_nodes(analogy: Analogy, side: Hand|None, include_pruned=False):
   match side:
     case Hand.SINISTER:
