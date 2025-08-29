@@ -1,9 +1,5 @@
 import { vstack } from "../../utilities/ui-utilities";
-import {
-  div,
-  el,
-  sanitize_name
-} from "../../utilities/utilities";
+import { div, el, sanitize_name } from "../../utilities/utilities";
 import { Spec } from "../analogy-viewer";
 import "./viewer.css";
 
@@ -45,10 +41,9 @@ async function render_ui_image(viewer: Viewer) {
   const get_path = (file_name: string) =>
     `./annotations/${viewer.spec.name}/${file_name}`;
 
-
   const layers = viewer.spec.image_names
     .map((s) => {
-      const layer_name = sanitize_name(s)
+      const layer_name = sanitize_name(s);
       const path = get_path(`${layer_name}.svg`);
       return el("img", {
         class: "layer",

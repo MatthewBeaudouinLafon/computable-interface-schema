@@ -1,9 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Cascadia+Mono:ital,wght@0,200..700;1,200..700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 
 :root {
-  --monospace-font: "Cascadia Mono";
+  --monospace-font: "Ubuntu Mono";
   --header-font: "EB Garamond";
   --sans-serif-font: "Source Sans 3";
   --serif-font: serif;
@@ -50,6 +51,7 @@ h1 {
   margin-bottom: 40px;
   opacity: 0.5;
   font-weight: 400;
+  font-size: 2em;
 }
 
 hr {

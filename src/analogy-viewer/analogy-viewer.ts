@@ -35,6 +35,8 @@ export type AnalogyViewer = {
   a_viewer: Viewer;
   b_viewer: Viewer;
   all_analogies: Analogy[];
+  num_pinned: number;
+  num_highlighted: number;
 };
 
 export async function make_analogy_viewer(
@@ -47,7 +49,7 @@ export async function make_analogy_viewer(
   const b_viewer = await make_viewer(b);
 
   // View
-  const frag = hstack(".analogy-editor", [
+  const frag = hstack(".analogy-viewer", [
     a_viewer.frag,
     b_viewer.frag,
     svg("svg", ".overlay"),
@@ -60,6 +62,8 @@ export async function make_analogy_viewer(
     a_viewer,
     b_viewer,
     all_analogies,
+    num_pinned: 0,
+    num_highlighted: 0,
   };
 
   // Event listeners
@@ -120,100 +124,222 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
     assert(a_viewer.view !== undefined);
     assert(b_viewer.view !== undefined);
 
-    for (const from_path of from_paths) {
-      const from_node = find_node_by(
-        a_viewer.view,
-        (n) => JSON.stringify(n.path) === JSON.stringify(from_path)
-      );
+    const from_nodes = from_paths
+      .map((p) =>
+        find_node_by(
+          a_viewer.view!,
+          (n) => JSON.stringify(n.path) === JSON.stringify(p)
+        )
+      )
+      .filter((n) => n !== undefined);
+    const to_nodes = to_paths
+      .map((p) =>
+        find_node_by(
+          b_viewer.view!,
+          (n) => JSON.stringify(n.path) === JSON.stringify(p)
+        )
+      )
+      .filter((n) => n !== undefined);
 
-      const from_img = a_viewer.frag.querySelector(
-        `img[data-id=${sanitize_name(from)}]`
-      ) as HTMLElement | null;
+    const from_img = a_viewer.frag.querySelector(
+      `img[data-id=${sanitize_name(from)}]`
+    ) as HTMLElement | null;
 
-      if (from_node === undefined) continue;
+    const to_img = b_viewer.frag.querySelector(
+      `img[data-id=${sanitize_name(to)}]`
+    ) as HTMLElement | null;
 
-      for (const to_path of to_paths) {
-        const to_node = find_node_by(
-          b_viewer.view,
-          (n) => JSON.stringify(n.path) === JSON.stringify(to_path)
-        );
+    // Draw connections
+    const from_bboxes = from_nodes
+      .map((n) => n.frag.getBoundingClientRect())
+      .map((b) => {
+        b.x -= container_bbox.x;
+        b.y -= container_bbox.y;
+        return b;
+      });
 
-        if (to_node === undefined) continue;
+    const to_bboxes = to_nodes
+      .map((n) => n.frag.getBoundingClientRect())
+      .map((b) => {
+        b.x -= container_bbox.x;
+        b.y -= container_bbox.y;
+        return b;
+      });
 
-        const to_img = b_viewer.frag.querySelector(
-          `img[data-id=${sanitize_name(to)}]`
-        ) as HTMLElement | null;
+    const bundle_bbox = {
+      x: (a_viewer_bbox.right + b_viewer_bbox.left) / 2 - container_bbox.x,
+      y:
+        from_bboxes.reduce((p, curr) => p + curr.y + curr.height / 2, 0) /
+        from_bboxes.length,
+      width: 1,
+      height: 1,
+    };
 
-        const to_bbox = to_node.frag.getBoundingClientRect();
-        to_bbox.x -= container_bbox.x + 5;
-        to_bbox.y -= container_bbox.y;
+    const from_connections = from_bboxes.map((b) =>
+      path(
+        ".connection-path",
+        get_curve_between_bbox_pivot(
+          b,
+          bundle_bbox,
+          a_viewer_bbox.right - b.right - container_bbox.x,
+          0
+        )
+      )
+    );
 
-        const from_bbox = from_node.frag.getBoundingClientRect();
-        from_bbox.x -= container_bbox.x - 5;
-        from_bbox.y -= container_bbox.y;
+    const to_connections = to_bboxes.map((b) =>
+      path(
+        ".connection-path",
+        get_curve_between_bbox_pivot(
+          bundle_bbox,
+          b,
+          0,
+          b_viewer_bbox.left - b.left - container_bbox.x
+        )
+      )
+    );
 
-        const p = path(
-          ".connection-path",
-          get_curve_between_bbox_pivot(
-            from_bbox,
-            to_bbox,
-            a_viewer_bbox.right - from_bbox.right - container_bbox.x,
-            b_viewer_bbox.left - to_bbox.left - container_bbox.x
-          )
-        );
+    // Event listeners
+    setup_connection_event_listeners(
+      to_nodes,
+      from_nodes,
+      to_connections,
+      from_connections,
+      to_img,
+      from_img,
+      analogy_viewer
+    );
+    overlay.append(...from_connections);
+    overlay.append(...to_connections);
 
-        // Event listeners
-        setup_connection_event_listeners(
-          to_node,
-          from_node,
-          p,
-          to_img,
-          from_img
-        );
+    // for (const from_path of from_paths) {
+    //   const from_node = find_node_by(
+    //     a_viewer.view,
+    //     (n) => JSON.stringify(n.path) === JSON.stringify(from_path)
+    //   );
 
-        overlay.append(p);
-      }
-    }
+    //   const from_img = a_viewer.frag.querySelector(
+    //     `img[data-id=${sanitize_name(from)}]`
+    //   ) as HTMLElement | null;
+
+    //   if (from_node === undefined) continue;
+
+    //   for (const to_path of to_paths) {
+    //     const to_node = find_node_by(
+    //       b_viewer.view,
+    //       (n) => JSON.stringify(n.path) === JSON.stringify(to_path)
+    //     );
+
+    //     if (to_node === undefined) continue;
+
+    //     const to_img = b_viewer.frag.querySelector(
+    //       `img[data-id=${sanitize_name(to)}]`
+    //     ) as HTMLElement | null;
+
+    //     const to_bbox = to_node.frag.getBoundingClientRect();
+    //     to_bbox.x -= container_bbox.x + 5;
+    //     to_bbox.y -= container_bbox.y;
+
+    //     const from_bbox = from_node.frag.getBoundingClientRect();
+    //     from_bbox.x -= container_bbox.x - 5;
+    //     from_bbox.y -= container_bbox.y;
+
+    //     const p = path(
+    //       ".connection-path",
+    //       get_curve_between_bbox(
+    //         from_bbox,
+    //         to_bbox
+    //         // a_viewer_bbox.right - from_bbox.right - container_bbox.x - 50,
+    //         // b_viewer_bbox.left - to_bbox.left - container_bbox.x + 50
+    //       )
+    //     );
+
+    //     // Event listeners
+    //     setup_connection_event_listeners(
+    //       to_node,
+    //       from_node,
+    //       p,
+    //       to_img,
+    //       from_img
+    //     );
+
+    //     overlay.append(p);
+    //   }
+    // }
   }
 }
 
+const HUES = [0, 180, 45, 135, 90];
+
 function setup_connection_event_listeners(
-  to_node: ViewNode,
-  from_node: ViewNode,
-  p: SVGPathElement,
+  to_nodes: ViewNode[],
+  from_nodes: ViewNode[],
+  from_connections: SVGPathElement[],
+  to_connections: SVGPathElement[],
   to_img: HTMLElement | null,
-  from_img: HTMLElement | null
+  from_img: HTMLElement | null,
+  analogy_viewer: AnalogyViewer
 ) {
-  to_node.frag.classList.add("matched");
-  from_node.frag.classList.add("matched");
+  const to_frags = to_nodes.map((n) => n.frag);
+  const from_frags = from_nodes.map((n) => n.frag);
+  const frags = [...to_frags, ...from_frags];
+
+  frags.forEach((frag) => frag.classList.add("matched"));
 
   let clicked = false;
 
-  [to_node.frag, from_node.frag].forEach((el) => {
+  let affected = [
+    ...frags,
+    ...from_connections,
+    ...to_connections,
+    to_img,
+    from_img,
+  ].filter((el) => el !== null);
+
+  let update_focused = () => {
+    if (analogy_viewer.num_highlighted > 0 || analogy_viewer.num_pinned > 0) {
+      analogy_viewer.frag.classList.add("focused");
+    } else {
+      analogy_viewer.frag.classList.remove("focused");
+    }
+  };
+
+  frags.forEach((el) => {
     el.addEventListener("mouseenter", () => {
-      [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-        el?.classList.add("highlight")
-      );
+      if (affected.some((el) => el.classList.contains("pinned"))) return;
+
+      affected.forEach((el) => el.classList.add("highlight"));
+
+      const hue_index = analogy_viewer.num_pinned % HUES.length;
+      const hue = HUES[hue_index];
+      affected.forEach((el) => (el.style.filter = `hue-rotate(${hue}deg)`));
+
+      analogy_viewer.num_highlighted++;
+      update_focused();
     });
 
     el.addEventListener("mouseleave", () => {
-      [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-        el?.classList.remove("highlight")
-      );
+      affected.forEach((el) => el.classList.remove("highlight"));
+      analogy_viewer.num_highlighted--;
+      update_focused();
     });
 
     el.addEventListener("mousedown", () => {
       if (clicked) {
         clicked = false;
-        [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-          el?.classList.remove("pinned")
-        );
+        affected.forEach((el) => el.classList.remove("pinned"));
+        affected.forEach((el) => (el.style.filter = ``));
+        analogy_viewer.num_pinned--;
       } else {
+        const hue_index = analogy_viewer.num_pinned % HUES.length;
+        const hue = HUES[hue_index];
         clicked = true;
-        [to_node.frag, to_img, from_node.frag, from_img, p].forEach((el) =>
-          el?.classList.add("pinned")
-        );
+        affected.forEach((el) => el.classList.add("pinned"));
+        affected.forEach((el) => (el.style.filter = `hue-rotate(${hue}deg)`));
+        analogy_viewer.num_pinned++;
       }
+
+      update_focused();
     });
   });
 }
