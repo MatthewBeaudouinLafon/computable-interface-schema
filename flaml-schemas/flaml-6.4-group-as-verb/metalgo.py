@@ -72,7 +72,7 @@ def edge_subst_cost(e1, e2):
     return MAX_COST
 
 """
-Cost of inserting or deleting a edge
+Cost of deleting or inserting a edge
 Used for both edge_del_cost and edge_ins_cost, since it should be symmetric.
 """
 def edge_diff_cost(edge):
@@ -195,15 +195,17 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
 
   # pruned nodes
   # NOTE: by definition, these should not have edges.
-  num_pruned = 0
-  for sinister_node, dexter_node in analogylib.get_nodes(analogy, side=None, include_pruned=True):
-    if analogylib.get_is_pruned(analogy, sinister_node, side=Hand.SINISTER):
-      num_pruned += 1
-      vprint(f'Pruned: {sinister_node}  <=>  {dexter_node}')
+  prune_cost = 0
+  for sinister_name, dexter_name in analogylib.get_nodes(analogy, side=None, include_pruned=True):
+    sinister_node = sinister[sinister_name]
+    dexter_node = dexter[dexter_name]
+    if analogylib.get_is_pruned(analogy, sinister_name, side=Hand.SINISTER):
+      prune_cost += node_subst_cost(sinister_node, dexter_node)
+      vprint(f'Pruned: {sinister_name}  <=>  {dexter_name}')
   
   if itemized or verbose:
     # NOTE: technically this is the cost of substitution (which could depend on eg. types)
-    print('---- Node pruning (no cost):', num_pruned)
+    print('---- Node pruning (no cost):', prune_cost)
 
   # node deletion
   node_deletion_cost = 0
@@ -377,7 +379,12 @@ def mermaid_graph_in_analogy(analogy: Analogy, graph: nx.MultiDiGraph, side: str
     elif side == 'dexter':
       return analogylib.is_edge_in_dexter(analogy=analogy, edge=edge)
   
-  return compiler.mermaid_graph(graph, should_color_node=is_node_in_analogy, should_color_edge=is_edge_in_analogy, verbose=True)
+  return compiler.mermaid_graph(
+    graph,
+    should_color_node=is_node_in_analogy,
+    should_color_edge=is_edge_in_analogy,
+    verbose=True
+  )
 
 
 def mermaid_analogy_with_graphs(analogy: Analogy,

@@ -453,8 +453,8 @@ def mermaid_graph(
   mermaid = "flowchart LR\n"
   mermaid_core, _ = mermaid_graph_core(
     graph,
-    should_color_edge=should_color_node,
-    should_color_node=should_color_edge,
+    should_color_node=should_color_node,
+    should_color_edge=should_color_edge,
     pad = '  ',
     start_index=0
   )

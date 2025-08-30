@@ -6,7 +6,6 @@
     covers: past, future
 - tense:
     subset: past, present, future
-    groups: timestamps
 - (action) time-progressing:
     update:
       - timestamps.now subset> timestamps
@@ -45,6 +44,7 @@
           update:
             - /lists/order affects> /cards
             - /lists group> /cards
+          # direction: /view/canvas # TODO: maybe?
 
       - (action) /create-list:
           create: /lists

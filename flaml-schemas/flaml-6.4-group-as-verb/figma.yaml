@@ -8,9 +8,9 @@
           mapto:
             - (action) prototype-actions:
                 subset:
-                  (action) navigate-prototype:
-                    update: frames.active-in-prototype subset> frames
-                    directions: prototype-links
+                  - (action) navigate-prototype:
+                      update: frames.in-prototype.current subset> frames
+                      directions: prototype-links
 
       - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
           group foreach:
@@ -26,7 +26,7 @@
           /marks.points: points
           /marks.icons: collaborators/cursor
           /marks.regions: layers
-          /encoding.canvas:
+          /encoding.canvas: canvas
 
       - (digraph) prototype-links: # related to
           affects: frames.in-prototype
@@ -41,6 +41,7 @@
       - (gui) prototype-window:
           /marks:
             - frames.in-prototype.current
+            - frames.in-prototype.current->layers
             - frames.in-prototype.current->prototype-actions
           /encoding.canvas: canvas
 

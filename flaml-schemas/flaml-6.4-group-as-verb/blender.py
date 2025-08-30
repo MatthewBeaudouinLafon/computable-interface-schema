@@ -7,6 +7,7 @@ import argparse
 import itertools, math
 import pprint
 import json
+import timeit
 
 import compiler
 import metalgo
@@ -14,12 +15,12 @@ import analogylib
 from analogylib import Hand
 
 spec_names = [
+  'video-editor',
+  'calendar',
   # 'slack',
-  # 'calendar',
-  # 'video-editor',
-  'finder',
+  # 'finder',
+  # 'figma',
   # 'imessage',
-  'figma',
   # olli/datanavigator
 ]
 
@@ -29,6 +30,7 @@ argp = argparse.ArgumentParser(
                     description='Generates pairwise analogies of a list of UIs')
 # argp.add_argument('filenames', action='append')
 argp.add_argument('-t', '--timeout', help='Timeout for each analogy.')
+argp.add_argument('-v', '--verbose', action="store_true", help='Print incremental results from metalgo.')
 argp.add_argument('-o', '--outputfile', help='Where the log file is written.')
 argp.add_argument('-c', '--continue', help='File to continue from')  # TODO
 
@@ -56,13 +58,17 @@ if __name__ == '__main__':
     print(f'> Pairing: {sinister_name} <=> {dexter_name}')
     sinister_graph = spec_graphs[sinister_name]
     dexter_graph = spec_graphs[dexter_name]
-    analogy, iterations = metalgo.compute_analogy(sinister_graph, dexter_graph, timeout=timeout)
+
+    start_time = timeit.default_timer()
+    analogy, iterations = metalgo.compute_analogy(sinister_graph, dexter_graph, timeout=timeout, verbose=flags.verbose)
+    end_time = timeit.default_timer()
 
     print('> Result:')
     # print(json.dumps(analogy, indent=2))  # doesn't like the tuple key (coward)
     pprint.pprint(analogy, width=200)
-    total_time = sum(iterations['times'])  # in seconds
-    print(f'> Result end ({total_time:.1f}s)') # TODO: timing information, number of trials
+    iterations_time = sum(iterations['times'])  # in seconds
+    total_time = end_time - start_time
+    print(f'> Result end (successful-iterations = {iterations_time:.1f}s | total-time = {total_time:.1f}s)')
 
     print('> Itemized Cost:')
     cost = metalgo.calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True)
