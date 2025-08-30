@@ -12,7 +12,7 @@ interp (short for interpretation) is a tuple of:
 - a list of [statements, path]   (used by the frontend to the location of keywords in the spec)
 """
 import yaml
-from pprint import pformat
+from pprint import pformat, pprint
 from pathlib import Path
 import re
 import enum
@@ -825,6 +825,9 @@ def make_relations(spec, verbose=False):
 
 
 if __name__ == '__main__':
-  spec = spec_from_file('video-editor.yaml')
+  spec = spec_from_file('calendar.yaml')
+  # spec = spec_from_file('video-editor.yaml')
   parse_type_definitions(spec, verbose=True)
-  make_relations(spec, verbose=True)
+  interp = make_relations(spec, verbose=True)
+
+  # pprint(interp[0], width=120)

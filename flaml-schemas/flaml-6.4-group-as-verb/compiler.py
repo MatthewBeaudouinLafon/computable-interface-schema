@@ -103,7 +103,7 @@ def compile(file_path: str, verbose=False):
 def compile_spec(spec: list, verbose=False):
   # TODO: technically I should rename all "interp" decl, but that's not a priority.
   std_spec = parser.spec_from_file('standard.yaml')
-  interp, paths = parser.make_relations(spec)
+  interp = parser.make_relations(spec)
   if verbose:
     print('\n--- Parsing spec ---')
     parser.print_interp(interp)
@@ -119,7 +119,7 @@ def compile_spec(spec: list, verbose=False):
   type_interps = type_interps | standard_type_interps
   type_parents = type_parents | standard_type_parents
   
-  return compile_interp(interp, type_interps, type_parents, standard_types, verbose=verbose)
+  return compile_interp(interp[0], type_interps, type_parents, standard_types, verbose=verbose)
 
 def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dict[str,str], standard_types: set[str], verbose=False):
   """
@@ -142,7 +142,7 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       continue
 
     graphs[relation_enum] = nx.DiGraph()
-  
+
   type_registry = {}  # node: type
 
   # --- Alias Pass.
@@ -208,6 +208,12 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       # losing attributes to the graph composition.
 
       # Tag node (target) with the type (source)
+      # TODO: When dealing with an alias, there are potentially multiple types.
+      #       Right now, it will essentially pick the last one that was defined.
+      #       It would be better to do fuzzy type matching (eg. for structures).
+      if type_registry.get(target) is not None:
+        # TODO: fuzzy type matching here if required
+        assert type_registry[target] == source, f'Double type assignment: Trying to assign `({source})` to `{target}`, but it already has type ({type_registry[target]}). Is this an alias problem?'
       type_registry[target] = source
       continue    
 
@@ -277,6 +283,12 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       # Finally add edge
       rel_graph.add_edge(source, target, relation=relation.name)
   
+  pprint.pprint(graphs)
+  for relation, graph in graphs.items():
+    if relation == rel.UPDATE_SRC or relation == rel.UPDATE_TRG:
+      print('\nrelation:', relation)
+      pprint.pprint(sorted(list(graph.nodes())))
+  
 
   # --- Question Declartion Pass.
   # Do the Question declarations actually check out?
@@ -290,6 +302,8 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
   combined_graph = nx.compose_all(
     [nx.MultiDiGraph(graph) for graph in graphs.values()]
   )
+
+  pprint.pprint(list(combined_graph.edges(data=True)))
 
   # - Assign types
   vprint('- Assign Types')
@@ -381,6 +395,37 @@ def print_graph(graph: nx.MultiDiGraph):
     source, target, attr = edge
     relation = attr.get('relation')
     print(f'{source} -{relation}-> {target}')
+
+def get_type_stats(graph: nx.MultiDiGraph, verbose=False):
+  if verbose:
+    print(f'nodes: {len(graph.nodes())}, edges: {len(list(graph.edges))}')
+
+  node_types = {} # {str(node): int(count)}
+  non_standard_types = set()
+  for node, attr in graph.nodes().items():
+    node_type = attr.get('type')
+    if attr.get('is_standard'):
+      node_types[node_type] = 1 + node_types.get(node_type, 0)
+    else:
+      non_standard_types.add(node_type)
+  
+  if verbose:
+    print('-- Node types')
+    pprint.pprint(node_types)
+
+    print('-- Nonstandard types')
+    print(non_standard_types)
+  
+  edge_types = {}  # {relation type: count}
+  for edge in graph.edges.data():
+    source, target, attr = edge
+    relation = attr.get('relation')
+    edge_types[relation] = 1 + edge_types.get(relation, 0)
+  
+  if verbose:
+    print('-- Edge Relations')
+    pprint.pprint(edge_types)
+
 
 # --- Mermaid Visualization ---
 def mermaid_graph_core(

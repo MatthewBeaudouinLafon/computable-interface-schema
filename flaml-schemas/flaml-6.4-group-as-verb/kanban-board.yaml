@@ -17,7 +17,7 @@
     group foreach:
       - /cards:
           group foreach:
-            - (text) /content # TODO: standard text
+            - /content # TODO: standard text
             - due-date
 
       - /lists:

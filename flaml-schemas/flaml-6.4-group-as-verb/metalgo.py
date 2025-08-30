@@ -103,7 +103,7 @@ def compute_analogy(
     edge_subst_cost=edge_subst_cost,
     edge_ins_cost=edge_diff_cost,
     edge_del_cost=edge_diff_cost,
-    #  strictly_decreasing=True,
+    # strictly_decreasing=False,
   )
 
   analogy = analogylib.new()
@@ -163,6 +163,8 @@ def compute_analogy(
     elapsed_time = timeit.default_timer() - start_time
     timings.append(elapsed_time)
     costs.append(cost)
+    if verbose:
+      print(f'Iteration took {elapsed_time:.2f}s.')
     start_time = timeit.default_timer()
     # NOTE: Restart here rather than at the top of the loop since the iteration
     # is the expensive call (because geds is a generator, not a list of results)
