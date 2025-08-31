@@ -31,7 +31,13 @@ EDGE_BASE_COST = BASE_COST
 """
 Cost incurred from making an analogy between two nodes.
 """
-def node_subst_cost(n1, n2): 
+def node_subst_cost(n1, n2):
+  n1_pref = n1.get('preference_id')
+  n2_pref = n2.get('preference_id')
+  if n1_pref is not None and n2_pref is not None and n1_pref == n2_pref:
+    # if preferences are set on both sides and equal to each other, it's free!
+    return 0
+
   n1_type = n1.get('type')
   n1_is_standard = n1.get('is_standard')
 
@@ -104,10 +110,64 @@ Compute analogy. This can terminate on its own, but it'll stop at the timeout
 provided in the prep_analogy
 """
 def compute_analogy(
-  sinister_graph, dexter_graph, timeout: int = 1 * 60, verbose=False
+  sinister_graph: nx.MultiDiGraph, dexter_graph: nx.MultiDiGraph, preferred_matches:dict|None = None, timeout: int = 1 * 60, verbose=False
 ):
   if verbose:
-    print('\n-- Starting Analogy --')
+    print('\n---- Starting Analogy ----')
+
+  # Prepare preferred matches for "efficient" matching
+  # Really it's mostly massaging aliases so the user can input any of the names.
+  if preferred_matches is not None:
+    assert isinstance(preferred_matches, dict), 'Type Error'
+
+    # The user should be able to use any of the names for an alias, so we need to
+    # correct the name. The alias name's order is not fixed so this is required.
+    sinister_aliases = {}
+    for sinister_node in sinister_graph.nodes():
+      if ' = ' in sinister_node:
+        for alias in sinister_node.split(' = '):
+          sinister_aliases[alias] = sinister_node
+    
+    dexter_aliases = {}
+    for dexter_node in dexter_graph.nodes():
+      if ' = ' in dexter_node:
+        for alias in dexter_node.split(' = '):
+          dexter_aliases[alias] = dexter_node
+
+    print(dexter_aliases)
+    
+    if verbose:
+      print('-- User defined preferred pairings')
+ 
+    fixed_preferred_matches = {}
+    preference_id = 0  # the node_subst_cost function will match based on this id
+    # NOTE: a slightly crazier thing would be to add the node's name as an attribute
+    # but that seems excessive, and not useful for anything else.
+    for sinister_node, dexter_node in preferred_matches.items():
+      if ' = ' in sinister_node:
+        # If the order is wrong, pick the first name and rely on the alias lookup
+        sinister_node = sinister_node.split(' = ')[0]
+      
+      if ' = ' in dexter_node:
+        # If the order is wrong, pick the first name and rely on the alias lookup
+        dexter_node = dexter_node.split(' = ')[0]
+
+      # Replace name with looked up name
+      print(dexter_node)
+      sinister_node = sinister_aliases.get(sinister_node, sinister_node)
+      dexter_node = dexter_aliases.get(dexter_node, dexter_node)
+      fixed_preferred_matches[sinister_node] = dexter_node
+      print(dexter_node)
+
+      assert sinister_node in sinister_graph.nodes, f'Could not find node `{sinister_node}` in sinister graph.'
+      assert dexter_node in dexter_graph.nodes, f'Could not find node `{dexter_node}` in dexter graph.'
+
+      sinister_graph.add_node(sinister_node, preference_id=preference_id)
+      dexter_graph.add_node(dexter_node, preference_id=preference_id)
+
+      if verbose:
+        print(f"{sinister_node:>30} <=> {dexter_node:<30}")
+    
 
   geds = nx.optimize_edit_paths(
     sinister_graph,
@@ -447,21 +507,31 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
   return mermaid
 
 if __name__ == '__main__':
+  preferred_matches = None
+  timeout = 3*60
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
   # sinister_name = 'imessage'
   # dexter_name = 'slack'
   # dexter_name = 'imessage'
+
   sinister_name = 'calendar'
   dexter_name = 'video-editor'
+  preferred_matches = {
+    'events': 'editors/videos'
+  }
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
 
-  analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=3*60, verbose=True)
+  start = timeit.default_timer()
+  analogy, attr = compute_analogy(sinister_graph, dexter_graph, preferred_matches=preferred_matches, timeout=timeout, verbose=True)
+  elapsed = timeit.default_timer() - start
+  pprint.pprint(attr)
+  print(f'Took {elapsed:.2f}s')
 
-  calculate_cost(analogy, sinister_graph, dexter_graph, verbose=True)
+  calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True)
 
   # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')
   # mermaid_graph_in_analogy(analogy, dexter_graph, side='dexter')
