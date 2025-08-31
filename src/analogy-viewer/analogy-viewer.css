@@ -18,7 +18,10 @@
 }
 
 .analogy-info {
-  margin-top: 30px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  margin: 20px 0px;
+  padding: 10px 20px;
 }
 
 .connection-path {
@@ -42,7 +45,7 @@
 
   height: fit-content;
   width: fit-content;
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .analogy-viewer-options {
