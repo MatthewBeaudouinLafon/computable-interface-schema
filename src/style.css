@@ -20,16 +20,24 @@
 }
 
 html {
-  overflow-y: scroll;
   height: 100%;
   word-wrap: break-word;
   margin: 0 auto;
-  padding: 4em;
   color: black;
   font-family: var(--sans-serif-font);
   font-optical-sizing: auto;
   background-color: #eff0f3;
-  overflow: auto;
+  overflow: hidden;
+}
+
+header {
+  padding: 0em 1em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(51, 56, 73, 0.05);
+}
+
+section {
+  height: 100%;
 }
 
 body {
@@ -38,18 +46,19 @@ body {
   margin: 0px;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 #app {
-  padding: 2em;
-  width: fit-content;
+  width: 100%;
+  height: 100%;
+}
+
+h1,
+h2 {
+  font-family: var(--header-font);
 }
 
 h1 {
-  font-family: var(--header-font);
-  margin-bottom: 40px;
-  opacity: 0.5;
   font-weight: 400;
   font-size: 2em;
 }
@@ -57,4 +66,17 @@ h1 {
 hr {
   margin: 200px 0px;
   opacity: 0.2;
+}
+
+.title {
+  margin-bottom: 0px;
+  padding: 0px;
+  line-height: 1em;
+}
+
+.subtitle {
+  margin: 15px 0px;
+  opacity: 1;
+  font-family: var(--header-font);
+  font-size: 1.3em;
 }

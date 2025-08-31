@@ -1,43 +1,450 @@
 [
   {
-    "inputs": ["imessage", "slack"],
+    "inputs": ["video-editor", "calendar"],
     "analogy": {
-      "pin": ["channel-type", false],
-      "conversations": ["channels", false],
-      "conversations.active->messages": ["channels.active->messages", false],
-      "convo-view/encoding.cluster": ["channel-view/encoding.cluster", false],
-      "convo-view/marks.text": ["channel-view/marks", false],
-      "chat-view/marks": ["chat-view/marks.text", false],
-      "time": ["time", false],
-      "convo-view/encoding.vstack": ["channel-view/encoding.vstack", false],
-      "chat-view/encoding.vstack": ["chat-view/encoding.vstack", false],
-      "conversations.active": ["channels.active", false],
-      "messages": ["messages", false],
-      "people": ["people", false],
-      "convo-view": ["channel-view", false],
-      "chat-view": ["chat-view", false],
-      "send-message": ["send-message", false],
-      "select-conversation": ["select-channel", false]
+      "editors/timeline": ["time", false],
+      "editors/view/marks.vline": ["week-view/marks.hline", false],
+      "editors/move-playhead": ["select-event", false],
+      "editors/view/marks.rectangles": ["week-view/marks.rectangles", false],
+      "select-video": ["create-event", true],
+      "editors/view/encoding.hstack": ["week-view/encoding.vstack", false],
+      "editors/tracks": ["weeks.active->timestamps", true],
+      "editors/view/encoding.cluster": ["week-view/encoding.cluster", false],
+      "videos.selected = media-preview/video": ["weeks", true],
+      "editors": ["weeks.active->events", true],
+      "timeline-preview": ["days", true],
+      "videos": ["months.selected->days", false],
+      "media-pool/marks": ["mini-month-view/marks.text", false],
+      "media-pool/encoding.hwrap": ["mini-month-view/encoding.hwrap", false],
+      "editors/timestamps.playhead": ["events.selected", false],
+      "timeline-preview/video = editors/composited-video": [
+        "timestamps.now",
+        true
+      ],
+      "editors/videos.selected": ["timestamps", false],
+      "editors/view": ["week-view", false],
+      "play": ["move-event", false],
+      "move-video": ["time-passing", false],
+      "media-pool": ["mini-month-view", false],
+      "timeline-preview/playhead = editors.current/timestamps.playhead": [
+        "events",
+        true
+      ],
+      "media-preview": ["months", true]
     }
   },
   {
-    "inputs": ["calendar", "video-editor"],
+    "inputs": ["video-editor", "slack"],
     "analogy": {
-      "weeks.active->timestamps": ["editors/timestamps", false],
-      "week-view/marks.hline": ["editors/view/marks.vline", false],
-      "week-view/marks.rectangles": ["editors/view/marks.rectangles", false],
-      "time": ["editors/timeline", false],
-      "week-view/encoding.vstack": ["editors/view/encoding.hstack", false],
-      "days": ["editors/videos", false],
-      "week-view/encoding.cluster": ["editors/view/encoding.cluster", false],
-      "mini-month-view/marks.text": ["media-pool/marks", false],
-      "mini-month-view/encoding.hwrap": ["media-pool/encoding.hwrap", false],
-      "timestamps.now": ["editors/timestamps.playhead", false],
-      "events.selected": ["editors/videos.selected", false],
-      "week-view": ["editors/view", false],
-      "mini-month-view": ["media-pool", false],
-      "time-passing": ["play", false],
-      "move-event": ["move-video", false]
+      "editors/timeline": ["alphabetical", false],
+      "editors/view/marks.vline": ["chat-view/marks.text", true],
+      "editors/move-playhead": ["send-message", true],
+      "editors/view/marks.rectangles": ["channel-view/marks", false],
+      "select-video": ["select-channel", false],
+      "editors/view/encoding.hstack": ["channel-view/encoding.vstack", false],
+      "editors/tracks": ["channel-type", false],
+      "editors/view/encoding.cluster": ["channel-view/encoding.cluster", false],
+      "videos": ["messages", false],
+      "sort-order": ["time", false],
+      "media-pool/encoding.hwrap": ["chat-view/encoding.vstack", false],
+      "editors/videos.selected": ["channels.active", false],
+      "videos.selected = media-preview/video": [
+        "channels.active->messages",
+        false
+      ],
+      "editors/view": ["channel-view", false],
+      "media-pool": ["chat-view", false],
+      "timeline-preview": ["channels", false],
+      "timeline-preview/video = editors/composited-video": ["people", false],
+      "timeline-preview/playhead = editors.current/timestamps.playhead": [
+        "name",
+        false
+      ]
+    }
+  },
+  {
+    "inputs": ["video-editor", "imessage"],
+    "analogy": {
+      "editors/timeline": ["time", false],
+      "editors/view/marks.vline": ["convo-view/encoding.cluster", false],
+      "editors/move-playhead": ["select-conversation", false],
+      "videos.in-editor = editors/videos": ["messages", false],
+      "editors/view/marks.rectangles": ["convo-view/marks.text", false],
+      "editors/view/encoding.hstack": ["convo-view/encoding.vstack", false],
+      "editors/tracks": ["people", false],
+      "media-pool/marks": ["chat-view/marks", false],
+      "media-pool/encoding.hwrap": ["chat-view/encoding.vstack", false],
+      "editors/timestamps.playhead": ["conversations.active", false],
+      "editors/videos.selected": ["conversations.active->messages", false],
+      "editors": ["conversations", false],
+      "editors/view": ["convo-view", false],
+      "play": ["send-message", false],
+      "media-pool": ["chat-view", false],
+      "media-preview": ["pin", true]
+    }
+  },
+  {
+    "inputs": ["video-editor", "finder"],
+    "analogy": {
+      "editors/timestamps": ["folder", true],
+      "editors/videos/timestamps": ["items.active", true],
+      "editors/timeline": ["alphabetical", true],
+      "editors/videos/timeline": ["file-system/depth-first-search", true],
+      "editors/view/marks.vline": ["file-type-list-view/marks.text", true],
+      "editors/move-playhead": ["nav-in-folder", true],
+      "videos.in-editor = editors/videos": ["file-system/leaves = files", true],
+      "editors/view/marks.rectangles": ["list-view/marks.text", false],
+      "select-video": ["delete-item", true],
+      "editors/view/encoding.hstack": ["list-view/encoding.vstack", false],
+      "editors/tracks": ["file", true],
+      "editors/view/encoding.cluster": ["column-view/mark", true],
+      "videos": ["folders = file-system/parents", false],
+      "media-pool/marks": ["grid-view/marks.text", true],
+      "sort-order": ["creation-time", true],
+      "media-pool/encoding.hwrap": ["column-view/encoding.hstack", false],
+      "editors/timestamps.playhead": ["paths", true],
+      "editors/videos.selected": ["items = files and folders", false],
+      "videos.selected = media-preview/video": ["folders.active", false],
+      "editors": ["file-system/depth-order", true],
+      "editors/view": ["list-view", false],
+      "move-video": ["move-item", false],
+      "play": ["create-item", true],
+      "media-pool": ["column-view", false],
+      "timeline-preview": ["folders.active->items", true],
+      "timeline-preview/video = editors/composited-video": [
+        "folders.in-selected-path = items.selected->paths->folders",
+        true
+      ],
+      "timeline-preview/playhead = editors.current/timestamps.playhead": [
+        "item-type",
+        true
+      ],
+      "media-preview": ["folders.in-selected-path->items", true]
+    }
+  },
+  {
+    "inputs": ["video-editor", "figma"],
+    "analogy": {
+      "editors/timestamps": ["frames = layer-hierarchy/parents", false],
+      "editors/videos/timestamps": ["pages.active", true],
+      "editors/timeline": ["page-order", true],
+      "editors/videos/timeline": ["collaborators/cursor->pages->points", true],
+      "editors/view/marks.vline": ["pages-view/marks", true],
+      "editors/move-playhead": ["prototype-actions", true],
+      "videos.in-editor = editors/videos": ["active_users/cursor", true],
+      "editors/view/marks.rectangles": [
+        "prototype-canvas-view/encoding.arrows",
+        false
+      ],
+      "select-video": ["navigate-prototype", true],
+      "editors/view/encoding.hstack": ["pages-view/encoding.vstack", true],
+      "editors/tracks": ["layer-hierarchy/depth-order", true],
+      "editors/view/encoding.cluster": [
+        "prototype-canvas-view/marks.icons",
+        false
+      ],
+      "videos": ["layer-hierarchy/depth-first-search-order", true],
+      "media-pool/marks": ["prototype-canvas-view/marks.regions", true],
+      "media-pool/encoding.hwrap": ["inspector-panel/encoding.vstack", false],
+      "editors/timestamps.playhead": [
+        "layer-hierarchy/leaves = shapes and text",
+        true
+      ],
+      "editors/videos.selected": ["collaborators", false],
+      "videos.selected = media-preview/video": ["layers/properties", false],
+      "timeline-preview": ["frames.in-prototype", true],
+      "editors": ["pages", false],
+      "editors/view": ["prototype-canvas-view", false],
+      "play": ["collaborators/move-cursor", true],
+      "media-pool": ["inspector-panel", false],
+      "timeline-preview/video = editors/composited-video": [
+        "collaborators/cursor",
+        true
+      ],
+      "timeline-preview/playhead = editors.current/timestamps.playhead": [
+        "frames.in-prototype.current",
+        true
+      ],
+      "media-preview": ["frames and shapes and text = layers", false]
+    }
+  },
+  {
+    "inputs": ["calendar", "slack"],
+    "analogy": {
+      "week-view/marks.hline": ["channel-view/encoding.cluster", false],
+      "select-event": ["send-message", true],
+      "time": ["alphabetical", false],
+      "week-view/encoding.vstack": ["channel-view/encoding.vstack", false],
+      "days": ["messages", false],
+      "week-view/encoding.cluster": ["channel-view/marks", false],
+      "months.selected->days": ["channels.active->messages", false],
+      "mini-month-view/marks.text": ["chat-view/marks.text", false],
+      "mini-month-view/encoding.hwrap": ["chat-view/encoding.vstack", false],
+      "timestamps": ["channels", false],
+      "events": ["channel-type", true],
+      "events.selected": ["people", true],
+      "timestamps.now": ["channels.active", false],
+      "week-view": ["channel-view", false],
+      "mini-month-view": ["chat-view", false],
+      "months": ["name", true],
+      "time-passing": ["select-channel", false]
+    }
+  },
+  {
+    "inputs": ["calendar", "imessage"],
+    "analogy": {
+      "week-view/marks.hline": ["convo-view/marks.text", false],
+      "weeks.active->events": ["pin", false],
+      "week-view/marks.rectangles": ["convo-view/encoding.cluster", false],
+      "time": ["time", false],
+      "week-view/encoding.vstack": ["convo-view/encoding.vstack", false],
+      "days": ["messages", false],
+      "months.selected->days": ["conversations.active->messages", false],
+      "mini-month-view/marks.text": ["chat-view/marks", false],
+      "mini-month-view/encoding.hwrap": ["chat-view/encoding.vstack", false],
+      "timestamps": ["conversations", false],
+      "timestamps.now": ["conversations.active", false],
+      "week-view": ["convo-view", false],
+      "mini-month-view": ["chat-view", false],
+      "weeks": ["people", true],
+      "move-event": ["send-message", false],
+      "time-passing": ["select-conversation", false]
+    }
+  },
+  {
+    "inputs": ["calendar", "finder"],
+    "analogy": {
+      "weeks.active->timestamps": ["items.active", false],
+      "week-view/marks.hline": ["list-view/marks.text", false],
+      "weeks.active->events": ["file-system/leaves = files", true],
+      "week-view/marks.rectangles": ["column-view/encoding.cluster", true],
+      "select-event": ["create-item", true],
+      "time": ["alphabetical", false],
+      "week-view/encoding.vstack": ["list-view/encoding.vstack", false],
+      "days": ["folders = file-system/parents", true],
+      "week-view/encoding.cluster": ["column-view/mark", true],
+      "months.selected->days": ["paths", true],
+      "mini-month-view/marks.text": ["grid-view/marks.text", true],
+      "mini-month-view/encoding.hwrap": ["column-view/encoding.vstack", false],
+      "timestamps": ["items = files and folders", false],
+      "events": ["folders.active->items", true],
+      "events.selected": ["sort-order.selected", true],
+      "timestamps.now": ["folders.in-selected-path->items", false],
+      "week-view": ["list-view", false],
+      "mini-month-view": ["column-view", false],
+      "weeks": [
+        "folders.in-selected-path = items.selected->paths->folders",
+        true
+      ],
+      "months": ["folders.active", true],
+      "create-event": ["delete-item", true],
+      "delete-event": ["move-item", true],
+      "move-event": ["select-folder", true],
+      "time-passing": ["nav-in-folder", false]
+    }
+  },
+  {
+    "inputs": ["calendar", "figma"],
+    "analogy": {
+      "weeks.active->timestamps": ["collaborators/cursor", true],
+      "week-view/marks.hline": ["inspector-panel/marks", true],
+      "weeks.active->events": ["collaborators/cursor->pages->points", true],
+      "week-view/marks.rectangles": ["canvas-view/encoding.canvas", true],
+      "select-event": ["prototype-actions", true],
+      "time": ["page-order", true],
+      "week-view/encoding.vstack": ["layer-panel/encoding.vstack", false],
+      "days": ["active_users/cursor", true],
+      "week-view/encoding.cluster": [
+        "prototype-canvas-view/marks.points",
+        true
+      ],
+      "months.selected->days": ["layer-hierarchy/depth-order", true],
+      "mini-month-view/marks.text": [
+        "prototype-canvas-view/marks.regions",
+        false
+      ],
+      "mini-month-view/encoding.hwrap": [
+        "inspector-panel/encoding.vstack",
+        true
+      ],
+      "timestamps": ["layer-hierarchy/depth-first-search-order", true],
+      "events": ["collaborators", true],
+      "events.selected": ["layers/properties", true],
+      "weeks": ["frames = layer-hierarchy/parents", true],
+      "timestamps.now": ["frames.in-prototype.current", false],
+      "week-view": ["layer-panel", false],
+      "mini-month-view": ["prototype-canvas-view", false],
+      "months": ["layer-hierarchy/leaves = shapes and text", true],
+      "time-passing": ["navigate-prototype", false],
+      "create-event": ["collaborators/move-cursor", true]
+    }
+  },
+  {
+    "inputs": ["slack", "imessage"],
+    "analogy": {
+      "channel-view/encoding.vstack": ["convo-view/encoding.vstack", false],
+      "channel-type": ["pin", false],
+      "channel-view/encoding.cluster": ["convo-view/encoding.cluster", false],
+      "channels": ["conversations", false],
+      "channel-view/marks": ["convo-view/marks.text", false],
+      "channels.active->messages": ["conversations.active->messages", false],
+      "chat-view/marks.text": ["chat-view/marks", false],
+      "time": ["time", false],
+      "chat-view/encoding.vstack": ["chat-view/encoding.vstack", false],
+      "channels.active": ["conversations.active", false],
+      "messages": ["messages", false],
+      "people": ["people", false],
+      "chat-view": ["chat-view", false],
+      "channel-view": ["convo-view", false],
+      "send-message": ["send-message", false],
+      "select-channel": ["select-conversation", false]
+    }
+  },
+  {
+    "inputs": ["slack", "finder"],
+    "analogy": {
+      "alphabetical": ["alphabetical", false],
+      "channel-view/encoding.vstack": ["list-view/encoding.vstack", false],
+      "channel-type": ["folders = file-system/parents", true],
+      "channel-view/encoding.cluster": ["list-view/marks.text", false],
+      "channels": ["items = files and folders", false],
+      "channel-view/marks": ["column-view/mark", true],
+      "channels.active->messages": ["folders.active", true],
+      "chat-view/marks.text": ["column-view/encoding.cluster", false],
+      "time": ["creation-time", true],
+      "chat-view/encoding.vstack": ["column-view/encoding.vstack", false],
+      "channels.active": ["items.active", false],
+      "messages": ["paths", true],
+      "people": ["folders.in-selected-path->items", true],
+      "name": [
+        "folders.in-selected-path = items.selected->paths->folders",
+        true
+      ],
+      "channel-view": ["list-view", false],
+      "chat-view": ["column-view", false],
+      "send-message": ["create-item", true],
+      "select-channel": ["nav-in-folder", false]
+    }
+  },
+  {
+    "inputs": ["slack", "figma"],
+    "analogy": {
+      "alphabetical": ["page-order", true],
+      "channel-view/encoding.vstack": ["layer-panel/encoding.vstack", true],
+      "channel-type": ["layer-hierarchy/depth-first-search-order", true],
+      "channel-view/encoding.cluster": ["canvas-view/marks.icons", false],
+      "channels": ["layer-hierarchy/leaves = shapes and text", true],
+      "channel-view/marks": ["canvas-view/marks.points", false],
+      "channels.active->messages": ["layers/properties", true],
+      "chat-view/marks.text": ["prototype-canvas-view/marks.points", false],
+      "chat-view/encoding.vstack": ["inspector-panel/encoding.vstack", true],
+      "channels.active": ["frames.in-prototype.current", false],
+      "people": ["collaborators/cursor", true],
+      "messages": ["frames and shapes and text = layers", false],
+      "name": ["collaborators/cursor->pages->points", true],
+      "channel-view": ["pages.active->canvas-view = canvas-view", false],
+      "chat-view": ["prototype-canvas-view", false],
+      "send-message": ["prototype-actions", true],
+      "select-channel": ["navigate-prototype", false]
+    }
+  },
+  {
+    "inputs": ["imessage", "finder"],
+    "analogy": {
+      "conversations.active->messages": ["paths", true],
+      "chat-view/marks": ["list-view/marks.text", false],
+      "time": ["alphabetical", false],
+      "chat-view/encoding.vstack": ["column-view/encoding.vstack", true],
+      "conversations": ["items = files and folders", false],
+      "convo-view/marks.text": ["column-view/encoding.cluster", false],
+      "pin": ["file-system/depth-order", true],
+      "convo-view/encoding.cluster": ["column-view/mark", false],
+      "convo-view/encoding.vstack": ["column-view/encoding.hstack", false],
+      "conversations.active": ["items.active", false],
+      "messages": ["folders.active", true],
+      "people": [
+        "folders.in-selected-path = items.selected->paths->folders",
+        true
+      ],
+      "chat-view": ["list-view", false],
+      "convo-view": ["column-view", false],
+      "send-message": ["create-item", true],
+      "select-conversation": ["nav-in-folder", false]
+    }
+  },
+  {
+    "inputs": ["imessage", "figma"],
+    "analogy": {
+      "conversations.active->messages": [
+        "layer-hierarchy/leaves = shapes and text",
+        true
+      ],
+      "chat-view/marks": ["canvas-view/marks.regions", true],
+      "time": ["page-order", false],
+      "chat-view/encoding.vstack": ["layer-panel/encoding.vstack", false],
+      "conversations": ["layers/properties", true],
+      "convo-view/marks.text": ["canvas-view/marks.points", false],
+      "pin": ["frames.in-prototype", true],
+      "convo-view/encoding.cluster": ["canvas-view/marks.icons", false],
+      "convo-view/encoding.vstack": ["inspector-panel/encoding.vstack", true],
+      "messages": ["pages", false],
+      "conversations.active": ["collaborators/cursor", false],
+      "people": ["collaborators/cursor->pages->points", true],
+      "convo-view": ["pages.active->canvas-view = canvas-view", false],
+      "chat-view": ["layer-panel", false],
+      "send-message": ["prototype-actions", true],
+      "select-conversation": ["navigate-prototype", true]
+    }
+  },
+  {
+    "inputs": ["finder", "figma"],
+    "analogy": {
+      "folders.active->items": ["frames = layer-hierarchy/parents", true],
+      "list-view/marks.text": ["prototype-canvas-view/encoding.arrows", true],
+      "sort-order.selected": ["collaborators/cursor", true],
+      "list-view/encoding.vstack": ["layer-panel/encoding.vstack", false],
+      "file-type-list-view/marks.text": ["prototype-window/marks", true],
+      "item-type": ["pages", true],
+      "file-type-list-view/encoding.cluster": ["pages-view/marks", true],
+      "file-type-list-view/encoding.vstack": [
+        "inspector-panel/encoding.vstack",
+        false
+      ],
+      "folders.in-selected-path->items": ["points", true],
+      "column-view/mark.text": ["prototype-canvas-view/marks.points", false],
+      "folders.in-selected-path = items.selected->paths->folders": [
+        "frames.in-prototype.current",
+        true
+      ],
+      "column-view/encoding.cluster": [
+        "prototype-canvas-view/marks.regions",
+        false
+      ],
+      "column-view/encoding.vstack": ["pages-view/encoding.vstack", true],
+      "column-view/mark": ["layer-panel/marks.text", true],
+      "file-system/depth-order": ["frames and shapes and text = layers", true],
+      "folders.active": ["pages.active", true],
+      "items = files and folders": ["frames.in-prototype", true],
+      "paths": ["collaborators/cursor->pages->points", true],
+      "folders = file-system/parents": ["layers/properties", true],
+      "file": ["collaborators", true],
+      "folder": ["layer-hierarchy/depth-order", true],
+      "file-system/leaves = files": [
+        "layer-hierarchy/depth-first-search-order",
+        false
+      ],
+      "items.active": ["layer-hierarchy/leaves = shapes and text", true],
+      "file-system": ["layer-hierarchy", false],
+      "file-system/depth-first-search": ["active_users/cursor", true],
+      "grid-view": ["pages.active->canvas-view = canvas-view", false],
+      "column-view": ["prototype-canvas-view", false],
+      "list-view": ["layer-panel", false],
+      "file-type-list-view": ["inspector-panel", false],
+      "grid-view/marks.text": ["canvas-view/encoding.canvas", false],
+      "alphabetical": ["page-order", true],
+      "create-item": ["prototype-actions", true],
+      "delete-item": ["navigate-prototype", true],
+      "move-item": ["collaborators/move-cursor", true]
     }
   }
 ]

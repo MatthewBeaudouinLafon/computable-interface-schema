@@ -4,12 +4,17 @@
   top: 0px;
   width: 100%;
   height: 100%;
-  overflow: visible;
   pointer-events: none;
 }
 
 .analogy-viewer {
-  gap: 40px;
+  padding: 4em;
+  width: 100%;
+  display: flex;
+  height: fit-content;
+  width: fit-content;
+  margin-bottom: 200px;
+  flex-direction: column;
 }
 
 .connection-path {
@@ -24,4 +29,24 @@
     stroke: #7a7a7a;
     opacity: 0;
   }
+}
+
+.analogy-viewer-viewers {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+
+  height: fit-content;
+  width: fit-content;
+  margin-top: 60px;
+}
+
+.analogy-viewer-options {
+  font-size: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.13);
+}
+
+.analogy-viewer-options:hover {
+  opacity: 1;
 }

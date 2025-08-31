@@ -1,5 +1,5 @@
 import "./ui-utilities.css";
-import { div, el, setup_drag, type ElementProps } from "./utilities";
+import { div, el, get_id, setup_drag, type ElementProps } from "./utilities";
 
 export function stack_resizable(
   stack_type: "horizontal" | "vertical",
@@ -80,14 +80,14 @@ export function tabs(
   panes: [HTMLElement | string, HTMLElement][],
   default_active = 0
 ) {
-  const toggles_container = div(
-    ".tabs-toggles",
-    panes.map((pane, i) => div({ onclick: () => toggle_handler(i) }, pane[0]))
+  const children = panes.map((pane, i) =>
+    div({ onclick: () => toggle_handler(i) }, pane[0])
   );
+  const toggles_container = div(".tabs-toggles", children);
 
   // Setup a toggle to go between code and diagram editor
   const toggle_handler = (active: number) => {
-    const toggles = [...toggles_container.children] as HTMLElement[];
+    const toggles = [...children] as HTMLElement[];
 
     panes[active][1].classList.add("active");
     panes
@@ -116,17 +116,22 @@ export function tabs(
 export function vtabs(
   props: ElementProps,
   panes: [HTMLElement | string, HTMLElement][],
-  default_active = 0
+  default_active = 0,
+  tab_header = ""
 ) {
   const ret = tabs(props, panes, default_active);
   ret.classList.add("vtabs");
+  if (tab_header.length > 0) {
+    ret.children[0].prepend(div(".vtabs-header", tab_header));
+  }
   return ret;
 }
 
 export function stack(
   stack_type: "horizontal" | "vertical",
   props: ElementProps,
-  items: (string | HTMLElement | SVGElement)[]
+  items: (string | HTMLElement | SVGElement)[],
+  gap: number = 0
 ) {
   const children: (string | HTMLElement | SVGElement)[] = [];
 
@@ -138,27 +143,46 @@ export function stack(
 
   const ret = div(props, children);
   ret.classList.add("stack", stack_type === "horizontal" ? "hstack" : "vstack");
+  ret.style.gap = `${gap}px`;
   return ret;
 }
 
 export function hstack(
   props: ElementProps,
-  items: (string | HTMLElement | SVGElement)[]
+  items: (string | HTMLElement | SVGElement)[],
+  gap: number = 0
 ) {
-  return stack("horizontal", props, items);
+  return stack("horizontal", props, items, gap);
 }
 
 export function vstack(
   props: ElementProps,
-  items: (string | HTMLElement | SVGElement)[]
+  items: (string | HTMLElement | SVGElement)[],
+  gap: number = 0
 ) {
-  return stack("vertical", props, items);
+  return stack("vertical", props, items, gap);
 }
 
-export function file_icon(name: string) {
-  const extension = name.split(".").at(-1);
-  return div(
-    { class: ["file-icon", `file-icon-${extension}`] },
-    el("img", { src: `./icons/${extension}.svg` })
-  );
+export function checkbox(
+  props: ElementProps = {},
+  name: string,
+  on_click?: (val: boolean, el: EventTarget | null) => void
+) {
+  const id = get_id();
+  const input = el("input", ".checkbox-input") as HTMLInputElement;
+  const label = el("label", ".checkbox-label", name);
+
+  input.id = id;
+  input.setAttribute("type", "checkbox");
+  label.setAttribute("for", id);
+
+  input.addEventListener("change", (e) => {
+    on_click?.(input.checked, e.target);
+  });
+
+  const ret = hstack(props, [input, label]);
+
+  ret.classList.add("checkbox");
+
+  return ret;
 }

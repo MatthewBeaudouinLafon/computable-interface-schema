@@ -8,7 +8,10 @@ import itertools, math
 import pprint
 import json
 import timeit
+import yaml
+import orjson
 
+import parser
 import compiler
 import metalgo
 import analogylib
@@ -17,10 +20,10 @@ from analogylib import Hand
 spec_names = [
   'video-editor',
   'calendar',
-  # 'slack',
-  # 'imessage',
-  # 'finder',
-  # 'figma',
+  'slack',
+  'imessage',
+  'finder',
+  'figma',
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]
@@ -34,6 +37,7 @@ argp.add_argument('-t', '--timeout', help='Timeout for each analogy.')
 argp.add_argument('-v', '--verbose', action="store_true", help='Print incremental results from metalgo.')
 argp.add_argument('-o', '--outputfile', help='Where the log file is written.')
 argp.add_argument('-c', '--continue', help='File to continue from')  # TODO
+argp.add_argument('-d', '--dump', action="store_true", help='Dump results from metalgo to a JSON.')
 
 if __name__ == '__main__':
   flags = argp.parse_args()
@@ -47,12 +51,24 @@ if __name__ == '__main__':
   for spec_name in spec_names:
     print('> Importing', spec_name)
     spec_graphs[spec_name] = compiler.compile(spec_name+'.yaml')
+
+  if (flags.dump):
+    with open('json/specs.json', 'wb') as f:
+      json_specs = { }
+      for spec_name in spec_names:
+        with open(spec_name+'.yaml') as spec_f:
+          spec_yaml = yaml.safe_load(spec_f)
+        json_specs[spec_name] = { "yaml": spec_yaml, "lookup": parser.make_relations(spec_yaml, False)[1] }
+      f.write(orjson.dumps(json_specs))
+
   
   num_combinations = math.comb(len(spec_graphs), 2)
   max_seconds = num_combinations * timeout
   max_minutes, max_seconds = divmod(max_seconds, 60)
   max_hours, max_minutes = divmod(max_minutes, 60)
   print(f'> Making {num_combinations} pairings. It will take at most {max_hours:d}h:{max_minutes:02d}m:{max_seconds:02d}s.')
+
+  json_analogies = []
   
   for sinister_name, dexter_name in itertools.combinations(spec_names, 2):
   # for sinister_name, dexter_name in itertools.permutations(spec_names, 2): # to make it symmetric ie. A<=>B and B <=> A
@@ -90,6 +106,14 @@ if __name__ == '__main__':
     print('analogy-edges   :', num_analogy_edges)
     print('conceptual-edges:', conceptual_connectivity)
     print('> Summary end\n')
+
+    if (flags.dump):
+      json_analogies.append( { "inputs": [sinister_name, dexter_name], "analogy": analogy[0]} )
+
+  if (flags.dump):
+    with open('json/analogies.json', 'wb') as f:
+      f.write(orjson.dumps(json_analogies))
+
     # break  # DEBUGGING - first pairing only
 
   print('> Done!')

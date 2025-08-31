@@ -1,6 +1,7 @@
-import { hstack } from "../utilities/ui-utilities";
+import { checkbox, hstack } from "../utilities/ui-utilities";
 import {
   assert,
+  div,
   get_curve_between_bbox_pivot,
   path,
   sanitize_name,
@@ -20,7 +21,6 @@ export type Spec = {
   name: string;
   yaml: object;
   lookup: [string, SpecPath][];
-  image_names: string[];
 };
 
 export type Analogy = {
@@ -50,10 +50,27 @@ export async function make_analogy_viewer(
 
   // View
   const frag = hstack(".analogy-viewer", [
-    a_viewer.frag,
-    b_viewer.frag,
-    svg("svg", ".overlay"),
+    div(".analogy-viewer-viewers", [
+      a_viewer.frag,
+      b_viewer.frag,
+      svg("svg", ".overlay"),
+    ]),
   ]);
+
+  const options = hstack(
+    ".analogy-viewer-options",
+    [
+      checkbox({}, "Show syntax highlighting", () => {
+        frag.classList.toggle("show-syntax-highlighting");
+      }),
+      checkbox({}, "Show primitives inline", () => {
+        frag.classList.toggle("show-primitives-inline");
+      }),
+    ],
+    10
+  );
+
+  frag.prepend(options);
 
   const analogy_viewer: AnalogyViewer = {
     frag,
@@ -142,11 +159,13 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
       .filter((n) => n !== undefined);
 
     const from_img = a_viewer.frag.querySelector(
-      `img[data-id=${sanitize_name(from)}]`
+      `#${sanitize_name(from)}`
     ) as HTMLElement | null;
 
+    console.log(sanitize_name(from), from_img);
+
     const to_img = b_viewer.frag.querySelector(
-      `img[data-id=${sanitize_name(to)}]`
+      `#${sanitize_name(to)}`
     ) as HTMLElement | null;
 
     // Draw connections
@@ -319,7 +338,11 @@ function setup_connection_event_listeners(
     });
 
     el.addEventListener("mouseleave", () => {
+      if (affected.some((el) => el.classList.contains("pinned"))) return;
+
       affected.forEach((el) => el.classList.remove("highlight"));
+      affected.forEach((el) => (el.style.filter = ``));
+
       analogy_viewer.num_highlighted--;
       update_focused();
     });
