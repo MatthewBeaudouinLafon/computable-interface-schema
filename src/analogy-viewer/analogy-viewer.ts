@@ -1,4 +1,4 @@
-import { checkbox, hstack, vstack } from "../utilities/ui-utilities";
+import { checkbox, hstack } from "../utilities/ui-utilities";
 import {
   assert,
   div,
@@ -49,16 +49,14 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
 
   // View
   const frag = hstack(".analogy-viewer", [
-    vstack(".analogy-info", [
-      pre({}, `Cost: ${analogy.cost}`),
-      pre({}, `Analogy Punchline (unpruned conceptual nodes only):`),
-      vstack(
-        { style: { marginLeft: "10px" } },
-        analogy.punchline.map((pair) =>
-          hstack({}, [pre({}, pair[0]), pre({}, " <=> "), pre({}, pair[1])])
-        )
-      ),
-    ]),
+    pre(
+      ".analogy-info",
+      `Cost: ${analogy.cost}\n\n` +
+        `Analogy Punchline (unpruned conceptual nodes only):\n` +
+        analogy.punchline
+          .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+          .join("\n")
+    ),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
       b_viewer.frag,
