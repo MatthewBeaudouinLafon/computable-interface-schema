@@ -283,12 +283,6 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       # Finally add edge
       rel_graph.add_edge(source, target, relation=relation.name)
   
-  pprint.pprint(graphs)
-  for relation, graph in graphs.items():
-    if relation == rel.UPDATE_SRC or relation == rel.UPDATE_TRG:
-      print('\nrelation:', relation)
-      pprint.pprint(sorted(list(graph.nodes())))
-  
 
   # --- Question Declartion Pass.
   # Do the Question declarations actually check out?
@@ -302,8 +296,6 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
   combined_graph = nx.compose_all(
     [nx.MultiDiGraph(graph) for graph in graphs.values()]
   )
-
-  pprint.pprint(list(combined_graph.edges(data=True)))
 
   # - Assign types
   vprint('- Assign Types')

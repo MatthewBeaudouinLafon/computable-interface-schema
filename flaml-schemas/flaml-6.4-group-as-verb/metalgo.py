@@ -14,40 +14,45 @@ import networkx as nx
 import compiler
 import analogylib
 from analogylib import Analogy, Hand
+from parser import rel
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
 # So lower is better, higher is penalized.
 
-# NOTE: could make this parametrized, but eh I don't expect to change this much.
-MAX_COST = 100
+
+MAX_COST = 10000
+BASE_COST = 10
+
+NODE_BASE_COST = BASE_COST
+EDGE_BASE_COST = BASE_COST
+
 
 """
 Cost incurred from making an analogy between two nodes.
 """
 def node_subst_cost(n1, n2): 
-  cost = 1
-
   n1_type = n1.get('type')
   n1_is_standard = n1.get('is_standard')
 
   n2_type = n2.get('type')
   n2_is_standard = n2.get('is_standard')
+  
+  if n1.get('layer') != n2.get('layer'):
+    # different layers shouldn't match
+    return MAX_COST
 
   if n1_is_standard or n2_is_standard:
     # TODO: do "type" "casting" for things like linear->tree
     if n1_type == n2_type:
-      pass # same (standard) type, no cost
+      return NODE_BASE_COST # same (standard) type, no cost
     else:
-      cost += 3 # different type, there's a cost
+      return NODE_BASE_COST + 30 # different type, there's a cost
   else:
     pass # ignore type if they're both custom
-  
-  if n1.get('layer') != n2.get('layer'):
-    cost = MAX_COST
 
   # Otherwise, deemphasize this pairing by maximizing costs.
-  return cost
+  return NODE_BASE_COST + 5
 
 
 """
@@ -55,7 +60,7 @@ Cost of inserting or deleting a node
 Used for both node_del_cost and node_ins_cost, since it should be symmetric.
 """
 def node_diff_cost(n1):
-  return 1
+  return NODE_BASE_COST
 
 """
 Cost incurred from making an analogy between two edges.
@@ -67,7 +72,7 @@ def edge_subst_cost(e1, e2):
   # TODO: maybe subset can stand in for mapto? Or is that done with transitive
   # rules?
   if e1.get('relation') == e2.get('relation'):
-    return 1
+    return EDGE_BASE_COST
   else:
     return MAX_COST
 
@@ -76,12 +81,23 @@ Cost of deleting or inserting a edge
 Used for both edge_del_cost and edge_ins_cost, since it should be symmetric.
 """
 def edge_diff_cost(edge):
-  # return 1
-  match edge.get('relation'):
-    case 'GROUP_FOREACH':
-      return 1
+  relation = rel[edge.get('relation')]
+  match relation:
+    case rel.AFFECTS | rel.COVERS | rel.DIRECTION:
+      return EDGE_BASE_COST
+    case rel.CREATE | rel.DELETE | rel.UPDATE:
+      return EDGE_BASE_COST
+    case rel.UPDATE_SRC | rel.UPDATE_TRG:
+      # TODO: is there a way to reward both at the same time?
+      # Noteably, these edges can be deleted if the action also uses a direction
+      # because 
+      return EDGE_BASE_COST
+    case rel.GROUP | rel.MAPTO | rel.SUBSET:
+      return EDGE_BASE_COST + 1
+    case rel.GROUP_FOREACH:
+      return EDGE_BASE_COST + 5
  
-  return 1
+  return EDGE_BASE_COST
 
 """
 Compute analogy. This can terminate on its own, but it'll stop at the timeout

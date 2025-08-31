@@ -15,12 +15,12 @@ import analogylib
 from analogylib import Hand
 
 spec_names = [
-  'calendar',
   'video-editor',
+  'calendar',
   # 'slack',
+  # 'imessage',
   # 'finder',
   # 'figma',
-  # 'imessage',
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]
@@ -70,6 +70,13 @@ if __name__ == '__main__':
     iterations_time = sum(iterations['times'])  # in seconds
     total_time = end_time - start_time
     print(f'> Result end (successful-iterations = {iterations_time:.1f}s | total-time = {total_time:.1f}s)')
+
+    print('\n> Analogy Punchline (unpruned conceptual nodes only):')
+    for sinister_node, dexter in analogy[0].items():
+      is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
+      dexter_node, is_pruned = dexter
+      if is_conceptual and not is_pruned:
+        print(f"{sinister_node:>30} <=> {dexter_node:<30}")
 
     print('> Itemized Cost:')
     cost = metalgo.calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True)
