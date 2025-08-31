@@ -1,9 +1,10 @@
-import { checkbox, hstack } from "../utilities/ui-utilities";
+import { checkbox, hstack, vstack } from "../utilities/ui-utilities";
 import {
   assert,
   div,
   get_curve_between_bbox_pivot,
   path,
+  pre,
   sanitize_name,
   svg,
 } from "../utilities/utilities";
@@ -25,7 +26,9 @@ export type Spec = {
 
 export type Analogy = {
   inputs: string[];
-  analogy: Record<string, [string, boolean]>;
+  analogy: [Record<string, [string, boolean]>, unknown];
+  punchline: [string, string][];
+  cost: number;
 };
 
 export type AnalogyViewer = {
@@ -34,22 +37,28 @@ export type AnalogyViewer = {
   b: Spec;
   a_viewer: Viewer;
   b_viewer: Viewer;
-  all_analogies: Analogy[];
+  analogy: Analogy;
   num_pinned: number;
   num_highlighted: number;
 };
 
-export async function make_analogy_viewer(
-  a: Spec,
-  b: Spec,
-  all_analogies: Analogy[]
-) {
+export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
   // Sub-views
   const a_viewer = await make_viewer(a);
   const b_viewer = await make_viewer(b);
 
   // View
   const frag = hstack(".analogy-viewer", [
+    vstack(".analogy-info", [
+      pre({}, `Cost: ${analogy.cost}`),
+      pre({}, `Analogy Punchline (unpruned conceptual nodes only):`),
+      vstack(
+        { style: { marginLeft: "10px" } },
+        analogy.punchline.map((pair) =>
+          hstack({}, [pre({}, pair[0]), pre({}, " <=> "), pre({}, pair[1])])
+        )
+      ),
+    ]),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
       b_viewer.frag,
@@ -78,7 +87,7 @@ export async function make_analogy_viewer(
     b,
     a_viewer,
     b_viewer,
-    all_analogies,
+    analogy,
     num_pinned: 0,
     num_highlighted: 0,
   };
@@ -112,13 +121,7 @@ export async function analogy_viewer_update_spec(
 }
 
 function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
-  const { a, b, a_viewer, b_viewer } = analogy_viewer;
-
-  // Find the analogy
-  const analogy = analogy_viewer.all_analogies.find(
-    (an) => an.inputs.includes(a.name) && an.inputs.includes(b.name)
-  );
-  if (analogy === undefined) return;
+  const { a, b, a_viewer, b_viewer, analogy } = analogy_viewer;
 
   // Draw connections
   const overlay = analogy_viewer.frag.querySelector(
@@ -130,7 +133,7 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
   const a_viewer_bbox = a_viewer.frag.getBoundingClientRect();
   const b_viewer_bbox = b_viewer.frag.getBoundingClientRect();
 
-  for (const [from, _to] of Object.entries(analogy.analogy)) {
+  for (const [from, _to] of Object.entries(analogy.analogy[0])) {
     if (_to[1] === true) continue; // Prune
 
     const to = _to[0];

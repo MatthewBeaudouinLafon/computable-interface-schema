@@ -96,6 +96,10 @@ export function div(props: ElementProps = {}, children: ElementChildren = []) {
   return el("div", props, children);
 }
 
+export function pre(props: ElementProps = {}, children: ElementChildren = []) {
+  return el("pre", props, children);
+}
+
 export function path(props: ElementProps = {}, d = ""): SVGPathElement {
   const ret = svg("path", props) as SVGPathElement;
   ret.setAttribute("d", d);

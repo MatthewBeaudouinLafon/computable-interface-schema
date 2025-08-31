@@ -80,3 +80,7 @@ hr {
   font-family: var(--header-font);
   font-size: 1.3em;
 }
+
+pre {
+  margin: 5px 0px;
+}

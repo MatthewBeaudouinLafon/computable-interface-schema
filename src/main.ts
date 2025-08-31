@@ -34,7 +34,10 @@ async function main() {
       make_analogy_viewer(
         get_spec(a.inputs[0]),
         get_spec(a.inputs[1]),
-        analogies
+        analogies.find(
+          (an) =>
+            an.inputs.includes(a.inputs[0]) && an.inputs.includes(a.inputs[1])
+        )!
       )
     )
   );
