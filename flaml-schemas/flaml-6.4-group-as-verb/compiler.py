@@ -367,6 +367,15 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       type_str = f'({type_name}) ' if type_name is not None else ''
       vprint(f'{node_layer}: {type_str}{node_name}')
 
+  # Label edges based which layer it comes from/gets to
+  for edge in combined_graph.edges:
+    source, target, key = edge
+    source_layer = combined_graph.nodes[source].get('layer')
+    target_layer = combined_graph.nodes[target].get('layer')
+    nx.set_edge_attributes(combined_graph, {
+      edge: {'layers': (source_layer, target_layer)}
+    })
+
   return combined_graph
 
 # ---- Presenting Results ----

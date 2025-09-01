@@ -15,12 +15,13 @@ import analogylib
 from analogylib import Hand
 
 spec_names = [
-  'video-editor',
+  # 'video-editor',
   'calendar',
-  # 'slack',
-  # 'imessage',
-  # 'finder',
-  # 'figma',
+  'slack',
+  'imessage',
+  'finder',
+  'figma',
+  'kanban-board'
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]

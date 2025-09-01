@@ -9,6 +9,7 @@ edges in individual graphs.
 import enum
 import pprint
 import timeit
+import math
 
 import networkx as nx
 import compiler
@@ -22,6 +23,7 @@ from parser import rel
 
 
 MAX_COST = 10000
+# MAX_COST = math.inf
 BASE_COST = 10
 
 NODE_BASE_COST = BASE_COST
@@ -77,10 +79,19 @@ def edge_subst_cost(e1, e2):
 
   # TODO: maybe subset can stand in for mapto? Or is that done with transitive
   # rules?
-  if e1.get('relation') == e2.get('relation'):
-    return EDGE_BASE_COST
-  else:
+  if e1.get('relation') != e2.get('relation'):
     return MAX_COST
+  
+  # if e1.get('layers') != e2.get('layers'):
+  #   # This is redundant with enforcing node layers matching,
+  #   # But maybe it'll help the algo prune edges.
+  #   return MAX_COST
+
+  # if e1.get('layers') == ('conceptual', 'conceptual'):
+  #   return EDGE_BASE_COST
+  
+  return EDGE_BASE_COST
+
 
 """
 Cost of deleting or inserting a edge
@@ -518,9 +529,9 @@ if __name__ == '__main__':
 
   sinister_name = 'calendar'
   dexter_name = 'video-editor'
-  preferred_matches = {
-    'events': 'editors/videos'
-  }
+  # preferred_matches = {
+  #   'events': 'editors/videos'
+  # }
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')
