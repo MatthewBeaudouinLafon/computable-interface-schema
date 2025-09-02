@@ -41,7 +41,7 @@
 
 - (gui) list-view:
     /marks.text <>: folders.active->items
-    /encoding.vstack <>: sort-order.selected
+    /encoding.vstack <>: (linear) sort-order.selected
 
 - (gui) file-type-list-view:
     /marks.text <>: folders.active->items

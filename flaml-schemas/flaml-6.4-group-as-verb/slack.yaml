@@ -19,7 +19,10 @@
       channel-type:
         groups: channels
         subgroups: channels.dm, channels.!dm
-    /marks <>: channels
+    /marks <>:
+      - channels
+      - (action) select-channel:
+          update: channels.active subset> channels
 
 - (gui) chat-view:
     /marks.text <>: channels.active->messages
@@ -27,7 +30,3 @@
 
 - (action) send-message:
     create: channels.active->messages
-    directions: time
-
-- (action) select-channel:
-    update: channels.active subset> channels
