@@ -4,6 +4,7 @@ import {
   Spec,
 } from "./analogy-viewer/analogy-viewer";
 import { SpecPath } from "./analogy-viewer/viewer/viewer";
+import { make_cost_matrix } from "./cost-matrix/cost-matrix";
 import "./style.css";
 import { vtabs } from "./utilities/ui-utilities";
 import { get_humane_name } from "./utilities/utilities";
@@ -42,6 +43,8 @@ async function main() {
     )
   );
 
+  const cost_matrix = make_cost_matrix(analogies);
+
   const app = document.getElementById("app")!;
 
   app.append(
@@ -53,6 +56,8 @@ async function main() {
       ])
     )
   );
+
+  document.querySelector("header")!.append(cost_matrix.frag);
 }
 
 async function loop() {

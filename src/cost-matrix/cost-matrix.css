@@ -1,0 +1,45 @@
+.cost-matrix {
+  display: none;
+  /* position: absolute; */
+  bottom: 0px;
+  right: 0px;
+  flex-direction: column;
+  padding: 20px;
+  padding-top: 120px;
+  padding-left: 100px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.178);
+}
+
+.cost-matrix.visible {
+  display: flex;
+}
+
+.cost-matrix-item {
+  width: 20px;
+  height: 20px;
+  /* background-color: rgb(171, 209, 196); */
+  /* border: 1px solid rgba(0, 0, 0, 0.171); */
+  overflow: visible;
+  position: relative;
+}
+
+.cost-matrix-row {
+  display: flex;
+  position: relative;
+  overflow: visible;
+}
+
+.cost-matrix-row-label {
+  position: absolute;
+  right: 25px;
+  top: 0px;
+  white-space: pre;
+}
+
+.cost-matrix-col-label {
+  position: absolute;
+  bottom: 25px;
+  left: 0px;
+  white-space: pre;
+  writing-mode: sideways-lr;
+}
