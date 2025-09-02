@@ -292,7 +292,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       prune_cost += node_subst_cost(sinister_node, dexter_node)
       vprint(f'Pruned: {sinister_name}  <=>  {dexter_name}')
   
-  if itemized or verbose:
+  if itemized and verbose:
     # NOTE: technically this is the cost of substitution (which could depend on eg. types)
     print('---- Node pruning (no cost):', prune_cost)
 
@@ -308,7 +308,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Deleted ({res}): {node}')
       node_deletion_cost += res
   
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Node deletion cost:', node_deletion_cost)
   vprint()
   cost += node_deletion_cost
@@ -325,7 +325,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Inserted ({res}): {node}')
       node_insertion_cost += res
   
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Node insertion cost:', node_insertion_cost)
   vprint()
   cost += node_insertion_cost
@@ -339,7 +339,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
     vprint(f'                  {str(sinister.nodes[sinister_node])} ==> {str(dexter.nodes[dexter_node])}')
     node_substitution_cost += res
 
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Node substitution cost:', node_substitution_cost)
   vprint()
   cost += node_substitution_cost
@@ -361,7 +361,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Deleted edge ({res}): {edge[:2]}')
       edge_deletion_cost += res
   
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Edge Deletion cost:', edge_deletion_cost)
   vprint()
   cost += edge_deletion_cost
@@ -374,7 +374,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Inserted edge ({res}): {edge[:2]}')
       edge_insertion_cost += res
   
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Edge Deletion cost:', edge_insertion_cost)
   vprint()
   cost += edge_insertion_cost
@@ -390,13 +390,13 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
     vprint(f'')
     edge_substition_cost += res
 
-  if itemized or verbose:
+  if itemized and verbose:
     print('---- Edge substitution cost:', edge_substition_cost)
   vprint()
   cost += edge_substition_cost
 
 
-  if itemized or verbose:
+  if itemized and verbose:
     print(f'------------------\nTotal Cost: {cost}\n')
   return cost
 

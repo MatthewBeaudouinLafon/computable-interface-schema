@@ -1,8 +1,10 @@
-import { hstack } from "../utilities/ui-utilities";
+import { checkbox, hstack } from "../utilities/ui-utilities";
 import {
   assert,
+  div,
   get_curve_between_bbox_pivot,
   path,
+  pre,
   sanitize_name,
   svg,
 } from "../utilities/utilities";
@@ -20,12 +22,13 @@ export type Spec = {
   name: string;
   yaml: object;
   lookup: [string, SpecPath][];
-  image_names: string[];
 };
 
 export type Analogy = {
   inputs: string[];
-  analogy: Record<string, [string, boolean]>;
+  analogy: [Record<string, [string, boolean]>, unknown];
+  punchline: [string, string][];
+  cost: number;
 };
 
 export type AnalogyViewer = {
@@ -34,26 +37,47 @@ export type AnalogyViewer = {
   b: Spec;
   a_viewer: Viewer;
   b_viewer: Viewer;
-  all_analogies: Analogy[];
+  analogy: Analogy;
   num_pinned: number;
   num_highlighted: number;
 };
 
-export async function make_analogy_viewer(
-  a: Spec,
-  b: Spec,
-  all_analogies: Analogy[]
-) {
+export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
   // Sub-views
   const a_viewer = await make_viewer(a);
   const b_viewer = await make_viewer(b);
 
   // View
   const frag = hstack(".analogy-viewer", [
-    a_viewer.frag,
-    b_viewer.frag,
-    svg("svg", ".overlay"),
+    pre(
+      ".analogy-info",
+      `Cost: ${analogy.cost}\n\n` +
+        `Analogy Punchline (unpruned conceptual nodes only):\n` +
+        analogy.punchline
+          .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+          .join("\n")
+    ),
+    div(".analogy-viewer-viewers", [
+      a_viewer.frag,
+      b_viewer.frag,
+      svg("svg", ".overlay"),
+    ]),
   ]);
+
+  const options = hstack(
+    ".analogy-viewer-options",
+    [
+      checkbox({}, "Show syntax highlighting", () => {
+        frag.classList.toggle("show-syntax-highlighting");
+      }),
+      checkbox({}, "Show primitives inline", () => {
+        frag.classList.toggle("show-primitives-inline");
+      }),
+    ],
+    10
+  );
+
+  frag.prepend(options);
 
   const analogy_viewer: AnalogyViewer = {
     frag,
@@ -61,7 +85,7 @@ export async function make_analogy_viewer(
     b,
     a_viewer,
     b_viewer,
-    all_analogies,
+    analogy,
     num_pinned: 0,
     num_highlighted: 0,
   };
@@ -95,13 +119,7 @@ export async function analogy_viewer_update_spec(
 }
 
 function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
-  const { a, b, a_viewer, b_viewer } = analogy_viewer;
-
-  // Find the analogy
-  const analogy = analogy_viewer.all_analogies.find(
-    (an) => an.inputs.includes(a.name) && an.inputs.includes(b.name)
-  );
-  if (analogy === undefined) return;
+  const { a, b, a_viewer, b_viewer, analogy } = analogy_viewer;
 
   // Draw connections
   const overlay = analogy_viewer.frag.querySelector(
@@ -113,7 +131,7 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
   const a_viewer_bbox = a_viewer.frag.getBoundingClientRect();
   const b_viewer_bbox = b_viewer.frag.getBoundingClientRect();
 
-  for (const [from, _to] of Object.entries(analogy.analogy)) {
+  for (const [from, _to] of Object.entries(analogy.analogy[0])) {
     if (_to[1] === true) continue; // Prune
 
     const to = _to[0];
@@ -142,11 +160,13 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
       .filter((n) => n !== undefined);
 
     const from_img = a_viewer.frag.querySelector(
-      `img[data-id=${sanitize_name(from)}]`
+      `#${sanitize_name(from)}`
     ) as HTMLElement | null;
 
+    console.log(sanitize_name(from), from_img);
+
     const to_img = b_viewer.frag.querySelector(
-      `img[data-id=${sanitize_name(to)}]`
+      `#${sanitize_name(to)}`
     ) as HTMLElement | null;
 
     // Draw connections
@@ -319,7 +339,11 @@ function setup_connection_event_listeners(
     });
 
     el.addEventListener("mouseleave", () => {
+      if (affected.some((el) => el.classList.contains("pinned"))) return;
+
       affected.forEach((el) => el.classList.remove("highlight"));
+      affected.forEach((el) => (el.style.filter = ``));
+
       analogy_viewer.num_highlighted--;
       update_focused();
     });

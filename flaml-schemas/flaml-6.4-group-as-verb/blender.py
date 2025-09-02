@@ -8,11 +8,16 @@ import itertools, math
 import pprint
 import json
 import timeit
+import yaml
+import orjson
 
+import parser
 import compiler
 import metalgo
 import analogylib
+import networkx as nx
 from analogylib import Hand
+from joblib import Parallel, delayed
 
 spec_names = [
   # 'video-editor',
@@ -35,6 +40,66 @@ argp.add_argument('-t', '--timeout', help='Timeout for each analogy.')
 argp.add_argument('-v', '--verbose', action="store_true", help='Print incremental results from metalgo.')
 argp.add_argument('-o', '--outputfile', help='Where the log file is written.')
 argp.add_argument('-c', '--continue', help='File to continue from')  # TODO
+argp.add_argument('-d', '--dump', action="store_true", help='Dump results from metalgo to a JSON.')
+
+def json_normalize_edges(edges):
+  normalized = []
+  for [k, v] in edges.items():
+    normalized.append({ "from": k, "to": v })
+
+  return normalized
+
+def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeout):
+  stdout = []
+  stdout.append(f'> Pairing: {sinister_name} <=> {dexter_name}')
+  
+  start_time = timeit.default_timer()
+  analogy, iterations = metalgo.compute_analogy(sinister_graph, dexter_graph, timeout=timeout)
+  end_time = timeit.default_timer()
+
+  stdout.append('> Result:')
+  stdout.append(pprint.pformat(analogy, width=200))
+  iterations_time = sum(iterations['times'])  # in seconds
+  total_time = end_time - start_time
+  stdout.append(f'> Result end (successful-iterations = {iterations_time:.1f}s | total-time = {total_time:.1f}s)')
+
+  punchline = []
+
+  stdout.append('\n> Analogy Punchline (unpruned conceptual nodes only):')
+
+  for sinister_node, dexter in analogy[0].items():
+    is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
+    dexter_node, is_pruned = dexter
+    if is_conceptual and not is_pruned:
+        punchline.append([sinister_node, dexter_node])
+        stdout.append(f"{sinister_node:>30} <=> {dexter_node:<30}")
+
+  # Note: Cannot print to stdout in multithreaded apps without it being jumbled, so I've set the verbose to False
+  # stdout.append('> Itemized Cost:') 
+  cost = metalgo.calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True, verbose=False)
+  num_analogy_edges = len(analogylib.get_edges(analogy, side=Hand.SINISTER))
+  conceptual_connectivity = metalgo.conceptual_connectivity(analogy, sinister_graph)
+
+  stdout.append(f'> Summary:')
+  stdout.append('num-iterations  : ' + str(len(iterations['times'])))
+
+  stdout.append('cumulative-times: ' + ', '.join([f'{t:.1f}' for t in itertools.accumulate(iterations['times'])]))
+  stdout.append('total-cost      : ' + str(cost))
+  stdout.append('analogy-edges   : ' + str(num_analogy_edges))
+  stdout.append('conceptual-edges: ' + str(conceptual_connectivity))
+  stdout.append('> Summary end\n')
+
+  dump = { "inputs": [sinister_name, dexter_name], 
+            "analogy": [analogy[0], json_normalize_edges(analogy[1])], 
+            "cost": cost, 
+            "num_analogy_edges": num_analogy_edges,
+            "conceptual_connectivity": conceptual_connectivity,
+            "punchline": punchline,
+            "sinister_graph": nx.node_link_data(sinister_graph, edges="edges"), 
+            "dexter_graph": nx.node_link_data(dexter_graph, edges="edges") }
+
+  return "\n".join(stdout), dump
+   
 
 if __name__ == '__main__':
   flags = argp.parse_args()
@@ -48,49 +113,42 @@ if __name__ == '__main__':
   for spec_name in spec_names:
     print('> Importing', spec_name)
     spec_graphs[spec_name] = compiler.compile(spec_name+'.yaml')
-  
+
+  # Write out specs
+  with open('json/specs.json', 'wb') as f:
+    json_specs = { }
+    for spec_name in spec_names:
+      with open(spec_name+'.yaml') as spec_f:
+        spec_yaml = yaml.safe_load(spec_f)
+      json_specs[spec_name] = { "yaml": spec_yaml, "lookup": parser.make_relations(spec_yaml, False)[1] }
+    f.write(orjson.dumps(json_specs))
+
+  # Estimate
   num_combinations = math.comb(len(spec_graphs), 2)
   max_seconds = num_combinations * timeout
   max_minutes, max_seconds = divmod(max_seconds, 60)
   max_hours, max_minutes = divmod(max_minutes, 60)
   print(f'> Making {num_combinations} pairings. It will take at most {max_hours:d}h:{max_minutes:02d}m:{max_seconds:02d}s.')
+
+  combinations = list(itertools.combinations(spec_names, 2))
+
+  # Place the smaller graph first
+  for i in range(len(combinations)):
+    sinister_graph = spec_graphs[combinations[i][0]]
+    dexter_graph = spec_graphs[combinations[i][1]]
+
+    if (sinister_graph.size() > dexter_graph.size()):
+      combinations[i] = [combinations[i][1], combinations[i][0]]
   
-  for sinister_name, dexter_name in itertools.combinations(spec_names, 2):
-  # for sinister_name, dexter_name in itertools.permutations(spec_names, 2): # to make it symmetric ie. A<=>B and B <=> A
-    print(f'> Pairing: {sinister_name} <=> {dexter_name}')
-    sinister_graph = spec_graphs[sinister_name]
-    dexter_graph = spec_graphs[dexter_name]
+  analogies = Parallel(n_jobs=-1)(delayed(make_analogy)(sinister_name, dexter_name, spec_graphs[sinister_name], spec_graphs[dexter_name], timeout) for sinister_name, dexter_name in combinations)
 
-    start_time = timeit.default_timer()
-    analogy, iterations = metalgo.compute_analogy(sinister_graph, dexter_graph, timeout=timeout, verbose=flags.verbose)
-    end_time = timeit.default_timer()
+  stdout = [analogy[0] for analogy in analogies]
+  print("\n\n".join(stdout))
 
-    print('> Result:')
-    # print(json.dumps(analogy, indent=2))  # doesn't like the tuple key (coward)
-    pprint.pprint(analogy, width=200)
-    iterations_time = sum(iterations['times'])  # in seconds
-    total_time = end_time - start_time
-    print(f'> Result end (successful-iterations = {iterations_time:.1f}s | total-time = {total_time:.1f}s)')
+  # for sinister_name, dexter_name in combinations:
+  #   analogies.append(make_analogy(sinister_name, dexter_name, spec_graphs[sinister_name], spec_graphs[dexter_name], timeout, verbose=flags.verbose))
 
-    print('\n> Analogy Punchline (unpruned conceptual nodes only):')
-    for sinister_node, dexter in analogy[0].items():
-      is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
-      dexter_node, is_pruned = dexter
-      if is_conceptual and not is_pruned:
-        print(f"{sinister_node:>30} <=> {dexter_node:<30}")
-
-    print('> Itemized Cost:')
-    cost = metalgo.calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True)
-    num_analogy_edges = len(analogylib.get_edges(analogy, side=Hand.SINISTER))
-    conceptual_connectivity = metalgo.conceptual_connectivity(analogy, sinister_graph)
-    print(f'> Summary:')
-    print('num-iterations  :', len(iterations['times']))
-
-    print('cumulative-times:', ', '.join([f'{t:.1f}' for t in itertools.accumulate(iterations['times'])]))
-    print('total-cost      :', cost)
-    print('analogy-edges   :', num_analogy_edges)
-    print('conceptual-edges:', conceptual_connectivity)
-    print('> Summary end\n')
-    # break  # DEBUGGING - first pairing only
+  with open('json/analogies.json', 'wb') as f:
+    f.write(orjson.dumps([analogy[1] for analogy in analogies]))
 
   print('> Done!')

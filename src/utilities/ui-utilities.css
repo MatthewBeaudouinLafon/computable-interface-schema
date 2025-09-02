@@ -34,33 +34,39 @@
 /* ------------------------ Tabs ------------------------ */
 .tabs-toggles {
   display: flex;
-  gap: 4px;
+  border-right: 1px solid rgba(0, 0, 0, 0.164);
+  padding: 1em 1em;
+  background: rgba(51, 56, 73, 0.05);
 
-  > * {
-    opacity: 0.4;
-    padding: 4px 6px;
-    width: fit-content;
-    border-radius: 5px;
-    text-align: left;
+  > *:not(.vtabs-header) {
+    /* margin-left: 15px; */
+    opacity: 0.6;
+    padding: 3px 0px;
     cursor: pointer;
+    font-size: 14px;
     white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
 
     &.active {
-      background: rgba(0, 0, 0, 0.1) !important;
+      text-decoration: underline;
       opacity: 1;
     }
 
     &:hover {
-      opacity: 0.8;
+      text-decoration: underline;
+      opacity: 1;
     }
+  }
+
+  > .vtabs-header {
+    margin-bottom: 10px;
+    opacity: 0.4;
   }
 }
 
 .tabs-panes {
   display: flex;
   flex-grow: 1;
+  overflow: auto;
 
   > *:not(.active) {
     display: none !important;
@@ -74,10 +80,10 @@
 
 .vtabs {
   flex-direction: row;
+  height: 100%;
 
   > .tabs-toggles {
     flex-direction: column;
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
   }
 }
 

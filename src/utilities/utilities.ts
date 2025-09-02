@@ -96,6 +96,10 @@ export function div(props: ElementProps = {}, children: ElementChildren = []) {
   return el("div", props, children);
 }
 
+export function pre(props: ElementProps = {}, children: ElementChildren = []) {
+  return el("pre", props, children);
+}
+
 export function path(props: ElementProps = {}, d = ""): SVGPathElement {
   const ret = svg("path", props) as SVGPathElement;
   ret.setAttribute("d", d);
@@ -270,11 +274,29 @@ export function does_image_exist(url: string) {
 
 export function sanitize_name(path: string) {
   return path
-    .replaceAll("->", "_A_")
-    .replaceAll(".", "_D_")
-    .replaceAll("/", "_S_");
+    .replaceAll("->", "__A__")
+    .replaceAll(".", "__D__")
+    .replaceAll("/", "__S__")
+    .replaceAll("=", "__E__");
 }
 
 export function string_to_hue(str: string) {
   return Math.floor(hash_code(str) * 360);
+}
+
+export function get_id() {
+  return Math.round(Math.random() * 1000000).toString();
+}
+
+export function get_humane_name(name: string) {
+  let humane = name
+    .split("-")
+    .map((s) => s[0].toUpperCase() + s.slice(1))
+    .join(" ");
+
+  if (name === "imessage") {
+    return "iMessage";
+  }
+
+  return humane;
 }

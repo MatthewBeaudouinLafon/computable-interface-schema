@@ -1,5 +1,5 @@
 import { vstack } from "../../utilities/ui-utilities";
-import { div, el, sanitize_name } from "../../utilities/utilities";
+import { div, get_id, sanitize_name } from "../../utilities/utilities";
 import { Spec } from "../analogy-viewer";
 import "./viewer.css";
 
@@ -38,28 +38,53 @@ export async function render_viewer(viewer: Viewer) {
 }
 
 async function render_ui_image(viewer: Viewer) {
-  const get_path = (file_name: string) =>
-    `./annotations/${viewer.spec.name}/${file_name}`;
+  const image = await (
+    await fetch(`./annotations/${viewer.spec.name}.svg`)
+  ).text();
 
-  const layers = viewer.spec.image_names
-    .map((s) => {
-      const layer_name = sanitize_name(s);
-      const path = get_path(`${layer_name}.svg`);
-      return el("img", {
-        class: "layer",
-        src: path,
-        data: [["id", layer_name]],
-      });
-    })
-    .filter((l) => l !== null);
+  // const layers = viewer.spec.image_names
+  //   .map((s) => {
+  //     const layer_name = sanitize_name(s);
+  //     const path = get_path(`${layer_name}.svg`);
+  //     return el("img", {
+  //       class: "layer",
+  //       src: path,
+  //       data: [["id", layer_name]],
+  //     });
+  //   })
+  //   .filter((l) => l !== null);
 
-  return div(".viewer-ui", [
-    el("img", {
-      class: "viewer-ui-image",
-      src: get_path(`${viewer.spec.name}.png`),
-    }),
-    ...layers,
-  ]);
+  const ret = div({ class: "viewer-ui", innerHTML: image });
+
+  const svg = ret.children[0];
+  svg.setAttribute("preserveAspectRatio", "xMinYMin meet");
+  svg.removeAttribute("width");
+  svg.removeAttribute("height");
+  if (svg.children.length > 0) {
+    [...svg.children[0].children].forEach((c) => {
+      console.log(c);
+      if (typeof c.id === "string") {
+        c.id = sanitize_name(c.id);
+      }
+    });
+
+    // Make unique IDs
+    const id = get_id();
+    const patterns = [...svg.querySelectorAll("pattern")];
+    patterns.forEach((p) => (p.id = `${p.id}_${id}`));
+
+    const backgrounds = [...svg.querySelectorAll("rect")];
+    backgrounds.forEach((b) => {
+      const fill = b.getAttribute("fill");
+      if (fill === null) return;
+
+      if (fill.startsWith("url(#")) {
+        b.setAttribute("fill", `url(#${fill.slice(5, -1)}_${id})`);
+      }
+    });
+  }
+
+  return ret;
 }
 
 export type ViewNode = {
@@ -101,7 +126,9 @@ function render_obj(
   const frag = vstack(
     ".v-obj",
     Object.entries(thing).map((_, i) => {
-      return div(".v-obj-entry", [
+      const classes = ["v-obj-entry"];
+      if (values[i].type === "Primitive") classes.push("is-single-line");
+      return div({ class: classes }, [
         div(".v-obj-key", keys[i].frag),
         div(".v-obj-value", values[i].frag),
       ]);
@@ -131,9 +158,20 @@ function render_primitive(
   path: SpecPath,
   is_key: boolean = false
 ): ViewNode & { type: "Primitive" } {
+  let frag: HTMLElement;
+
   const classes = ["v-string"];
   if (is_key) classes.push("v-key");
-  const frag = div({ class: classes }, thing);
+
+  if (thing.startsWith("(")) {
+    const end_idx = thing.indexOf(")", 1);
+    const _type = thing.slice(0, end_idx + 1);
+    const _rest = thing.slice(end_idx + 1);
+    frag = div({ class: classes }, [div(".v-string-type", _type), _rest]);
+  } else {
+    frag = div({ class: classes }, thing);
+  }
+
   return { type: "Primitive", frag, path, value: thing };
 }
 
