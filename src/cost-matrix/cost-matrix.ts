@@ -45,15 +45,21 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
         ];
 
         const cost = analogies.find(
-          (a) => a.inputs.includes(row) && a.inputs.includes(col)
-        )!.cost;
+          (a) =>
+            (a.inputs[0] === row && a.inputs[1] === col) ||
+            (a.inputs[1] === row && a.inputs[0] === col)
+        )?.cost;
 
-        const h = Math.round((1 - remap(cost, 0, max_cost, 0, 1)) * 360);
-        const s = 70;
-        const l = 60;
-        const color = `hsl(${h}deg ${s}% ${l}%)`;
+        let color = "none";
 
-        const title = `${cost} (${row}, ${col})`;
+        if (cost !== undefined) {
+          const h = Math.round((1 - remap(cost, 0, max_cost, 0, 1)) * 360);
+          const s = 70;
+          const l = 60;
+          color = `hsl(${h}deg ${s}% ${l}%)`;
+        }
+
+        const title = `${cost ? cost : "-"} (${row}, ${col})`;
 
         return div(
           {

@@ -57,7 +57,7 @@ async function main() {
     )
   );
 
-  document.querySelector("header")!.append(cost_matrix.frag);
+  document.querySelector(".tabs-toggles")!.prepend(cost_matrix.frag);
 }
 
 async function loop() {

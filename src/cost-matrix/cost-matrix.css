@@ -17,6 +17,7 @@
 .cost-matrix-item {
   width: 20px;
   height: 20px;
+  margin: 1px;
   /* background-color: rgb(171, 209, 196); */
   /* border: 1px solid rgba(0, 0, 0, 0.171); */
   overflow: visible;

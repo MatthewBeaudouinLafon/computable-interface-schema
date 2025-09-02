@@ -73,12 +73,15 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
       checkbox({}, "Show primitives inline", () => {
         frag.classList.toggle("show-primitives-inline");
       }),
-      checkbox({}, "Show cost matrix", () => {
+      checkbox({}, "Show cost matrix", (input) => {
         const cost_matrix = document.querySelector(".cost-matrix");
         if (cost_matrix === null) return;
 
-        cost_matrix.classList.toggle("visible");
-        frag.insertBefore(cost_matrix, frag.children[1]);
+        if (input) {
+          cost_matrix.classList.add("visible");
+        } else {
+          cost_matrix.classList.remove("visible");
+        }
       }),
     ],
     10
