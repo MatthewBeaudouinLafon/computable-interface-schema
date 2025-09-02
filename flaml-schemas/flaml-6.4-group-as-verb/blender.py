@@ -20,12 +20,13 @@ from analogylib import Hand
 from joblib import Parallel, delayed
 
 spec_names = [
-  'video-editor',
+  # 'video-editor',
   'calendar',
   'slack',
   'imessage',
   'finder',
   'figma',
+  'kanban-board'
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]
@@ -151,4 +152,3 @@ if __name__ == '__main__':
     f.write(orjson.dumps([analogy[1] for analogy in analogies]))
 
   print('> Done!')
-

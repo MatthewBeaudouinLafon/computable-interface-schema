@@ -367,6 +367,32 @@ def compile_interp(interp: list, type_interps: dict[str,list], type_parents: dic
       type_str = f'({type_name}) ' if type_name is not None else ''
       vprint(f'{node_layer}: {type_str}{node_name}')
 
+  # Label edges based which layer it comes from/gets to
+  for edge in combined_graph.edges:
+    source, target, key = edge
+    source_layer = combined_graph.nodes[source].get('layer')
+    target_layer = combined_graph.nodes[target].get('layer')
+    nx.set_edge_attributes(combined_graph, {
+      edge: {'layers': (source_layer, target_layer)}
+    })
+  
+  # - Assign type parents
+  vprint('\n- Assign parent distances')
+  for node_name, attr in combined_graph.nodes(data=True):
+    ancestry_dist = None
+
+    node_type = attr.get('type')
+    if node_type is not None and node_type in type_ancestry.nodes:
+      ancestry_dist = nx.shortest_path_length(type_ancestry, source=node_type)
+
+      if verbose:
+        vprint(f'({node_type}) {node_name}')
+        pprint.pprint(ancestry_dist)
+        vprint()
+
+    combined_graph.add_node(node_name, ancestry_distances=ancestry_dist)
+
+
   return combined_graph
 
 # ---- Presenting Results ----

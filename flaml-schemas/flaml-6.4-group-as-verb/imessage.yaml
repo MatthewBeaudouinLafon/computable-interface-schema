@@ -6,13 +6,14 @@
           groups: messages
 
 - (gui) chat-view:
-    /marks <>: conversations.active->messages
+    /marks.text <>: conversations.active->messages
     /encoding.vstack <>:
       (linear) time:
         affects: messages, conversations
+    /encoding.left-right-align <>: people
 
 - (gui) convo-view:
-    /marks.text <>: conversations
+    /marks <>: conversations
     /encoding.cluster <>:
       pin:
         groups: conversations

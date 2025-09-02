@@ -1,6 +1,6 @@
 # Google Calendar
 - (gui) week-view:
-    /marks.hline <>: weeks.active->timestamps
+    /marks.hlines <>: weeks.active->timestamps
     /marks.rectangles <>:
       - weeks.active->events
       - (action) select-event:

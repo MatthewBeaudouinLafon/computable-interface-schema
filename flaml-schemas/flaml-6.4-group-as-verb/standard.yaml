@@ -31,11 +31,13 @@
       - (2D) yz-projection
       - (2D) zx-projection
 
-# Views
+# Presentation Layer
+- def (mark)
+- def (encoding) extends (structure)
 - def (presentation):
     group foreach:
-      - (structure) /encoding:
-          affects: /marks
+      - (encoding) /encoding:
+          affects: (mark) /marks
 
 - def (gui) extends (presentation):
     group foreach:
@@ -45,17 +47,21 @@
             - (linear) /encoding.vwrap
             - (linear) /encoding.vstack
             - (linear) /encoding.hstack
-            - /encoding.cluster
+            - (linear) /encoding.voffset
+            - (linear) /encoding.hoffset
             - (2D) /encoding.canvas
-            - /encoding.color
+            - (encoding) /encoding.cluster
+            - (encoding) /encoding.left-right-align
+            - (encoding) /encoding.top-bottom-align
+            - (encoding) /encoding.color
       - /marks:
           subset:
-            - marks.points
-            - marks.hlines
-            - marks.vlines
-            - marks.rectangles
-            - marks.icons
-            - marks.text
+            - (mark) /marks.points
+            - (mark) /marks.hlines
+            - (mark) /marks.vlines
+            - (mark) /marks.rectangles
+            - (mark) /marks.icons
+            - (mark) /marks.text
 
 - def (reader) extends (presentation):
     group foreach:
