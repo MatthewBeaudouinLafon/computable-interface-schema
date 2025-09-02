@@ -27,6 +27,9 @@ MAX_COST = 10000
 BASE_COST = 10
 
 NODE_BASE_COST = BASE_COST
+NODE_TYPE_ANCESTRY_COST = 10
+NODE_TYPE_DIFF_COST = 40
+
 EDGE_BASE_COST = BASE_COST
 
 
@@ -42,20 +45,51 @@ def node_subst_cost(n1, n2):
 
   n1_type = n1.get('type')
   n1_is_standard = n1.get('is_standard')
+  n1_ancestry_dist = n1.get('ancestry_distances')
 
   n2_type = n2.get('type')
   n2_is_standard = n2.get('is_standard')
+  n2_ancestry_dist = n2.get('ancestry_distances')
   
   if n1.get('layer') != n2.get('layer'):
     # different layers shouldn't match
     return MAX_COST
 
   if n1_is_standard or n2_is_standard:
-    # TODO: do "type" "casting" for things like linear->tree
     if n1_type == n2_type:
       return NODE_BASE_COST # same (standard) type, no cost
     else:
-      return NODE_BASE_COST + 30 # different type, there's a cost
+      return NODE_TYPE_DIFF_COST
+
+      # NOTE: The commented block below does fuzzy type matching. It's cool, but
+      # seems to obliterate graph edit distance performance :(
+      # if n1_type is None or n2_type is None:
+      #   return NODE_TYPE_DIFF_COST
+
+      # # n1's type is an ancestor of n2's type
+      # if n2_ancestry_dist is not None and (distance := n2_ancestry_dist.get(n1_type) is not None):
+      #   return distance * NODE_TYPE_ANCESTRY_COST
+      
+      # # n2's type is an ancestor of n1's type
+      # if n1_ancestry_dist is not None and (distance := n1_ancestry_dist.get(n2_type) is not None):
+      #   return distance * NODE_TYPE_ANCESTRY_COST
+      
+      # # check if they have a common ancestor
+      # if n1_ancestry_dist is not None and n2_ancestry_dist is not None:
+      #   common_ancestors = set(n1_ancestry_dist.keys()).intersection(set(n2_ancestry_dist.keys()))
+      #   if len(common_ancestors) > 0:
+      #     # filter the dict for the common ancestors
+      #     n1_common_ancestor_distances = {t:cost for t, cost in n1_ancestry_dist.items() if t in common_ancestors}
+
+      #     # find the closest one. This should be the same if we did it the other way around, because its a dag.
+      #     closest_common_ancestor = min(n1_common_ancestor_distances, key=n1_common_ancestor_distances.get)
+
+      #     n1_travel_cost = n1_ancestry_dist[closest_common_ancestor]
+      #     n2_travel_cost = n2_ancestry_dist[closest_common_ancestor]
+
+      #     # NOTE: this won't be more expensive than not matching types at all.
+      #     return min(NODE_TYPE_DIFF_COST, NODE_TYPE_ANCESTRY_COST * (n1_travel_cost + n2_travel_cost))
+
   else:
     pass # ignore type if they're both custom
 
@@ -268,7 +302,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       print(*args)
 
   if itemized or verbose:
-    vprint('-------- Cost breakdown')
+    print('-------- Cost breakdown')
   
   vprint('-- Nodes in analogy / nodes in graph:')
   num_analogy_nodes = len(analogylib.get_nodes(analogy, None))
@@ -292,7 +326,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       prune_cost += node_subst_cost(sinister_node, dexter_node)
       vprint(f'Pruned: {sinister_name}  <=>  {dexter_name}')
   
-  if itemized and verbose:
+  if itemized or verbose:
     # NOTE: technically this is the cost of substitution (which could depend on eg. types)
     print('---- Node pruning (no cost):', prune_cost)
 
@@ -308,7 +342,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Deleted ({res}): {node}')
       node_deletion_cost += res
   
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Node deletion cost:', node_deletion_cost)
   vprint()
   cost += node_deletion_cost
@@ -325,7 +359,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Inserted ({res}): {node}')
       node_insertion_cost += res
   
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Node insertion cost:', node_insertion_cost)
   vprint()
   cost += node_insertion_cost
@@ -339,7 +373,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
     vprint(f'                  {str(sinister.nodes[sinister_node])} ==> {str(dexter.nodes[dexter_node])}')
     node_substitution_cost += res
 
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Node substitution cost:', node_substitution_cost)
   vprint()
   cost += node_substitution_cost
@@ -361,7 +395,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Deleted edge ({res}): {edge[:2]}')
       edge_deletion_cost += res
   
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Edge Deletion cost:', edge_deletion_cost)
   vprint()
   cost += edge_deletion_cost
@@ -374,7 +408,7 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
       vprint(f'Inserted edge ({res}): {edge[:2]}')
       edge_insertion_cost += res
   
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Edge Deletion cost:', edge_insertion_cost)
   vprint()
   cost += edge_insertion_cost
@@ -390,13 +424,13 @@ def calculate_cost(analogy: Analogy, sinister: nx.MultiDiGraph, dexter: nx.Multi
     vprint(f'')
     edge_substition_cost += res
 
-  if itemized and verbose:
+  if itemized or verbose:
     print('---- Edge substitution cost:', edge_substition_cost)
   vprint()
   cost += edge_substition_cost
 
 
-  if itemized and verbose:
+  if itemized or verbose:
     print(f'------------------\nTotal Cost: {cost}\n')
   return cost
 
@@ -519,16 +553,17 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
 
 if __name__ == '__main__':
   preferred_matches = None
+  # timeout = 3
   timeout = 3*60
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  # sinister_name = 'imessage'
-  # dexter_name = 'slack'
+  sinister_name = 'imessage'
+  dexter_name = 'slack'
   # dexter_name = 'imessage'
 
-  sinister_name = 'calendar'
-  dexter_name = 'video-editor'
+  # sinister_name = 'calendar'
+  # dexter_name = 'video-editor'
   # preferred_matches = {
   #   'events': 'editors/videos'
   # }

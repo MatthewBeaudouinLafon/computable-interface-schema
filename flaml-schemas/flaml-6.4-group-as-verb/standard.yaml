@@ -56,12 +56,12 @@
             - (encoding) /encoding.color
       - /marks:
           subset:
-            - (mark) marks.points
-            - (mark) marks.hlines
-            - (mark) marks.vlines
-            - (mark) marks.rectangles
-            - (mark) marks.icons
-            - (mark) marks.text
+            - (mark) /marks.points
+            - (mark) /marks.hlines
+            - (mark) /marks.vlines
+            - (mark) /marks.rectangles
+            - (mark) /marks.icons
+            - (mark) /marks.text
 
 - def (reader) extends (presentation):
     group foreach:
