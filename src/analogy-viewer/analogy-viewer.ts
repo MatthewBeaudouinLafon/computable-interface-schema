@@ -1,4 +1,4 @@
-import { checkbox, hstack } from "../utilities/ui-utilities";
+import { hstack } from "../utilities/ui-utilities";
 import {
   assert,
   div,
@@ -29,6 +29,7 @@ export type Analogy = {
   analogy: [Record<string, [string, boolean]>, unknown];
   punchline: [string, string][];
   cost: number;
+  conceptual_connectivity: number;
 };
 
 export type AnalogyViewer = {
@@ -64,30 +65,7 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
     ]),
   ]);
 
-  const options = hstack(
-    ".analogy-viewer-options",
-    [
-      checkbox({}, "Show syntax highlighting", () => {
-        frag.classList.toggle("show-syntax-highlighting");
-      }),
-      checkbox({}, "Show primitives inline", () => {
-        frag.classList.toggle("show-primitives-inline");
-      }),
-      checkbox({}, "Show cost matrix", (input) => {
-        const cost_matrix = document.querySelector(".cost-matrix");
-        if (cost_matrix === null) return;
-
-        if (input) {
-          cost_matrix.classList.add("visible");
-        } else {
-          cost_matrix.classList.remove("visible");
-        }
-      }),
-    ],
-    10
-  );
-
-  frag.prepend(options);
+  // frag.prepend(options);
 
   const analogy_viewer: AnalogyViewer = {
     frag,

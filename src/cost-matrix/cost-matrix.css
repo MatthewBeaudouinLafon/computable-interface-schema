@@ -1,13 +1,15 @@
 .cost-matrix {
   display: none;
-  /* position: absolute; */
   bottom: 0px;
   right: 0px;
   flex-direction: column;
-  padding: 20px;
-  padding-top: 120px;
-  padding-left: 100px;
+  padding: 10px;
+  padding-top: 100px;
+  padding-left: 90px;
+  padding-bottom: 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.178);
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .cost-matrix.visible {
@@ -15,13 +17,14 @@
 }
 
 .cost-matrix-item {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   margin: 1px;
   /* background-color: rgb(171, 209, 196); */
   /* border: 1px solid rgba(0, 0, 0, 0.171); */
   overflow: visible;
   position: relative;
+  border-radius: 2px;
 }
 
 .cost-matrix-row {

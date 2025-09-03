@@ -1,5 +1,5 @@
 import { Analogy } from "../analogy-viewer/analogy-viewer";
-import { div, remap } from "../utilities/utilities";
+import { div, get_humane_name, remap } from "../utilities/utilities";
 import "./cost-matrix.css";
 
 export type CostMatrix = {
@@ -31,41 +31,53 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
   cost_matrix.frag.innerHTML = "";
 
   const min_cost = analogies.reduce(
-    (prev, a) => Math.min(prev, a.cost),
+    (prev, a) => Math.min(prev, a.conceptual_connectivity),
     Infinity
   );
-  const max_cost = analogies.reduce((prev, a) => Math.max(prev, a.cost), 0);
+  const max_cost = analogies.reduce(
+    (prev, a) => Math.max(prev, a.conceptual_connectivity),
+    0
+  );
 
   const rows = spec_names.map((row, idx_row) =>
-    div(".cost-matrix-row", [
+    div({ class: "cost-matrix-row", style: {} }, [
       ...spec_names.map((col, idx_col) => {
         const labels = [
-          ...(idx_col === 0 ? [div(".cost-matrix-row-label", row)] : []),
-          ...(idx_row === 0 ? [div(".cost-matrix-col-label", col)] : []),
+          ...(idx_col === 0
+            ? [div(".cost-matrix-row-label", get_humane_name(row))]
+            : []),
+          ...(idx_row === 0
+            ? [div(".cost-matrix-col-label", get_humane_name(col))]
+            : []),
         ];
 
         const cost = analogies.find(
           (a) =>
             (a.inputs[0] === row && a.inputs[1] === col) ||
             (a.inputs[1] === row && a.inputs[0] === col)
-        )?.cost;
+        )?.conceptual_connectivity;
 
         let color = "none";
 
         if (cost !== undefined) {
-          const h = Math.round((1 - remap(cost, 0, max_cost, 0, 1)) * 360);
-          const s = 70;
-          const l = 60;
-          color = `hsl(${h}deg ${s}% ${l}%)`;
+          const n = remap(cost, 0, max_cost, 0, 1);
+          // const h = 210; // Math.round((1 - remap(cost, 0, max_cost, 0, 1)) * 360);
+          // const s = 70;
+          // const l = n * 90;
+          // const opacity = idx_col > idx_row ? 0.5 : 1;
+          // color = `hsl(${h}deg ${s}% ${l}% / ${opacity})`;
+          color = `oklab(${0.5} ${0.1} ${-0.2} / ${n * 0.9})`;
         }
 
-        const title = `${cost ? cost : "-"} (${row}, ${col})`;
+        const title = `${cost !== undefined ? cost : "-"} (${row}, ${col})`;
 
         return div(
           {
             class: "cost-matrix-item",
             title: title,
-            style: { background: color },
+            style: {
+              background: color,
+            },
           },
           labels
         );
