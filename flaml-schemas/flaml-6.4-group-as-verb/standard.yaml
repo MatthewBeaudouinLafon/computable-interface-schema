@@ -1,7 +1,9 @@
 # Structures
 - def (structure)
 
-- def (digraph) extends (structure)
+- def (digraph) extends (structure):
+    group foreach:
+      - /arrows
 
 - def (tree) extends (digraph):
     group foreach:
@@ -32,12 +34,12 @@
       - (2D) zx-projection
 
 # Presentation Layer
-- def (mark)
+# - def (mark)  # this seems to make things significantly worse?
 - def (encoding) extends (structure)
 - def (presentation):
     group foreach:
       - (encoding) /encoding:
-          affects: (mark) /marks
+          affects: /marks
 
 - def (gui) extends (presentation):
     group foreach:
@@ -56,12 +58,12 @@
             - (encoding) /encoding.color
       - /marks:
           subset:
-            - (mark) /marks.points
-            - (mark) /marks.hlines
-            - (mark) /marks.vlines
-            - (mark) /marks.rectangles
-            - (mark) /marks.icons
-            - (mark) /marks.text
+            - /marks.points
+            - /marks.hlines
+            - /marks.vlines
+            - /marks.rectangles
+            - /marks.icons
+            - /marks.text
 
 - def (reader) extends (presentation):
     group foreach:
