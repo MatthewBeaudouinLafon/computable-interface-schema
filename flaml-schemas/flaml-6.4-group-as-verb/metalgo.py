@@ -27,6 +27,7 @@ MAX_COST = 10000
 BASE_COST = 10
 
 NODE_BASE_COST = BASE_COST
+NODE_BOTH_PRES_COST = BASE_COST + 10
 NODE_TYPE_ANCESTRY_COST = 10
 NODE_TYPE_DIFF_COST = 40
 
@@ -59,10 +60,19 @@ def node_subst_cost(n1, n2):
     if n1_type == n2_type:
       return NODE_BASE_COST # same (standard) type, no cost
     else:
+      # try to match different types of views with one another
+      if n1.get('layer') == 'presentation' and n2.get('layer') == 'presentation':
+        # NOTE: we know they're different types at this point.
+        # NOTE: the ancestry stuff could be used for this too but not necessary.
+        # if n1_ancestry_dist is not None and 'presentation' in n1_ancestry_dist:
+        #   if n2_ancestry_dist is not None and 'presentation' in n2_ancestry_dist:
+        #     return NODE_BOTH_PRES_COST
+        return NODE_BOTH_PRES_COST
+
       return NODE_TYPE_DIFF_COST
 
-      # NOTE: The commented block below does fuzzy type matching. It's cool, but
-      # seems to obliterate graph edit distance performance :(
+      # # NOTE: The commented block below does fuzzy type matching. It's cool, but
+      # # seems to obliterate graph edit distance performance :(
       # if n1_type is None or n2_type is None:
       #   return NODE_TYPE_DIFF_COST
 
@@ -553,13 +563,14 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
 
 if __name__ == '__main__':
   preferred_matches = None
-  # timeout = 3
-  timeout = 3*60
+  timeout = 15*60
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
   sinister_name = 'imessage'
-  dexter_name = 'slack'
+  dexter_name = 'calendar'
+
+  # dexter_name = 'slack'
   # dexter_name = 'imessage'
 
   # sinister_name = 'calendar'
@@ -574,9 +585,11 @@ if __name__ == '__main__':
   start = timeit.default_timer()
   analogy, attr = compute_analogy(sinister_graph, dexter_graph, preferred_matches=preferred_matches, timeout=timeout, verbose=True)
   elapsed = timeit.default_timer() - start
+  pprint.pprint(analogy)
   pprint.pprint(attr)
   print(f'Took {elapsed:.2f}s')
 
+  calculate_cost(analogy, sinister_graph, dexter_graph, verbose=True)
   calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True)
 
   # mermaid_graph_in_analogy(analogy, sinister_graph, side='sinister')

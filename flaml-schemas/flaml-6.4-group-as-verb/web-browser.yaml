@@ -1,0 +1,53 @@
+- webpages:
+    group foreach:
+      - /links->webpages
+      - (gui) /view:
+          /marks <>:
+            - /divs
+            - /links
+            - (action) nav-to-link:
+                update:
+                  - webpages.open.active subset> webpages
+                  - webpages.visited
+                directions: web-links
+            - (action) open-in-new-tab:
+                create: tabs.open
+                update:
+                  - tabs.active subset> tabs
+                  - webpages.open.active subset> webpages
+                  - webpages.visited
+                directions: web-links
+          /encoding <>:
+            - (tree) dom:
+                affects: /divs
+      - (reader) page-reader:
+          /marks.spoken <>: /divs
+
+- (digraph) web-links:
+    affects: webpages
+    /arrows =: webpages/links
+
+- (linear) history:
+    affects: webpages.visited
+
+- (gui) open-page-views:
+    /marks <>: webpages.open/view
+
+- tabs =: webpages.open
+- (gui) tabs-view:
+    /marks <>:
+      - tabs
+      - (action) change-tab:
+          update: tabs.active subset> tabs
+    /encoding.hstack <>:
+      (linear) tab-order:
+        affects: tabs
+
+- (action) nav-tabs:
+    update: tabs.active subset> tabs
+    directions: tab-order
+
+- (gui) main-view:
+    /marks <>:
+      - tabs-view
+      - tabs.active/view

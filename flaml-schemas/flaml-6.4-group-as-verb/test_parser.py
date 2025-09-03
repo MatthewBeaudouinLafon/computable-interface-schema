@@ -63,6 +63,7 @@ class TestCompoundObjectParser:
                           [
                             ('a.b.c', rel.SUBSET, 'a.b', dpower.WEAK),
                             ('a.b', rel.SUBSET, 'a', dpower.WEAK),
+                            ('a.b.c', rel.SUBSET, 'a', dpower.WEAK),
                           ])
     
     interp = parser.new_interp()
@@ -154,6 +155,9 @@ class TestCompoundObjectParser:
                             ('a/c.d', rel.SUBSET, 'a/c', dpower.WEAK),
                             ('a/c.d.e', rel.SUBSET, 'a/c.d', dpower.WEAK),
                             ('a/c/f.g', rel.SUBSET, 'a/c/f', dpower.WEAK),
+                            ('a.b/c/f', rel.SUBSET, 'a/c/f', dpower.WEAK),
+                            ('a/c.d/f', rel.SUBSET, 'a/c/f', dpower.WEAK),
+                            ('a/c.d.e/f', rel.SUBSET, 'a/c/f', dpower.WEAK),
                           ])
     
     interp = parser.new_interp()
@@ -165,6 +169,7 @@ class TestCompoundObjectParser:
                             ('a', rel.GROUP_FOREACH, 'a/b', dpower.WEAK),
                             ('c', rel.GROUP_FOREACH, 'c/e', dpower.WEAK),
                             ('c.d', rel.SUBSET, 'c', dpower.WEAK),
+                            ('c.d/e', rel.SUBSET, 'c/e', dpower.WEAK),
                             ('f', rel.GROUP_FOREACH, 'f/g', dpower.WEAK),
                             ('f/g.h', rel.SUBSET, 'f/g', dpower.WEAK),
                             ('a/b->c.d/e->f/g.h', rel.SUBSET, 'f/g.h', dpower.WEAK),
@@ -177,8 +182,10 @@ class TestCompoundObjectParser:
                             ('a.b.c', rel.MAPTO, 'd.e.f', dpower.WEAK),
                             ('d.e.f', rel.MAPTO, 'g.h', dpower.WEAK),
                             ('a.b.c', rel.SUBSET, 'a.b', dpower.WEAK),
+                            ('a.b.c', rel.SUBSET, 'a', dpower.WEAK),
                             ('a.b', rel.SUBSET, 'a', dpower.WEAK),
                             ('d.e.f', rel.SUBSET, 'd.e', dpower.WEAK),
+                            ('d.e.f', rel.SUBSET, 'd', dpower.WEAK),
                             ('d.e', rel.SUBSET, 'd', dpower.WEAK),
                             ('g.h', rel.SUBSET, 'g', dpower.WEAK),
                             ('a.b.c->d.e.f->g.h', rel.SUBSET, 'g.h', dpower.WEAK),
@@ -204,6 +211,7 @@ class TestCompoundObjectParser:
                           [
                             ('b.c/d', rel.SUBSET, 'b.c/d and y.z', dpower.WEAK),
                             ('b.c', rel.SUBSET, 'b', dpower.WEAK),
+                            ('b.c/d', rel.SUBSET, 'b/d', dpower.WEAK),
                             ('b', rel.GROUP_FOREACH, 'b/d', dpower.WEAK),
                             ('y.z', rel.SUBSET, 'b.c/d and y.z', dpower.WEAK),
                             ('y.z', rel.SUBSET, 'y', dpower.WEAK),
@@ -216,6 +224,7 @@ class TestCompoundObjectParser:
                             ('b.c/d', rel.SUBSET, 'b.c/d and y.z->w', dpower.WEAK),
                             ('a', rel.TYPE, 'b.c/d', dpower.STRONG),
                             ('b.c', rel.SUBSET, 'b', dpower.WEAK),
+                            ('b.c/d', rel.SUBSET, 'b/d', dpower.WEAK),
                             ('b', rel.GROUP_FOREACH, 'b/d', dpower.WEAK),
                             ('y.z->w', rel.SUBSET, 'b.c/d and y.z->w', dpower.WEAK),
                             ('x', rel.TYPE, 'y.z', dpower.STRONG),
@@ -241,6 +250,7 @@ class TestCompoundObjectParser:
                             ('editors', rel.GROUP_FOREACH, 'editors/timestamps', dpower.WEAK),
                             ('editors.current', rel.SUBSET, 'editors', dpower.WEAK),
                             ('editors/timestamps.playhead', rel.SUBSET, 'editors/timestamps', dpower.WEAK),
+                            ('editors.current/timestamps', rel.SUBSET, 'editors/timestamps', dpower.WEAK),
                           ])
     
     interp = parser.new_interp()
@@ -278,6 +288,15 @@ class TestCompoundObjectParser:
                             ('numerical->interval-info', rel.SUBSET, 'interval-info', dpower.WEAK),
                             ('numerical->interval-info', rel.SUBSET, 'chart-summary and numerical->dimension-info and numerical->interval-info', dpower.WEAK),
                             ('numerical', rel.MAPTO, 'interval-info', dpower.WEAK),
+                          ])
+    
+    interp = parser.new_interp()
+    parse_str('webpages.open/view', interp=interp)
+    assert compare_declarations(interp, 
+                          [
+                            ('webpages', rel.GROUP_FOREACH, 'webpages/view', dpower.WEAK),
+                            ('webpages.open/view', rel.SUBSET, 'webpages/view', dpower.WEAK),
+                            ('webpages.open', rel.SUBSET, 'webpages', dpower.WEAK),
                           ])
 
 

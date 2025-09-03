@@ -253,6 +253,7 @@ def parse_compound_object(statement: str, parent: str, interp: tuple[list, list]
     assert first_dot_term is not None, f"The first term of this dot sequence is malformed: {phrase} in {statement}"
 
     # Add every term following a `/`
+    # eg. a.b/c.d/e.f => [a, c, e]
     leading_dot_terms = [first_dot_term.group()] + \
       list(map(lambda x: x[1:], re.findall(r'\/[\w\-@]+', phrase)))
 
@@ -281,10 +282,16 @@ def parse_compound_object(statement: str, parent: str, interp: tuple[list, list]
     # subsets nested between slashes mush be prefixed with the appropriate group
     # for namespacing purposes.
     # eg. a.b.c/d.e.f/g.h =>
-    # a.b -SUB-> a   |   a.b.c -SUB-> a.b
-    # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e
+    # a.b -SUB-> a   |   a.b.c -SUB-> a.b         # subset
+
+    # a/d.e -SUB-> a/d  |   a/d.e.f -SUB-> a/d.e  # rhs subsets
     # a/d/g.h -SUB-> a/d/g
-    for idx, slash_term in enumerate(phrase.split('/')):
+
+    # a.b/d/g -SUB-> a/d/g  |   a.b.c/d/g -SUB-> a/d/g  # lhs subsets
+    # a/d.e/g -SUB-> a/d/g  |   a/d.e.f/g -SUB-> a/d/g
+
+    slash_phrases = phrase.split('/')
+    for idx, slash_term in enumerate(slash_phrases):
       prefix = '' if idx == 0 else aggregated_leading_terms[idx-1]+'/'
 
       # a.b.c => [a, a.b, a.b.c]
@@ -293,6 +300,7 @@ def parse_compound_object(statement: str, parent: str, interp: tuple[list, list]
       # [a, a.b, a.b.c] => [prefix/a, prefix/a.b, prefix/a.b.c]
       dot_aggregates = list(map(lambda t: prefix+t, dot_aggregates))
 
+      # rhs subsets
       # iterate through pairs and add an edge.
       # NOTE: we flip the order because larger sequences are subsets of smaller
       # subsequences eg. a.b.c -SUBSET-> a.b
@@ -300,6 +308,19 @@ def parse_compound_object(statement: str, parent: str, interp: tuple[list, list]
       for d_idx, dot_agg in enumerate(dot_aggregates[:-1]):
         next_dot_agg = dot_aggregates[d_idx + 1]
         declare(interp=interp, source=next_dot_agg, relation=rel.SUBSET, target=dot_agg, power=dpower.WEAK)
+      
+      # lhs subsets
+      suffix = ''
+      if idx < len(slash_phrases)-1:
+        suffix = '/' + '/'.join(leading_dot_terms[idx+1:])
+        
+      # NOTE: a side effect of this code is that it will parse
+      # a.b.c.d => (normal incremental chain) + a.b.c.d -SUBSET-> a
+      # which is... fine. Not what this code is supposed to do but ¯\_(ツ)_/¯
+      for d_idx, dot_agg in enumerate(dot_aggregates[1:]):
+        dot_in_context = dot_agg + suffix
+        declare(interp=interp, source=dot_in_context, relation=rel.SUBSET, target=aggregated_leading_terms[-1], power=dpower.WEAK)
+
 
   return rebuilt_statement
 
