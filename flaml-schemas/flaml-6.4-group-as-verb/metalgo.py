@@ -578,6 +578,9 @@ if __name__ == '__main__':
   # preferred_matches = {
   #   'events': 'editors/videos'
   # }
+
+  sinister_name = 'slides'
+  dexter_name = 'figma'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')

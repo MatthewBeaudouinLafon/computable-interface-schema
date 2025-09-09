@@ -56,8 +56,10 @@
             - (encoding) /encoding.left-right-align
             - (encoding) /encoding.top-bottom-align
             - (encoding) /encoding.color
+            - (encoding) /encoding.tree-vis
       - /marks:
           subset:
+            - /marks.hitboxes
             - /marks.points
             - /marks.hlines
             - /marks.vlines

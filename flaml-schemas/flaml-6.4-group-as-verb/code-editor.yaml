@@ -1,0 +1,52 @@
+# VSCode
+- files:
+    group foreach:
+      - (linear) /buffer:
+          affects: /characters, /cursor
+          cover: /tokens
+      - (tree) /ast:
+          affects: /tokens
+      - token-types:
+          groups: tokens
+      - (gui) /editor:
+          /marks.text: /characters
+          /encoding.hwrap: /buffer
+          /encoding.color: token-types
+      - (action) /write:
+          create: /characters
+      - (action) /delete:
+          delete: /characters
+      - (action) move-cursor:
+          update:
+            - /buffer affects> /cursor
+            - match-scoring affects> /tokens.variables
+          directions: /buffer
+
+      - (gui) /auto-complete-list:
+          - /marks.text: /tokens.variables
+          - /encoding.vstack:
+              (linear) match-scoring:
+                affects: /tokens.variables
+
+- (gui) tabs:
+    /marks: files.open/editor
+    /encoding.hstack: (linear) tab-order
+
+- (gui) open-editor:
+    /marks: files.open.active/editor
+
+- (action) open-file:
+    create: files.open
+- (action) close-file:
+    delete: files.open.selected
+- (action) change-tabs:
+    update: files.open.active
+
+- (tree) file-system:
+    affects: files and folders
+    covers: folders, paths
+    /internal-nodes: folders
+    /leaves: files
+- (gui) file-viewer:
+    /marks.text: files and folders
+    /encoding.tree-vis: file-system

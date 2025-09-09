@@ -18,10 +18,13 @@
                   - webpages.visited
                 directions: web-links
           /encoding <>:
-            - (tree) dom:
+            - (tree) /dom:
                 affects: /divs
       - (reader) page-reader:
-          /marks.spoken <>: /divs
+          /marks.spoken <>: /divs.active
+      - (action) nav-div:
+          update: /divs.active subset> /divs
+          directions: /dom
 
 - (digraph) web-links:
     affects: webpages

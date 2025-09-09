@@ -1,0 +1,15 @@
+# Tabs design pattern on a generic subject
+- subjects:
+    group foreach>:
+      - (gui) /view
+
+- (gui) tabs-view:
+    /marks <>:
+      - subjects
+      - (action) change-tab:
+          update>: subjects.active subset> subjects
+    /encoding.stack <>:
+      (linear) tabs-order:
+        affects>: subjects
+- (gui) main-view:
+    /marks <>: subjects.active/view

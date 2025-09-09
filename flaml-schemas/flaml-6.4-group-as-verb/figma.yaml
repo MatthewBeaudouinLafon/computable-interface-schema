@@ -1,3 +1,4 @@
+# components?
 - pages:
     group foreach:
       - layers =: frames and shapes and text # TODO: components
@@ -11,6 +12,11 @@
                   - (action) navigate-prototype:
                       update: frames.in-prototype.current subset> frames
                       directions: prototype-links
+
+      - (action) create-layer:
+          create: layers
+      - (action) delete-layer:
+          delete: layers
 
       - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
           group foreach:
@@ -26,14 +32,22 @@
           /marks.points: points
           /marks.icons: collaborators/cursor
           /marks.regions: layers
-          /encoding.canvas: canvas
+          /marks.hitboxes:
+            - (action) select-layer:
+                update: layers.selected subset> layers
+            - (action) move-layer:
+                update: /canvas cover> layers.selected
+                directions: /canvas
+          /encoding.canvas: canvas # could do z-order based on breadth-first-ordering of layers
 
-      - (digraph) prototype-links: # related to
+      - (digraph) prototype-links:
           affects: frames.in-prototype
 
       - (gui) prototype-canvas-view:
           /marks.points: points
-          /marks.regions: layers
+          /marks.regions:
+            - layers
+            - move-layer
           /marks.icons: collaborators/cursor
           /encoding.canvas: canvas
           /encoding.arrows: prototype-links
@@ -55,7 +69,11 @@
             affects: layers
 
       - (gui) layer-panel:
-          /marks.text: layers
+          /marks.text:
+            - layers
+            - select-layer
+            - (action) reorder-layers:
+                update: layer-hierarchy affects> layers
           /encoding.vstack: layer-hierarchy/depth-first-search-order
           /encoding.hoffset: layer-hierarchy/depth-order
 
@@ -66,7 +84,7 @@
 - (gui) canvas-view =: pages.active->canvas-view
 - (gui) inspector-view =: pages.active->inspector-view
 
-- (gui) change-page:
+- (action) change-page:
     update: pages.active subset> pages
 
 - (gui) pages-view:
