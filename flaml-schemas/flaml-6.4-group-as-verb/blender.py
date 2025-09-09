@@ -20,13 +20,16 @@ from analogylib import Hand
 from joblib import Parallel, delayed
 
 spec_names = [
-  # 'video-editor',
+  'video-editor',
   'calendar',
   'slack',
   'imessage',
   'finder',
   'figma',
-  'kanban-board'
+  'kanban-board',
+  'slides',
+  'web-browser',
+  'code-editor',
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]
