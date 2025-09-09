@@ -1,36 +1,36 @@
-<svg width="444" height="329" viewBox="0 0 444 329" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="445" height="329" viewBox="0 0 445 329" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="imessage">
 <g id="BACKGROUND">
-<rect id="image 36" x="230.045" y="0.122192" width="213.766" height="281.514" fill="url(#pattern0_56_32)"/>
-<rect id="image 194" x="0.314209" y="31.723" width="213.766" height="296.809" fill="url(#pattern1_56_32)"/>
-<rect id="image 195" x="0.314209" y="0.122192" width="213.766" height="31.6008" fill="url(#pattern2_56_32)"/>
+<rect id="image 36" x="230.857" width="213.766" height="281.514" fill="url(#pattern0_56_32)"/>
+<rect id="image 194" x="1.12598" y="31.6008" width="213.766" height="296.809" fill="url(#pattern1_56_32)"/>
+<rect id="image 195" x="1.12598" width="213.766" height="31.6008" fill="url(#pattern2_56_32)"/>
 </g>
 <g id="conversations">
-<rect id="Rectangle 1" x="4.8479" y="183.574" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 2" x="4.8479" y="231.392" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 3" x="4.8479" y="279.211" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 4" x="12.1887" y="31.3544" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 5" x="81.8013" y="31.3544" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 6" x="149.873" y="31.3544" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 7" x="149.873" y="107.464" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 8" x="81.8013" y="107.464" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 9" x="12.1887" y="107.464" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 1" x="4.65967" y="183.452" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 2" x="4.65967" y="231.27" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 3" x="4.65967" y="279.089" width="204.002" height="44.6786" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 4" x="12.0005" y="31.2322" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 5" x="81.613" y="31.2322" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 6" x="149.684" y="31.2322" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 7" x="149.684" y="107.342" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 8" x="81.613" y="107.342" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 9" x="12.0005" y="107.342" width="54.4106" height="68.0973" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
 </g>
 <g id="conversations.active-&#62;messages">
-<rect id="Rectangle 2_2" x="235.957" y="63.6025" width="140.19" height="44.6312" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 4_2" x="235.957" y="153.603" width="138.473" height="32.4004" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 5_2" x="235.957" y="204.603" width="144.606" height="54.2495" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 3_2" x="285.64" y="110.687" width="153.802" height="40.9768" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 2_2" x="235.769" y="63.4803" width="140.19" height="44.6312" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 4_2" x="235.769" y="153.48" width="138.473" height="32.4004" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 5_2" x="235.769" y="204.48" width="144.606" height="54.2495" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 3_2" x="285.452" y="110.565" width="153.802" height="40.9768" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
 </g>
-<rect id="chat-view" x="231.688" y="46.2682" width="210.857" height="282.003" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="convo-view" x="0.688232" y="24.5328" width="211.565" height="303.739" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="chat-view" x="231.5" y="46.146" width="210.857" height="282.003" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="convo-view" x="0.5" y="24.4106" width="211.565" height="303.739" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
 <g id="time">
-<path id="Arrow 1" d="M431.195 319.604C431.585 319.994 432.218 319.994 432.609 319.604L438.973 313.24C439.363 312.849 439.363 312.216 438.973 311.825C438.582 311.435 437.949 311.435 437.559 311.825L431.902 317.482L426.245 311.825C425.854 311.435 425.221 311.435 424.831 311.825C424.44 312.216 424.44 312.849 424.831 313.24L431.195 319.604ZM431.902 63.5316L430.902 63.5316L430.902 318.897L431.902 318.897L432.902 318.897L432.902 63.5316L431.902 63.5316Z" fill="#649FE3"/>
-<path id="Arrow 2" d="M198.195 318.604C198.585 318.994 199.218 318.994 199.609 318.604L205.973 312.24C206.363 311.849 206.363 311.216 205.973 310.826C205.582 310.435 204.949 310.435 204.559 310.826L198.902 316.482L193.245 310.826C192.854 310.435 192.221 310.435 191.831 310.826C191.44 311.216 191.44 311.849 191.831 312.24L198.195 318.604ZM198.902 187.28L197.902 187.28L197.902 317.897L198.902 317.897L199.902 317.897L199.902 187.28L198.902 187.28Z" fill="#649FE3"/>
+<path id="Arrow 1" d="M431.007 319.481C431.397 319.872 432.03 319.872 432.421 319.481L438.785 313.117C439.175 312.727 439.175 312.094 438.785 311.703C438.394 311.313 437.761 311.313 437.37 311.703L431.714 317.36L426.057 311.703C425.666 311.313 425.033 311.313 424.643 311.703C424.252 312.094 424.252 312.727 424.643 313.117L431.007 319.481ZM431.714 63.4094L430.714 63.4094L430.714 318.774L431.714 318.774L432.714 318.774L432.714 63.4094L431.714 63.4094Z" fill="#649FE3"/>
+<path id="Arrow 2" d="M198.007 318.482C198.397 318.872 199.03 318.872 199.421 318.482L205.785 312.118C206.175 311.727 206.175 311.094 205.785 310.703C205.394 310.313 204.761 310.313 204.37 310.703L198.714 316.36L193.057 310.703C192.666 310.313 192.033 310.313 191.643 310.703C191.252 311.094 191.252 311.727 191.643 312.118L198.007 318.482ZM198.714 187.158L197.714 187.158L197.714 317.774L198.714 317.774L199.714 317.774L199.714 187.158L198.714 187.158Z" fill="#649FE3"/>
 </g>
 <g id="pin">
-<rect id="Rectangle 2_3" x="5.09631" y="28.6742" width="203.379" height="150.266" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
-<rect id="Rectangle 3_3" x="0.5" y="-0.5" width="203.379" height="140.247" rx="2.5" transform="matrix(1 0 0 -1 4.59631 322.687)" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 2_3" x="4.90808" y="28.552" width="203.379" height="150.266" rx="2.5" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
+<rect id="Rectangle 3_3" x="0.5" y="-0.5" width="203.379" height="140.247" rx="2.5" transform="matrix(1 0 0 -1 4.40808 322.565)" fill="#3B96FF" fill-opacity="0.1" stroke="#649FE3"/>
 </g>
 </g>
 <defs>

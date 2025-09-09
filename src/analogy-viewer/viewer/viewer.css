@@ -80,7 +80,7 @@
 }
 
 .show-syntax-highlighting .v-string-type {
-  color: #c95013;
+  color: rgb(201, 80, 19);
 }
 
 .v-obj,
@@ -137,7 +137,7 @@
 }
 
 .show-syntax-highlighting .v-string.v-key {
-  color: #259a0e;
+  color: rgb(37, 154, 14);
 }
 
 .v-array > * {

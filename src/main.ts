@@ -4,8 +4,9 @@ import {
   Spec,
 } from "./analogy-viewer/analogy-viewer";
 import { SpecPath } from "./analogy-viewer/viewer/viewer";
+import { make_cost_matrix } from "./cost-matrix/cost-matrix";
 import "./style.css";
-import { vtabs } from "./utilities/ui-utilities";
+import { checkbox, hstack, vtabs } from "./utilities/ui-utilities";
 import { get_humane_name } from "./utilities/utilities";
 
 async function main() {
@@ -42,6 +43,8 @@ async function main() {
     )
   );
 
+  const cost_matrix = make_cost_matrix(analogies);
+
   const app = document.getElementById("app")!;
 
   app.append(
@@ -53,6 +56,33 @@ async function main() {
       ])
     )
   );
+
+  document.querySelector(".tabs-toggles")!.prepend(cost_matrix.frag);
+
+  const options = hstack(
+    ".analogy-viewer-options",
+    [
+      checkbox({}, "Show syntax highlighting", () => {
+        app.classList.toggle("show-syntax-highlighting");
+      }),
+      checkbox({}, "Show primitives inline", () => {
+        app.classList.toggle("show-primitives-inline");
+      }),
+      checkbox({}, "Show cost matrix", (input) => {
+        const cost_matrix = document.querySelector(".cost-matrix");
+        if (cost_matrix === null) return;
+
+        if (input) {
+          cost_matrix.classList.add("visible");
+        } else {
+          cost_matrix.classList.remove("visible");
+        }
+      }),
+    ],
+    10
+  );
+
+  document.querySelector("header")!.append(options);
 }
 
 async function loop() {
