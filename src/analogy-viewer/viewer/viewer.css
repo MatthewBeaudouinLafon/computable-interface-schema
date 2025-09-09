@@ -137,7 +137,7 @@
 }
 
 .show-syntax-highlighting .v-string.v-key {
-  color: rgb(37, 154, 14);
+  color: #2476d3;
 }
 
 .v-array > * {
