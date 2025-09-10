@@ -30,6 +30,7 @@ export type Analogy = {
   punchline: [string, string][];
   cost: number;
   conceptual_connectivity: number;
+  stdout: string[];
 };
 
 export type AnalogyViewer = {
@@ -52,11 +53,12 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
   const frag = hstack(".analogy-viewer", [
     pre(
       ".analogy-info",
-      `Cost: ${analogy.cost}\n\n` +
-        `Analogy Punchline (unpruned conceptual nodes only):\n` +
-        analogy.punchline
-          .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
-          .join("\n")
+      analogy.stdout.join("\n")
+      // `Cost: ${analogy.cost}\n\n` +
+      //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
+      //   analogy.punchline
+      //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+      //     .join("\n")
     ),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
