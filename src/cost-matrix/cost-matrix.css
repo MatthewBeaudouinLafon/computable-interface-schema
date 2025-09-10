@@ -25,6 +25,11 @@
   overflow: visible;
   position: relative;
   border-radius: 2px;
+  cursor: pointer;
+}
+
+.cost-matrix-item:hover {
+  border: 2px solid rgba(0, 0, 0, 0.297);
 }
 
 .cost-matrix-row {
@@ -46,4 +51,8 @@
   left: 0px;
   white-space: pre;
   writing-mode: sideways-lr;
+}
+
+.cost-matrix-item.active {
+  border: 2px solid black;
 }

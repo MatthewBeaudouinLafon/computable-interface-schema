@@ -310,3 +310,7 @@ export function remap(
 ) {
   return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
 }
+
+export function get_humane_pair_name(a: string, b: string) {
+  return `${get_humane_name(a)} / ${get_humane_name(b)}`;
+}

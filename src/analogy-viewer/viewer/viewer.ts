@@ -62,7 +62,6 @@ async function render_ui_image(viewer: Viewer) {
   svg.removeAttribute("height");
   if (svg.children.length > 0) {
     [...svg.children[0].children].forEach((c) => {
-      console.log(c);
       if (typeof c.id === "string") {
         c.id = sanitize_name(c.id);
       }

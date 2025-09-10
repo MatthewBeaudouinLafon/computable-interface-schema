@@ -1,5 +1,12 @@
 import "./ui-utilities.css";
-import { div, el, get_id, setup_drag, type ElementProps } from "./utilities";
+import {
+  assert,
+  div,
+  el,
+  get_id,
+  setup_drag,
+  type ElementProps,
+} from "./utilities";
 
 export function stack_resizable(
   stack_type: "horizontal" | "vertical",
@@ -85,7 +92,6 @@ export function tabs(
   );
   const toggles_container = div(".tabs-toggles", children);
 
-  // Setup a toggle to go between code and diagram editor
   const toggle_handler = (active: number) => {
     const toggles = [...children] as HTMLElement[];
 
@@ -109,7 +115,13 @@ export function tabs(
       panes.map((pane) => pane[1])
     ),
   ]);
+
   ret.classList.add("tabs");
+  ret.addEventListener("switch-tab", (e: Event) => {
+    assert("detail" in e);
+    toggle_handler(e.detail as number);
+  });
+
   return ret;
 }
 
@@ -166,7 +178,8 @@ export function vstack(
 export function checkbox(
   props: ElementProps = {},
   name: string,
-  on_click?: (val: boolean, el: EventTarget | null) => void
+  on_click?: (val: boolean, el: EventTarget | null) => void,
+  default_bool: boolean = false
 ) {
   const id = get_id();
   const input = el("input", ".checkbox-input") as HTMLInputElement;
@@ -175,6 +188,12 @@ export function checkbox(
   input.id = id;
   input.setAttribute("type", "checkbox");
   label.setAttribute("for", id);
+
+  input.checked = default_bool;
+
+  if (default_bool) {
+    on_click?.(input.checked, input);
+  }
 
   input.addEventListener("change", (e) => {
     on_click?.(input.checked, e.target);

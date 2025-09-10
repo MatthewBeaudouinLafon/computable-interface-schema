@@ -7,7 +7,7 @@ import { SpecPath } from "./analogy-viewer/viewer/viewer";
 import { make_cost_matrix } from "./cost-matrix/cost-matrix";
 import "./style.css";
 import { checkbox, hstack, vtabs } from "./utilities/ui-utilities";
-import { get_humane_name } from "./utilities/utilities";
+import { get_humane_pair_name } from "./utilities/utilities";
 
 async function main() {
   const specs = (await (await fetch("./specs.json")).json()) as Record<
@@ -45,17 +45,55 @@ async function main() {
 
   const cost_matrix = make_cost_matrix(analogies);
 
+  const tabs = vtabs(
+    ".app-tabs",
+    analogy_viewers.map((v) => [
+      get_humane_pair_name(v.a.name, v.b.name),
+      v.frag,
+    ])
+  );
+
+  const tab_items = [
+    ...tabs.querySelectorAll(".tabs-toggles > *:not(.cost-matrix)"),
+  ] as HTMLElement[];
+
+  const cells = [
+    ...cost_matrix.frag.querySelectorAll(".cost-matrix-item"),
+  ] as HTMLElement[];
+
+  cells.forEach((cell) => {
+    const index = tab_items.findIndex(
+      (item) =>
+        item.innerText === cell.dataset.name ||
+        item.innerText === cell.dataset.alt_name
+    );
+    if (index === -1) return;
+
+    cell.addEventListener("click", () => {
+      tabs.dispatchEvent(new CustomEvent("switch-tab", { detail: index }));
+
+      cells.forEach((c) => c.classList.remove("active"));
+      cells
+        .filter(
+          (c) =>
+            c.dataset.name === cell.dataset.name ||
+            c.dataset.alt_name === cell.dataset.name
+        )
+        .forEach((c) => c.classList.add("active"));
+    });
+  });
+
+  cells
+    .filter(
+      (c) =>
+        c.dataset.name === tab_items[0].innerText ||
+        c.dataset.alt_name === tab_items[0].innerText
+    )
+    .forEach((c) => c.classList.add("active"));
+
   const app = document.getElementById("app")!;
 
-  app.append(
-    vtabs(
-      ".app-tabs",
-      analogy_viewers.map((v) => [
-        `${get_humane_name(v.a.name)} / ${get_humane_name(v.b.name)}`,
-        v.frag,
-      ])
-    )
-  );
+  app.append(tabs);
 
   document.querySelector(".tabs-toggles")!.prepend(cost_matrix.frag);
 
@@ -68,16 +106,21 @@ async function main() {
       checkbox({}, "Show primitives inline", () => {
         app.classList.toggle("show-primitives-inline");
       }),
-      checkbox({}, "Show cost matrix", (input) => {
-        const cost_matrix = document.querySelector(".cost-matrix");
-        if (cost_matrix === null) return;
+      checkbox(
+        {},
+        "Show cost matrix",
+        (input) => {
+          const cost_matrix = document.querySelector(".cost-matrix");
+          if (cost_matrix === null) return;
 
-        if (input) {
-          cost_matrix.classList.add("visible");
-        } else {
-          cost_matrix.classList.remove("visible");
-        }
-      }),
+          if (input) {
+            cost_matrix.classList.add("visible");
+          } else {
+            cost_matrix.classList.remove("visible");
+          }
+        },
+        true
+      ),
     ],
     10
   );

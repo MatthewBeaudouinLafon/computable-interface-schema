@@ -1,5 +1,10 @@
 import { Analogy } from "../analogy-viewer/analogy-viewer";
-import { div, get_humane_name, remap } from "../utilities/utilities";
+import {
+  div,
+  get_humane_name,
+  get_humane_pair_name,
+  remap,
+} from "../utilities/utilities";
 import "./cost-matrix.css";
 
 export type CostMatrix = {
@@ -78,6 +83,10 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
             style: {
               background: color,
             },
+            data: [
+              ["name", get_humane_pair_name(row, col)],
+              ["alt_name", get_humane_pair_name(col, row)],
+            ],
           },
           labels
         );
