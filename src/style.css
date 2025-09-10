@@ -86,3 +86,8 @@ hr {
 pre {
   margin: 5px 0px;
 }
+
+.viewer-ui > .container {
+  max-width: 109px;
+  max-height: 3px;
+}
