@@ -3,7 +3,8 @@
     group foreach:
       - layers =: frames and shapes and text # TODO: components
       - layers:
-          groups foreach: /properties
+          groups foreach:
+            - /properties
 
       - frames:
           mapto:
@@ -20,6 +21,7 @@
 
       - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
           group foreach:
+            - /cursor
             - /cursor->pages->points # TODO: connect with standard gui. Maybe inherits from mouse?
             - (action) /move-cursor:
                 update: pages/canvas affects> /cursor
@@ -38,7 +40,7 @@
             - (action) move-layer:
                 update: /canvas cover> layers.selected
                 directions: /canvas
-          /encoding.canvas: canvas # could do z-order based on breadth-first-ordering of layers
+          /encoding.canvas: /canvas # could do z-order based on breadth-first-ordering of layers
 
       - (digraph) prototype-links:
           affects: frames.in-prototype
@@ -79,7 +81,7 @@
 
       - (gui) inspector-panel:
           /marks: layers.selected/properties
-          /encoding.vstack: _
+          /encoding.vstack: (linear) property-order
 
 - (gui) canvas-view =: pages.active->canvas-view
 - (gui) inspector-view =: pages.active->inspector-view

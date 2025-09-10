@@ -10,7 +10,7 @@
               cover: /elements
       - (action) /move-element:
           update: /canvas cover> /element
-          directions: canvas
+          directions: /canvas
       - (action) /create-element:
           create: /elements
       - (action) /delete-element:
@@ -20,7 +20,7 @@
           /marks: /elements
           /marks.hitboxes:
             - /move-element
-            - (action) select-element:
+            - (action) /select-element:
                 update: /elements.selected subset> /elements
           /encoding.canvas: /canvas
 

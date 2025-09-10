@@ -33,6 +33,10 @@
 - (linear) history:
     affects: webpages.visited
 
+- (action) nav-history:
+    update: webpages.open.active subset> webpages.visited
+    directions: history
+
 - (gui) open-page-views:
     /marks <>: webpages.open/view
 
