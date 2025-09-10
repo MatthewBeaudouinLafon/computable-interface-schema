@@ -30,6 +30,7 @@ spec_names = [
   'slides',
   'web-browser',
   'code-editor',
+  'tabs-pattern',
   # olli/datanavigator
   # TODO: compare powerpoint with Figma!
 ]
@@ -70,12 +71,29 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
 
   stdout.append('\n> Analogy Punchline (unpruned conceptual nodes only):')
 
-  for sinister_node, dexter in analogy[0].items():
-    is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
-    dexter_node, is_pruned = dexter
-    if is_conceptual and not is_pruned:
+  analogy_graph = analogylib.graph_from_analogy(analogy, side=analogylib.Hand.SINISTER)
+  for isolate in nx.connected_components(analogy_graph.to_undirected()):
+    added_something = False
+    for sinister_node in isolate:
+      is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
+      dexter_node = analogylib.get_analogous_node(analogy, sinister_node)
+      is_pruned = analogylib.get_is_pruned(analogy, sinister_node)
+      if is_conceptual and not is_pruned:
+        added_something = True
         punchline.append([sinister_node, dexter_node])
         stdout.append(f"{sinister_node:>30} <=> {dexter_node:<30}")
+
+    if added_something:
+      punchline.append(None)
+      stdout.append(f'\n')
+
+  # stdout.append(f'OLD')
+  # for sinister_node, dexter in analogy[0].items():
+  #   is_conceptual = sinister_graph.nodes[sinister_node]['layer'] == 'conceptual'
+  #   dexter_node, is_pruned = dexter
+  #   if is_conceptual and not is_pruned:
+  #       punchline.append([sinister_node, dexter_node])
+  #       stdout.append(f"{sinister_node:>30} <=> {dexter_node:<30}")
 
   # Note: Cannot print to stdout in multithreaded apps without it being jumbled, so I've set the verbose to False
   # stdout.append('> Itemized Cost:') 
