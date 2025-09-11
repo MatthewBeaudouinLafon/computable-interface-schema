@@ -100,6 +100,7 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
   cost = metalgo.calculate_cost(analogy, sinister_graph, dexter_graph, itemized=True, verbose=False)
   num_analogy_edges = len(analogylib.get_edges(analogy, side=Hand.SINISTER))
   conceptual_connectivity = metalgo.conceptual_connectivity(analogy, sinister_graph)
+  score = metalgo.score_analogy(analogy, sinister_graph)
 
   stdout.append(f'> Summary:')
   stdout.append('num-iterations  : ' + str(len(iterations['times'])))
@@ -108,6 +109,7 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
   stdout.append('total-cost      : ' + str(cost))
   stdout.append('analogy-edges   : ' + str(num_analogy_edges))
   stdout.append('conceptual-edges: ' + str(conceptual_connectivity))
+  stdout.append('score: ' + str(score))
   stdout.append('> Summary end\n')
 
   dump = { "inputs": [sinister_name, dexter_name], 

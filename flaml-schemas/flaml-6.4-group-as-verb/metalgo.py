@@ -10,12 +10,19 @@ import enum
 import pprint
 import timeit
 import math
+import argparse
 
 import networkx as nx
 import compiler
 import analogylib
 from analogylib import Analogy, Hand
 from parser import rel
+
+argp = argparse.ArgumentParser(
+                    prog='Interface Schema Compiler',
+                    description='Prints mermaid diagram for provided files. Default is calendar.yaml.')
+argp.add_argument('filenames', action='append')
+argp.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
 
 # ----- Analogy Computation
 # The networkx algorithm tries to minimize costs. 
@@ -489,6 +496,48 @@ def conceptual_connectivity(analogy: Analogy, graph: nx.MultiDiGraph, side=Hand.
     print(f'\n-- Total: {len(conceptual_edges)}')
   
   return len(conceptual_edges)
+
+def get_conceptual_adjacent_edges(graph: nx.MultiDiGraph):
+  assert isinstance(graph, nx.MultiDiGraph)
+
+  res = []
+  for edge in graph.edges(data=True):
+    source, target, attr = edge
+    source_layer, target_layer = attr['layers']
+    if source_layer == 'conceptual' or target_layer == 'conceptual':
+      res.append(edge)
+  
+  return res
+
+def score_analogy(analogy: Analogy, smaller_graph: nx.MultiDiGraph, side=Hand.SINISTER) -> int | None:
+  cae = get_conceptual_adjacent_edges(smaller_graph)
+  
+  analogy_count = 0
+  max_count = len(cae)
+  # assert max_count > 0
+  if max_count == 0:
+    # HACK: on the off-chance this metric doesn't work, no time to test...
+    return None
+
+  for edge in cae:
+    # HACK: this is the format that analogies store edges in, it'd be nice to
+    # have a better abstraction of edges so we don't have to do this but eh
+    source, target, attr = edge
+    formatted_edge = (source, target, 0)
+
+    in_analogy = False
+    if side == Hand.SINISTER:
+      in_analogy = analogylib.is_edge_in_sinister(analogy, formatted_edge)
+    else:
+      # HACK: TODO: check that it is actually DEXTER...
+      in_analogy = analogylib.is_edge_in_dexter(analogy, formatted_edge)
+
+    if in_analogy:
+      analogy_count += 1
+  
+  return analogy_count / max_count
+
+  
   
 
 
