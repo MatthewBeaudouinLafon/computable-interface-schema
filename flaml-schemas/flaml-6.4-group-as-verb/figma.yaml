@@ -1,90 +1,94 @@
 # components?
 - pages:
     group foreach:
-      - layers =: frames and shapes and text # TODO: components
-      - layers:
+      - /layers:
+          subsets:
+            - /frames
+            - /shapes
+            - /text # TODO: components
+      - /layers:
           groups foreach:
             - /properties
 
-      - frames:
+      - /frames:
           mapto:
-            - (action) prototype-actions:
-                subset:
-                  - (action) navigate-prototype:
-                      update: frames.in-prototype.current subset> frames
-                      directions: prototype-links
+            - (action) /navigate-prototype:
+                update: /frames.in-prototype.current subset> /frames
+                directions: /prototype-links
+            # - (action) /prototype-actions:
+            #     subset:
 
       - (action) create-layer:
-          create: layers
+          create: /layers
       - (action) delete-layer:
-          delete: layers
+          delete: /layers
 
-      - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
-          group foreach:
-            - /cursor
-            - /cursor->pages->points # TODO: connect with standard gui. Maybe inherits from mouse?
-            - (action) /move-cursor:
-                update: pages/canvas affects> /cursor
+      # - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
+      #     group foreach:
+      #       - /cursor
+      #       - /cursor->pages->points # TODO: connect with standard gui. Maybe inherits from mouse?
+      #       - (action) /move-cursor:
+      #           update: pages/canvas affects> /cursor
 
       - (2D) /canvas:
-          affects: points, active_users/cursor
-          covers: layers
+          affects: /points #, active_users/cursor
+          covers: /layers
 
-      - (gui) canvas-view:
-          /marks.points: points
-          /marks.icons: collaborators/cursor
-          /marks.regions: layers
+      - (gui) /canvas-view:
+          /marks.points: /points
+          # /marks.icons: collaborators/cursor
+          /marks.regions: /layers
           /marks.hitboxes:
             - (action) select-layer:
-                update: layers.selected subset> layers
+                update: /layers.selected subset> /layers
             - (action) move-layer:
-                update: /canvas cover> layers.selected
+                update: /canvas cover> /layers.selected
                 directions: /canvas
           /encoding.canvas: /canvas # could do z-order based on breadth-first-ordering of layers
 
-      - (digraph) prototype-links:
-          affects: frames.in-prototype
+      - (digraph) /prototype-links:
+          affects: /frames.in-prototype
 
       - (gui) prototype-canvas-view:
-          /marks.points: points
+          /marks.points: /points
           /marks.regions:
-            - layers
+            - /layers
             - move-layer
-          /marks.icons: collaborators/cursor
-          /encoding.canvas: canvas
-          /encoding.arrows: prototype-links
+          # /marks.icons: collaborators/cursor
+          /encoding.canvas: /canvas
+          /encoding.arrows: /prototype-links
 
       - (gui) prototype-window:
           /marks:
-            - frames.in-prototype.current
-            - frames.in-prototype.current->layers
-            - frames.in-prototype.current->prototype-actions
+            - /frames.in-prototype.current
+            - /frames.in-prototype.current->/layers
+            - /frames.in-prototype.current->/navigate-prototype
           /encoding.canvas: canvas
 
-      - (tree) layer-hierarchy:
-          affects: layers
-          /parents =: frames
-          /leaves =: shapes and text
+      - (tree) /layer-hierarchy:
+          affects: /layers
+          # /parents =: /frames
+          # /leaves =: /shapes and /text
           /depth-first-search-order:
-            affects: layers
+            affects: /layers
           /depth-order:
-            affects: layers
+            affects: /layers
 
-      - (gui) layer-panel:
+      - (gui) /layer-panel:
           /marks.text:
-            - layers
+            - /layers
             - select-layer
             - (action) reorder-layers:
-                update: layer-hierarchy affects> layers
-          /encoding.vstack: layer-hierarchy/depth-first-search-order
-          /encoding.hoffset: layer-hierarchy/depth-order
+                update: /layer-hierarchy affects> /layers
+          /encoding.vstack: /layer-hierarchy/depth-first-search-order
+          /encoding.hoffset: /layer-hierarchy/depth-order
 
-      - (gui) inspector-panel:
-          /marks: layers.selected/properties
+      - (gui) /inspector-panel:
+          /marks: /layers.selected/properties
           /encoding.vstack: (linear) property-order
 
-- (gui) canvas-view =: pages.active->canvas-view
-- (gui) inspector-view =: pages.active->inspector-view
+# - (gui) canvas-view =: pages.active/canvas-view
+# - (gui) inspector-view =: pages.active/inspector-panel
 
 - (action) change-page:
     update: pages.active subset> pages

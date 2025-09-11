@@ -2,14 +2,14 @@
 # clickable things in the view?
 - slides:
     group foreach:
-      - /elements =: shapes and text
+      # - /elements =: shapes and text
       - (gui) /view:
           /marks: /elements
           /encoding.canvas:
             (2D) /canvas:
               cover: /elements
       - (action) /move-element:
-          update: /canvas cover> /element
+          update: /canvas cover> /elements
           directions: /canvas
       - (action) /create-element:
           create: /elements
@@ -45,4 +45,4 @@
           /marks: slides/view
           /marks.hitboxes:
             (action) select-slide:
-              update: slides.current subset> slides
+              update: slides.selected subset> slides
