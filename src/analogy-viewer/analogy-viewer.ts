@@ -33,6 +33,8 @@ export type Analogy = {
   cost: number;
   conceptual_connectivity: number;
   stdout: string[];
+  score: number;
+  num_iterations: number;
 };
 
 export type AnalogyViewer = {
