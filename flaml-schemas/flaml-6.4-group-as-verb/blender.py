@@ -26,7 +26,7 @@ spec_names = [
   'imessage',
   'finder',
   'figma',
-  'kanban-board',
+  # 'kanban-board',
   'slides',
   'web-browser',
   'code-editor',
@@ -119,7 +119,8 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
             "conceptual_connectivity": conceptual_connectivity,
             "punchline": punchline,
             "sinister_graph": nx.node_link_data(sinister_graph, edges="edges"), 
-            "dexter_graph": nx.node_link_data(dexter_graph, edges="edges") }
+            "dexter_graph": nx.node_link_data(dexter_graph, edges="edges"),
+            "stdout": stdout }
 
   return "\n".join(stdout), dump
    

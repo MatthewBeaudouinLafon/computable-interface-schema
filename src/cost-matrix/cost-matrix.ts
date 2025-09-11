@@ -1,5 +1,10 @@
 import { Analogy } from "../analogy-viewer/analogy-viewer";
-import { div, get_humane_name, remap } from "../utilities/utilities";
+import {
+  div,
+  get_humane_name,
+  get_humane_pair_name,
+  remap,
+} from "../utilities/utilities";
 import "./cost-matrix.css";
 
 export type CostMatrix = {
@@ -51,13 +56,29 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
             : []),
         ];
 
-        const cost = analogies.find(
+        const analogy = analogies.find(
           (a) =>
             (a.inputs[0] === row && a.inputs[1] === col) ||
             (a.inputs[1] === row && a.inputs[0] === col)
-        )?.conceptual_connectivity;
+        );
+
+        const cost = analogy?.conceptual_connectivity;
 
         let color = "none";
+        const classes = ["cost-matrix-item"];
+
+        if (analogy !== undefined) {
+          let iters_raw = analogy.stdout.find((l) =>
+            l.startsWith("num-iterations")
+          );
+          let iters = iters_raw
+            ? Number(iters_raw.split(":").at(1)?.trim())
+            : undefined;
+
+          if (iters !== undefined && iters <= 3) {
+            classes.push("insignificant");
+          }
+        }
 
         if (cost !== undefined) {
           const n = remap(cost, 0, max_cost, 0, 1);
@@ -73,11 +94,15 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
 
         return div(
           {
-            class: "cost-matrix-item",
+            class: classes,
             title: title,
             style: {
               background: color,
             },
+            data: [
+              ["name", get_humane_pair_name(row, col)],
+              ["alt_name", get_humane_pair_name(col, row)],
+            ],
           },
           labels
         );

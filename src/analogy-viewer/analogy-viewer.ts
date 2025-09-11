@@ -2,7 +2,9 @@ import { hstack } from "../utilities/ui-utilities";
 import {
   assert,
   div,
+  el,
   get_curve_between_bbox_pivot,
+  get_humane_pair_name,
   path,
   pre,
   sanitize_name,
@@ -30,6 +32,7 @@ export type Analogy = {
   punchline: [string, string][];
   cost: number;
   conceptual_connectivity: number;
+  stdout: string[];
 };
 
 export type AnalogyViewer = {
@@ -50,13 +53,15 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
 
   // View
   const frag = hstack(".analogy-viewer", [
+    el("p", ".analogy-title", get_humane_pair_name(a.name, b.name)),
     pre(
       ".analogy-info",
-      `Cost: ${analogy.cost}\n\n` +
-        `Analogy Punchline (unpruned conceptual nodes only):\n` +
-        analogy.punchline
-          .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
-          .join("\n")
+      analogy.stdout.join("\n")
+      // `Cost: ${analogy.cost}\n\n` +
+      //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
+      //   analogy.punchline
+      //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+      //     .join("\n")
     ),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
@@ -150,8 +155,6 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
     const from_img = a_viewer.frag.querySelector(
       `#${sanitize_name(from)}`
     ) as HTMLElement | null;
-
-    console.log(sanitize_name(from), from_img);
 
     const to_img = b_viewer.frag.querySelector(
       `#${sanitize_name(to)}`
