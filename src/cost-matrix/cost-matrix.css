@@ -56,3 +56,9 @@
 .cost-matrix-item.active {
   border: 2px solid black;
 }
+
+.cost-matrix-item.insignificant::after {
+  content: "*";
+  font-size: 20px;
+  opacity: 0.7;
+}
