@@ -35,35 +35,35 @@
           covers: /layers
 
       - (gui) /canvas-view:
-          /marks.points: /points
+          /marks.points <>: /points
           # /marks.icons: collaborators/cursor
-          /marks.regions: /layers
-          /marks.hitboxes:
+          /marks.regions <>: /layers
+          /marks.hitboxes <>:
             - (action) select-layer:
                 update: /layers.selected subset> /layers
             - (action) move-layer:
                 update: /canvas cover> /layers.selected
                 directions: /canvas
-          /encoding.canvas: /canvas # could do z-order based on breadth-first-ordering of layers
+          /encoding.canvas <>: /canvas # could do z-order based on breadth-first-ordering of layers
 
       - (digraph) /prototype-links:
           affects: /frames.in-prototype
 
       - (gui) prototype-canvas-view:
-          /marks.points: /points
-          /marks.regions:
+          /marks.points <>: /points
+          /marks.regions <>:
             - /layers
             - move-layer
           # /marks.icons: collaborators/cursor
-          /encoding.canvas: /canvas
-          /encoding.arrows: /prototype-links
+          /encoding.canvas <>: /canvas
+          /encoding.arrows <>: /prototype-links
 
       - (gui) prototype-window:
-          /marks:
+          /marks <>:
             - /frames.in-prototype.current
             - /frames.in-prototype.current->/layers
             - /frames.in-prototype.current->/navigate-prototype
-          /encoding.canvas: canvas
+          /encoding.canvas <>: canvas
 
       - (tree) /layer-hierarchy:
           affects: /layers
@@ -75,17 +75,17 @@
             affects: /layers
 
       - (gui) /layer-panel:
-          /marks.text:
+          /marks.text <>:
             - /layers
             - select-layer
             - (action) reorder-layers:
                 update: /layer-hierarchy affects> /layers
-          /encoding.vstack: /layer-hierarchy/depth-first-search-order
-          /encoding.hoffset: /layer-hierarchy/depth-order
+          /encoding.vstack <>: /layer-hierarchy/depth-first-search-order
+          /encoding.hoffset <>: /layer-hierarchy/depth-order
 
       - (gui) /inspector-panel:
-          /marks: /layers.selected/properties
-          /encoding.vstack: (linear) property-order
+          /marks <>: /layers.selected/properties
+          /encoding.vstack <>: (linear) property-order
 
 # - (gui) canvas-view =: pages.active/canvas-view
 # - (gui) inspector-view =: pages.active/inspector-panel
@@ -94,8 +94,8 @@
     update: pages.active subset> pages
 
 - (gui) pages-view:
-    /marks: pages, change-page
-    /encoding.vstack:
+    /marks <>: pages, change-page
+    /encoding.vstack <>:
       (linear) page-order: # huge action candidate
         affects: pages
 #

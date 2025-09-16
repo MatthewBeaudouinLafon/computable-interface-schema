@@ -57,5 +57,5 @@
     /encoding.hstack <>: file-system/depth-order
 
 - (gui) grid-view:
-    /marks.text: folders.in-selected-path->items
-    /encoding.hwrap: sort-order.selected
+    /marks.text <>: folders.in-selected-path->items
+    /encoding.hwrap <>: sort-order.selected

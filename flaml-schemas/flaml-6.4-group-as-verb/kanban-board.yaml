@@ -27,12 +27,12 @@
                 affects: /lists->/cards
 
       - (gui) /view:
-          /marks.rectangles: /cards
-          /marks.text: /cards/content
-          /encoding.cluster: /lists
-          /encoding.color: tense
-          /encoding.vstack: /lists/order
-          /encoding.hstack:
+          /marks.rectangles <>: /cards
+          /marks.text <>: /cards/content
+          /encoding.cluster <>: /lists
+          /encoding.color <>: tense
+          /encoding.vstack <>: /lists/order
+          /encoding.hstack <>:
             (linear) list-ordering:
               affects: /lists
 
@@ -54,7 +54,7 @@
           update: list-ordering affects> lists
 
 - (gui) main-view:
-    /mark: boards.active/view
+    /mark <>: boards.active/view
 
 - (action) change-board:
     update: boards.active subset> boards

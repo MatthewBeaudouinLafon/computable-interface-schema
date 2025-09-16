@@ -4,8 +4,8 @@
     group foreach:
       # - /elements =: shapes and text
       - (gui) /view:
-          /marks: /elements
-          /encoding.canvas:
+          /marks <>: /elements
+          /encoding.canvas <>:
             (2D) /canvas:
               cover: /elements
       - (action) /move-element:
@@ -17,12 +17,12 @@
           delete: /elements
 
       - (gui) /edit-view:
-          /marks: /elements
-          /marks.hitboxes:
+          /marks <>: /elements
+          /marks.hitboxes <>:
             - /move-element
             - (action) /select-element:
                 update: /elements.selected subset> /elements
-          /encoding.canvas: /canvas
+          /encoding.canvas <>: /canvas
 
 - (action) new-slide:
     create: slides
@@ -32,17 +32,17 @@
     affects: slides
 
 - (gui) presentation-view:
-    /marks: slides.current/view
+    /marks <>: slides.current/view
 
 - (action) advance-slide:
     update: slides.current subset> slides
     directions: slide-order
 
 - (gui) main-view:
-    /marks:
+    /marks <>:
       - slides.current/view
       - (gui) thumbnail-view:
-          /marks: slides/view
-          /marks.hitboxes:
+          /marks <>: slides/view
+          /marks.hitboxes <>:
             (action) select-slide:
               update: slides.selected subset> slides
