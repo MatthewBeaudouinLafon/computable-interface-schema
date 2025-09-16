@@ -120,6 +120,8 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
             "punchline": punchline,
             "sinister_graph": nx.node_link_data(sinister_graph, edges="edges"), 
             "dexter_graph": nx.node_link_data(dexter_graph, edges="edges"),
+            "score": score,
+            "num_iterations": str(len(iterations['times'])),
             "stdout": stdout }
 
   return "\n".join(stdout), dump

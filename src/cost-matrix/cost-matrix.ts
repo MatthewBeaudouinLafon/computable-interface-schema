@@ -3,7 +3,6 @@ import {
   div,
   get_humane_name,
   get_humane_pair_name,
-  remap,
 } from "../utilities/utilities";
 import "./cost-matrix.css";
 
@@ -62,26 +61,18 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
             (a.inputs[1] === row && a.inputs[0] === col)
         );
 
-        const cost = analogy?.conceptual_connectivity;
+        const cost = analogy?.score;
 
         let color = "none";
         const classes = ["cost-matrix-item"];
 
-        if (analogy !== undefined) {
-          let iters_raw = analogy.stdout.find((l) =>
-            l.startsWith("num-iterations")
-          );
-          let iters = iters_raw
-            ? Number(iters_raw.split(":").at(1)?.trim())
-            : undefined;
-
-          if (iters !== undefined && iters <= 3) {
-            classes.push("insignificant");
-          }
+        if (analogy !== undefined && analogy.num_iterations < 3) {
+          classes.push("insignificant");
         }
 
         if (cost !== undefined) {
-          const n = remap(cost, 0, max_cost, 0, 1);
+          const n = cost;
+          // const n = remap(cost, 0, max_cost, 0, 1);
           // const h = 210; // Math.round((1 - remap(cost, 0, max_cost, 0, 1)) * 360);
           // const s = 70;
           // const l = n * 90;

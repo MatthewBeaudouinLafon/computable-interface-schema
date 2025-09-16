@@ -24,7 +24,7 @@ html {
   word-wrap: break-word;
   margin: 0 auto;
   color: black;
-  font-family: var(--sans-serif-font);
+  font-family: var(--sans-serif-font) !important;
   font-optical-sizing: auto;
   background-color: #eff0f3;
   overflow: hidden;
@@ -48,6 +48,7 @@ body {
   margin: 0px;
   display: flex;
   flex-direction: column;
+  font-family: var(--sans-serif-font) !important;
 }
 
 #app {
