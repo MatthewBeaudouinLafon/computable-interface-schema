@@ -196,7 +196,7 @@ def compute_analogy(
         for alias in dexter_node.split(' = '):
           dexter_aliases[alias] = dexter_node
 
-    print(dexter_aliases)
+    # print(dexter_aliases)
     
     if verbose:
       print('-- User defined preferred pairings')
@@ -215,21 +215,26 @@ def compute_analogy(
         dexter_node = dexter_node.split(' = ')[0]
 
       # Replace name with looked up name
-      print(dexter_node)
+      # print(dexter_node)
       sinister_node = sinister_aliases.get(sinister_node, sinister_node)
       dexter_node = dexter_aliases.get(dexter_node, dexter_node)
       fixed_preferred_matches[sinister_node] = dexter_node
-      print(dexter_node)
+      # print(dexter_node)
 
       assert sinister_node in sinister_graph.nodes, f'Could not find node `{sinister_node}` in sinister graph.'
       assert dexter_node in dexter_graph.nodes, f'Could not find node `{dexter_node}` in dexter graph.'
 
       sinister_graph.add_node(sinister_node, preference_id=preference_id)
       dexter_graph.add_node(dexter_node, preference_id=preference_id)
-
+      preference_id += 1
       if verbose:
         print(f"{sinister_node:>30} <=> {dexter_node:<30}")
     
+  print('pairs according to attributes')
+  print('\n sinister:')
+  pprint.pprint([(node_name, attr.get('preference_id')) for node_name, attr in sinister_graph.nodes(data=True) if attr.get('preference_id') is not None], width=120)
+  print('\n dexter:')
+  pprint.pprint([(node_name, attr.get('preference_id')) for node_name, attr in dexter_graph.nodes(data=True) if attr.get('preference_id') is not None], width=120)
 
   geds = nx.optimize_edit_paths(
     sinister_graph,
