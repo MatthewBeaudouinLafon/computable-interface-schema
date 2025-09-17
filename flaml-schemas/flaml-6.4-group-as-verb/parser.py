@@ -26,9 +26,17 @@ def new_interp():
 def record_path(statement: str, interp: tuple[list, list], path: SpecPath):
     interp[1].append([statement, path])
 
-def spec_from_file(file_path):
-  real_path = Path(__file__).with_name(file_path)  # https://stackoverflow.com/a/65174822
-  with open(real_path, "r") as file_handle:
+def spec_from_file(file_name):
+  # https://stackoverflow.com/a/65174822
+  real_path = Path(__file__).parent.joinpath('specifications', file_name)
+  return _spec_from_filepath(real_path)
+
+def spec_from_standard():
+  real_path = Path(__file__).with_name('standard.yaml')
+  return _spec_from_filepath(real_path)
+
+def _spec_from_filepath(file_path):
+  with open(file_path, "r") as file_handle:
     spec = yaml.safe_load(file_handle)
   return spec
 

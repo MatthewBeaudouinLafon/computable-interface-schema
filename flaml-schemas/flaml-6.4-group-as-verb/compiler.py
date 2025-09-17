@@ -102,7 +102,7 @@ def compile(file_path: str, verbose=False):
 
 def compile_spec(spec: list, verbose=False):
   # TODO: technically I should rename all "interp" decl, but that's not a priority.
-  std_spec = parser.spec_from_file('standard.yaml')
+  std_spec = parser.spec_from_standard()
   interp = parser.make_relations(spec)
   if verbose:
     print('\n--- Parsing spec ---')
@@ -541,7 +541,7 @@ if __name__ == '__main__':
       print(f'Skipping `{spec_file}` because it\'s not yaml')
       continue
 
-    if not os.path.exists(spec_file):
+    if not os.path.exists(os.path.join('specifications', spec_file)):
       print(f'Skipping `{spec_file}` because it does not exist.')
       continue
 
