@@ -25,7 +25,7 @@ html {
   color: black;
   font-family: var(--sans-serif-font) !important;
   font-optical-sizing: auto;
-  background: white;
+  background: white !important;
   overflow: hidden;
 }
 
