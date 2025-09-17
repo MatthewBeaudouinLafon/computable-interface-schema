@@ -36,8 +36,9 @@ class TestCompilationSmoke:
       'slack.yaml',
       'calendar.yaml',
       'video-editor.yaml',
-      # 'figma.yaml',
-      # 'finder.yaml',
+      'web-browser.yaml',
+      'figma.yaml',
+      'finder.yaml',
       ]
     for spec_file_name in specs:
       print('Compiling', spec_file_name)

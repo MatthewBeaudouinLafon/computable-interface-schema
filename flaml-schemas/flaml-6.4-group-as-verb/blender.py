@@ -129,7 +129,7 @@ def make_analogy(sinister_name, dexter_name, sinister_graph, dexter_graph, timeo
 
 if __name__ == '__main__':
   flags = argp.parse_args()
-  timeout = 60
+  timeout = 1
   if flags.timeout is not None:
     timeout = int(flags.timeout)
 
@@ -144,8 +144,9 @@ if __name__ == '__main__':
   with open('json/specs.json', 'wb') as f:
     json_specs = { }
     for spec_name in spec_names:
-      with open(spec_name+'.yaml') as spec_f:
-        spec_yaml = yaml.safe_load(spec_f)
+      spec_yaml = parser.spec_from_file(spec_name+'.yaml')
+      # with open(spec_name+'.yaml') as spec_f:
+      #   spec_yaml = yaml.safe_load(spec_f)
       json_specs[spec_name] = { "yaml": spec_yaml, "lookup": parser.make_relations(spec_yaml, False)[1] }
     f.write(orjson.dumps(json_specs))
 

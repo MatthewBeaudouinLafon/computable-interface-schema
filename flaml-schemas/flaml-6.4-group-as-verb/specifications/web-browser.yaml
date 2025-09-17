@@ -9,7 +9,7 @@
                 update>:
                   - webpages.open.active subset> webpages
                   - webpages.visited
-                directions: web-links
+                directions>: web-links
             - (action) open-in-new-tab:
                 create>: tabs.open
                 update>:

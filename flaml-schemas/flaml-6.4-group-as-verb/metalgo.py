@@ -230,12 +230,6 @@ def compute_analogy(
       if verbose:
         print(f"{sinister_node:>30} <=> {dexter_node:<30}")
     
-  print('pairs according to attributes')
-  print('\n sinister:')
-  pprint.pprint([(node_name, attr.get('preference_id')) for node_name, attr in sinister_graph.nodes(data=True) if attr.get('preference_id') is not None], width=120)
-  print('\n dexter:')
-  pprint.pprint([(node_name, attr.get('preference_id')) for node_name, attr in dexter_graph.nodes(data=True) if attr.get('preference_id') is not None], width=120)
-
   geds = nx.optimize_edit_paths(
     sinister_graph,
     dexter_graph,
