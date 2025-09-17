@@ -1,41 +1,41 @@
 # Finder
 - items =: files and folders
 - item-type:
-    subsets: file, folder
-    subgroups: files, folders
-    groups: items
+    subsets>: file, folder
+    subgroups>: files, folders
+    groups>: items
 
 - (tree) file-system:
-    affects: items
-    covers: folders, paths
+    affects>: items
+    cover>: folders, paths
     /parents =: folders
     /leaves =: files
     /depth-first-search:
-      affects: items
+      affects>: items
     /depth-order:
-      affects: items
+      affects>: items
 
 - (action) create-item:
-    create: items
+    create>: items
 - (action) delete-item:
-    delete: items
+    delete>: items
 - (action) move-item:
-    update: file-system affects> items
+    update>: file-system affects> items
 
 - (action) select-folder:
-    update: folders.active subset> folders
+    update>: folders.active subset> folders
 - (action) nav-in-folder:
-    update: items.active subset> items
-    directions: sort-order.selected
+    update>: items.active subset> items
+    directions>: sort-order.selected
 
 - (linear) alphabetical:
-    affects: items
+    affects>: items
 
 - (linear) creation-time:
-    affects: items
+    affects>: items
 
 - (linear) modification-time:
-    affects: items
+    affects>: items
 
 - sort-orders =: alphabetical and creation-time and modification-time
 

@@ -2,11 +2,11 @@
 - def (structure)
 
 - def (digraph) extends (structure):
-    group foreach:
+    group foreach>:
       - /arrows
 
 - def (tree) extends (digraph):
-    group foreach:
+    group foreach>:
       - /root
       - /leaves
       - /internal-nodes
@@ -15,17 +15,17 @@
       - (linear) depth-order
 
 - def (linear) extends (tree):
-    group foreach:
+    group foreach>:
       - /first =: /root
       - /last =: /leaves
 
 - def (2D) extends (structure):
-    group foreach:
+    group foreach>:
       - (linear) x-axis
       - (linear) y-axis
 
 - def (3D) extends (structure):
-    group foreach:
+    group foreach>:
       - (linear) x-axis
       - (linear) y-axis
       - (linear) z-axis
@@ -37,14 +37,14 @@
 # - def (mark)  # this seems to make things significantly worse?
 - def (encoding) extends (structure)
 - def (presentation):
-    group foreach:
+    group foreach>:
       - (encoding) /encoding:
-          affects: /marks
+          affects>: /marks
 
 - def (gui) extends (presentation):
-    group foreach:
+    group foreach>:
       - /encoding:
-          subset:
+          subset>:
             - (linear) /encoding.hwrap
             - (linear) /encoding.vwrap
             - (linear) /encoding.vstack
@@ -58,7 +58,7 @@
             - (encoding) /encoding.color
             - (encoding) /encoding.tree-vis
       - /marks:
-          subset:
+          subset>:
             - /marks.hitboxes
             - /marks.points
             - /marks.hlines
@@ -68,18 +68,18 @@
             - /marks.text
 
 - def (reader) extends (presentation):
-    group foreach:
+    group foreach>:
       - /encoding:
-          subset: .order
+          subset>: (linear) /encoding.order
       - /marks:
-          subset: .spoken
+          subset>: /marks.spoken
 
 # Action
 - def (action)
 #     subgroup: move
 # - def (move):
 #     arguments: /trajector, /substrate, /structure
-#     updates: /trajector covers /substrate
+#     updates: /trajector cover /substrate
 #     directions: /structure
 
 # Input Devices (super tentative)

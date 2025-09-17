@@ -1,32 +1,32 @@
 # Slack
 - channels:
-    group foreach:
+    group foreach>:
       - name
       - messages
       - people
 
 - people:
-    groups: messages
+    groups>: messages
 
 - (linear) time:
-    affects: messages
+    affects>: messages
 
 - (gui) channel-view:
     /encoding.vstack <>:
       (linear) alphabetical:
-        affects: channels
+        affects>: channels
     /encoding.cluster <>:
       channel-type:
-        groups: channels
-        subgroups: channels.dm, channels.!dm
+        groups>: channels
+        subgroups>: channels.dm, channels.!dm
     /marks <>:
       - channels
       - (action) select-channel:
-          update: channels.active subset> channels
+          update>: channels.active subset> channels
 
 - (gui) chat-view:
     /marks.text <>: channels.active->messages
     /encoding.vstack <>: time
 
 - (action) send-message:
-    create: channels.active->messages
+    create>: channels.active->messages

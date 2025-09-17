@@ -2,54 +2,54 @@
 - $name: imessage
 # ios messages
 - conversations:
-    group foreach:
+    group foreach>:
       - messages
       - people:
-          groups: messages
+          groups>: messages
 
 - (gui) chat-view:
     /marks <>: conversations.active->messages
     /encoding.vstack <>:
       (linear) time:
-        affects: messages, conversations
+        affects>: messages, conversations
 
 - (gui) convo-view:
     /marks.text <>: conversations
     /encoding.cluster <>:
       pin:
-        groups: conversations
+        groups>: conversations
     /encoding.vstack <>: time
 
 - (action) send-message:
-    create: conversations.active->messages
-    directions: time
+    create>: conversations.active->messages
+    directions>: time
 
 - (action) select-conversation:
-    update: conversations.active subsets> conversations
+    update>: conversations.active subsets> conversations
 
 ---
 # Slack
 - $name: slack
 - channels:
-    group foreach:
+    group foreach>:
       - name
       - messages
       - people
 
 - people:
-    groups: messages
+    groups>: messages
 
 - (linear) time:
-    affects: messages
+    affects>: messages
 
 - (gui) channel-view:
     /encoding.vstack <>:
       (linear) alphabetical:
-        affects: channels
+        affects>: channels
     /encoding.cluster <>:
       channel-type:
-        groups: channels
-        subgroups: channels.dm, channels.!dm
+        groups>: channels
+        subgroups>: channels.dm, channels.!dm
     /marks <>: channels
 
 - (gui) chat-view:
@@ -57,11 +57,11 @@
     /encoding.vstack <>: time
 
 - (action) send-message:
-    create: channels.active->messages
-    directions: time
+    create>: channels.active->messages
+    directions>: time
 
 - (action) select-channel:
-    update: channels.active subset> channels
+    update>: channels.active subset> channels
 
 ---
 - $name: calendar
@@ -71,8 +71,8 @@
     /marks.rectangles <>: weeks.active->events
     /encoding.vstack <>:
       (linear) time:
-        affects: timestamps
-        covers: events, days, weeks, months
+        affects>: timestamps
+        cover>: events, days, weeks, months
     /encoding.cluster <>: days
 
 - (gui) mini-month-view:
@@ -80,34 +80,34 @@
     /encoding.hwrap <>: time
 
 - (action) create-event:
-    create: events
+    create>: events
 
 - (action) delete-event:
-    delete: events
+    delete>: events
 
 - (action) move-event:
-    update: time covers> events.selected
-    directions: time
+    update>: time cover> events.selected
+    directions>: time
 
 - (action) time-passing:
-    update: timestamps.now subset> timestamps
-    directions: time
+    update>: timestamps.now subset> timestamps
+    directions>: time
 
 ---
 - $name: video-editor
 - def (video):
-    group foreach:
+    group foreach>:
       - /timestamps->/images
       - (linear) /timeline:
-          affects: /images
+          affects>: /images
           /first =: /images.first
           /backwards:
-            affects: /images
+            affects>: /images
 
 - (video) videos
 
 - editors:
-    group foreach: # feels redundant if there's just one (but there could be more!!)
+    group foreach>: # feels redundant if there's just one (but there could be more!!)
       # - /videos =: videos.in-editor
 
       - (video) /videos:
@@ -115,40 +115,40 @@
           /timeline <>: /timeline
 
       - (linear) /timeline:
-          affects: /timestamps
-          covers: /videos
+          affects>: /timestamps
+          cover>: /videos
 
       - (gui) /view:
           /marks.vline <>:
             - /timestamps
             - (action) /move-playhead:
-                update: /timestamps.playhead subset> /timestamps
+                update>: /timestamps.playhead subset> /timestamps
           /marks.rectangles <>:
             - /videos
             - (action) /select-video:
-                update: /videos.selected subset> /videos
+                update>: /videos.selected subset> /videos
           /encoding.hstack <>: /timeline
           /encoding.cluster <>:
             /tracks:
-              groups: /videos
+              groups>: /videos
 
       - (action) play:
-          update: /timestamps.playhead subset> /timestamps
-          directions: /timeline
+          update>: /timestamps.playhead subset> /timestamps
+          directions>: /timeline
 
       - (action) move-video:
-          update: /timeline covers> /videos.selected
-          direction: /timeline
+          update>: /timeline cover> /videos.selected
+          directions>: /timeline
 
 - (gui) media-pool:
     /marks <>: videos
     /encoding.hwrap <>:
       (linear) sort-order:
-        affects: videos
+        affects>: videos
 
 - def (video-player):
-    arguments: (video) /video, /playhead
-    group foreach:
+    arguments>: (video) /video, /playhead
+    group foreach>:
       - (gui) image-view:
           /marks.image <>: video/images.current
       - (gui) scrubber-view:

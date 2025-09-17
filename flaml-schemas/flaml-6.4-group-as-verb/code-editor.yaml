@@ -1,52 +1,52 @@
 # VSCode
 - files:
-    group foreach:
+    group foreach>:
       - (linear) /buffer:
-          affects: /characters, /cursor
-          cover: /tokens
+          affects>: /characters, /cursor
+          cover>: /tokens
       - (tree) /ast:
-          affects: /tokens
+          affects>: /tokens
       - token-types:
-          groups: tokens
+          groups>: /tokens
       - (gui) /editor:
-          /marks.text: /characters
-          /encoding.hwrap: /buffer
-          /encoding.color: token-types
+          /marks.text <>: /characters
+          /encoding.hwrap <>: /buffer
+          /encoding.color <>: token-types
       - (action) /write:
-          create: /characters
+          create>: /characters
       - (action) /delete:
-          delete: /characters
-      - (action) move-cursor:
-          update:
+          delete>: /characters
+      - (action) /move-cursor:
+          update>:
             - /buffer affects> /cursor
             - match-scoring affects> /tokens.variables
-          directions: /buffer
+          directions>: /buffer
 
       - (gui) /auto-complete-list:
-          - /marks.text: /tokens.variables
-          - /encoding.vstack:
+          - /marks.text <>: /tokens.variables
+          - /encoding.vstack <>:
               (linear) match-scoring:
-                affects: /tokens.variables
+                affects>: /tokens.variables
 
 - (gui) tabs:
-    /marks: files.open/editor
-    /encoding.hstack: (linear) tab-order
+    /marks <>: files.open/editor
+    /encoding.hstack <>: (linear) tab-order
 
 - (gui) open-editor:
-    /marks: files.open.active/editor
+    /marks <>: files.open.active/editor
 
 - (action) open-file:
-    create: files.open
+    create>: files.open
 - (action) close-file:
-    delete: files.open.selected
+    delete>: files.open.selected
 - (action) change-tabs:
-    update: files.open.active
+    update>: files.open.active
 
 - (tree) file-system:
-    affects: files and folders
-    covers: folders, paths
-    /internal-nodes: folders
-    /leaves: files
+    affects>: files and folders
+    cover>: folders, paths
+    /internal-nodes =: folders
+    /leaves =: files
 - (gui) file-viewer:
-    /marks.text: files and folders
-    /encoding.tree-vis: file-system
+    /marks.text <>: files and folders
+    /encoding.tree-vis <>: file-system

@@ -2,31 +2,31 @@
 - datapoints:
     group foreach:
       (reader) /info:
-        /mark: $self->numerical/numbers and $self->categorical # get the values for all axes
-        /encoding.order: alphabetical # using the alphabetical order of axes (this doesn't _technically_ follow the definition of alphabetical)
+        /mark <>: $self->numerical/numbers and $self->categorical # get the values for all axes
+        /encoding.order <>: alphabetical # using the alphabetical order of axes (this doesn't _technically_ follow the definition of alphabetical)
 
 # olli
 - numerical:
-    group foreach:
+    group foreach>:
       - /name
       - (linear) /axis:
-          affects: /numbers, datapoints
-          covers: intervals
-          /first: datapoints.smallest
-          /last: datapoints.largest
+          affects>: /numbers, datapoints
+          cover>: intervals
+          /first =: datapoints.smallest
+          /last =: datapoints.largest
 
       - datapoints:
-          subset: /numbers
+          subset>: /numbers
 
       # axis info
       - (reader) dimension-info:
-          /marks.spoken: /name and datapoints.smallest and datapoints.largest
+          /marks.spoken <>: /name and datapoints.smallest and datapoints.largest
 
       # interval info and navigation
       - intervals:
-          group foreach:
+          group foreach>:
             (reader) /info:
-              /marks.spoken: /datapoints.interval.selected.smallest and /datapoints.interval.selected.smallest # a bit sketch but works
+              /marks.spoken <>: /datapoints.interval.selected.smallest and /datapoints.interval.selected.smallest # a bit sketch but works
 
       # - (reader) intervals-info:
       #     /marks.spoken: intervals.selected->datapoints.smallest and intervals.selected->datapoints.largest # a bit sketch but works
@@ -40,40 +40,40 @@
       #     /marks.spoken: intervals.selected->datapoints # note sure what happens here
 
 - categorical:
-    group foreach:
+    group foreach>:
       - /name
       - categories:
-          groups: datapoints
+          groups>: datapoints
 
       - (linear) category-ordering:
-          affects: categories
+          affects>: categories
 
       # axis info
       - (reader) dimension-info:
-          /marks.spoken: /name # any other info?
+          /marks.spoken <>: /name # any other info?
 
       # interval info and navigation
       - (reader) category-info:
-          /marks.spoken: category.selected->datapoints # what other info?
+          /marks.spoken <>: category.selected->datapoints # what other info?
 
 - (reader) dimensions-info:
-    /marks.words: numerical and categorical
-    /encoding.order:
+    /marks.words <>: numerical and categorical
+    /encoding.order <>:
       (linear) alphabetical:
-        affects: numerical and categorical
+        affects>: numerical and categorical
 
 - (reader) chart-summary:
-    /marks: summary and dimensions-info
+    /marks <>: summary and dimensions-info
 
 - all-views =: chart-summary and dimensions-info and
     numerical->dimension-info and numerical->interval-info and numerical->data-info
     category->dimension-info and category->category-info and category->data-info
 
 - (tree) olli-nav:
-    affects: all-views
+    affects>: all-views
     /root =: chart-summary
-    /depth-order:
-      affects: all-views
+    /depth-order <>:
+      affects>: all-views
 
 - (action) move-up-down-hierarchy:
     /moves: all-views.active

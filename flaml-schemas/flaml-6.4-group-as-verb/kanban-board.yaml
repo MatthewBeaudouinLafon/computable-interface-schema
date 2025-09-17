@@ -2,27 +2,27 @@
 - (linear) time: # TODO: probably move to standard.yaml
     affects:
       - timestamps:
-          subset: due-date
-    covers: past, future
+          subset>: due-date
+    cover>: past, future
 - tense:
-    subset: past, present, future
+    subset>: past, present, future
 - (action) time-progressing:
-    update:
+    update>:
       - timestamps.now subset> timestamps
       - past groups> timestamps
       - future groups> timestamps
-    directions: time
+    directions>: time
 
 - boards:
-    group foreach:
+    group foreach>:
       - /cards:
-          group foreach:
+          group foreach>:
             - /content # TODO: standard text
             - due-date
 
       - /lists:
-          group: /cards
-          group foreach:
+          group>: /cards
+          group foreach>:
             - (linear) /order:
                 affects: /lists->/cards
 
@@ -34,27 +34,27 @@
           /encoding.vstack <>: /lists/order
           /encoding.hstack <>:
             (linear) list-ordering:
-              affects: /lists
+              affects>: /lists
 
       - (action) /create-card:
-          create: /cards
+          create>: /cards
       - (action) /delete-card:
-          delete: /cards
+          delete>: /cards
       - (action) move-card:
-          update:
+          update>:
             - /lists/order affects> /cards
             - /lists group> /cards
           # direction: /view/canvas # TODO: maybe?
 
       - (action) /create-list:
-          create: /lists
+          create>: /lists
       - (action) /delete-list:
-          delete: /lists
+          delete>: /lists
       - (action) move-list:
-          update: list-ordering affects> lists
+          update>: list-ordering affects> lists
 
 - (gui) main-view:
     /mark <>: boards.active/view
 
 - (action) change-board:
-    update: boards.active subset> boards
+    update>: boards.active subset> boards

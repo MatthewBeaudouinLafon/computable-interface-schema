@@ -128,7 +128,7 @@ class TestCompoundObjectParser:
                           ])
   
   def test_validate_instance_dict(self):
-    key = 'affects'
+    key = 'affects>'
     assert parser.validate_instance_dict(key), f'`{key}` failed'
 
     key = '/attribute-map <>'
@@ -305,7 +305,7 @@ class TestRecursiveDescent:
   def test_group(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - thing:
-    groups: other-thing
+    groups>: other-thing
 """))
     assert compare_declarations(interp, 
                   [
@@ -336,8 +336,8 @@ class TestRecursiveDescent:
   def test_structure(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - (linear) alphabetical:
-    affects: people
-    covers: words
+    affects>: people
+    cover>: words
 """))
     assert compare_declarations(interp, 
                   [
@@ -379,7 +379,7 @@ class TestRecursiveDescent:
   def test_group_attributes(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
-    group foreach:
+    group foreach>:
       - /videos
 """))
     parser.print_interp(interp)
@@ -392,7 +392,7 @@ class TestRecursiveDescent:
   def test_group_attribute_alias(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
-    group foreach:
+    group foreach>:
       - /videos =: videos-in-editor
 """))
     assert compare_declarations(interp, 
@@ -406,7 +406,7 @@ class TestRecursiveDescent:
   def test_group_attribute_map(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
-    group foreach:
+    group foreach>:
       - /videos <>: videos-in-editor
 """))
     assert compare_declarations(interp, 
@@ -422,7 +422,7 @@ class TestRecursiveDescent:
     /marks <>: messages
     /encoding <>:
         (linear) time:
-            affects: messages
+            affects>: messages
 """))
     assert compare_declarations(interp, 
                   [
@@ -440,9 +440,9 @@ class TestRecursiveDescent:
   def test_attribute_structure(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
-    group foreach:
+    group foreach>:
       - (linear) /timeline:
-          affects: /timestamps
+          affects>: /timestamps
 """), verbose=True)
     assert compare_declarations(interp, 
                   [
@@ -458,11 +458,11 @@ class TestRecursiveDescent:
     # The turbo nest
     interp = parser.make_relations(parser.spec_from_string("""
 - editors:
-    group foreach: # feels redundant if there's just one (but there could be more!!)
+    group foreach>: # feels redundant if there's just one (but there could be more!!)
       - (gui) /view:
           /encoding.cluster <>:
             /tracks:
-              groups: /videos
+              groups>: /videos
 """))
     parser.print_interp(interp)
     assert compare_declarations(interp, 
@@ -486,7 +486,7 @@ class TestTypeDeclarations:
   def test_basic(self):
     type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
-    group foreach:
+    group foreach>:
       - /timestamps
 """))
     
@@ -502,7 +502,7 @@ class TestTypeDeclarations:
   def test_basic_extension(self):
     type_decls, type_parents = parser.parse_type_definitions(parser.spec_from_string("""
 - def (gui) extends (presentation):
-    group foreach:
+    group foreach>:
       - /marks
 """))
     decls = type_decls.get('gui', None)
@@ -519,11 +519,11 @@ class TestTypeDeclarations:
   def test_multiple(self):
     type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (linear):
-    group foreach:
+    group foreach>:
       - /first
 
 - def (tree):
-    group foreach:
+    group foreach>:
       - /root
 """))
     
@@ -546,9 +546,9 @@ class TestTypeDeclarations:
   def test_depth(self):
     type_decls, _ = parser.parse_type_definitions(parser.spec_from_string("""
 - def (video):
-    group foreach:
+    group foreach>:
       - (linear) /timeline:
-          affects: /images
+          affects>: /images
 """))
     decls = type_decls.get('video', None)
     assert decls is not None
@@ -577,7 +577,7 @@ class TestActionDeclaration:
   def test_basic_create(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - (action) add-item:
-    create: items
+    create>: items
 """))
     assert compare_declarations(interp, 
                   [
@@ -588,7 +588,7 @@ class TestActionDeclaration:
   def test_basic_delete(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - (action) delete-item:
-    delete: items
+    delete>: items
 """))
     assert compare_declarations(interp, 
                   [
@@ -599,7 +599,7 @@ class TestActionDeclaration:
   def test_relation_action(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - (action) select-item:
-    update: items.selected subset> items
+    update>: items.selected subset> items
 """))
     assert compare_declarations(interp, 
                   [
@@ -612,7 +612,7 @@ class TestActionDeclaration:
   def test_relation_list(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - (action) select-item:
-    update: 
+    update>: 
       - items.selected subset> items
       - undo-actions
 """))
@@ -630,7 +630,7 @@ class TestActionDeclaration:
 - (gui) toolbar:
     /marks <>:
       (action) pick-tool:
-        update: tools.selected subset> tools
+        update>: tools.selected subset> tools
 """))
     assert compare_declarations(interp, 
                   [
@@ -647,9 +647,9 @@ class TestActionDeclaration:
   def test_group_foreach_action(self):
     interp = parser.make_relations(parser.spec_from_string("""
 - steps:
-    group foreach:
+    group foreach>:
       - (action) /press:
-          update: /states.current subset> /states
+          update>: /states.current subset> /states
 """))
     assert compare_declarations(interp, 
                   [

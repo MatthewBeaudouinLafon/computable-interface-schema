@@ -1,17 +1,17 @@
 - def (video):
-    group foreach:
+    group foreach>:
       - /timestamps->/images
       - (linear) /timeline:
-          affects: /images
+          affects>: /images
           /first =: /images.first
           /backwards:
-            affects: /images
+            affects>: /images
 
 - (video) videos:
-    subset: editors/videos
+    subset>: editors/videos
 
 - editors:
-    group foreach: # feels redundant if there's just one (but there could be more!!)
+    group foreach>: # feels redundant if there's just one (but there could be more!!)
       #   - /videos =: videos.in-editor
 
       - (video) /videos:
@@ -19,40 +19,40 @@
           /timeline <>: /timeline
 
       - (linear) /timeline:
-          affects: /timestamps
-          covers: /videos
+          affects>: /timestamps
+          cover>: /videos
 
       - (gui) /view:
           /marks.vline <>:
             - /timestamps
             - (action) /move-playhead:
-                update: /timestamps.playhead subset> /timestamps
+                update>: /timestamps.playhead subset> /timestamps
           /marks.rectangles <>:
             - /videos
             - (action) select-video:
-                update: /videos.selected subset> /videos
+                update>: /videos.selected subset> /videos
           /encoding.hstack <>: /timeline
           /encoding.cluster <>:
             /tracks:
-              groups: /videos
+              groups>: /videos
 
       - (action) play:
-          update: /timestamps.playhead subset> /timestamps
-          directions: /timeline
+          update>: /timestamps.playhead subset> /timestamps
+          directions>: /timeline
 
       - (action) move-video:
-          update: /timeline covers> /videos.selected
-          direction: /timeline
+          update>: /timeline cover> /videos.selected
+          directions>: /timeline
 
 - (gui) media-pool:
     /marks <>: videos
     /encoding.hwrap <>:
       (linear) sort-order:
-        affects: videos
+        affects>: videos
 
 - def (video-player):
-    arguments: (video) /video, /playhead
-    group foreach:
+    arguments>: (video) /video, /playhead
+    group foreach>:
       - (gui) image-view:
           /marks.image <>: video/images.current
       - (gui) scrubber-view:

@@ -66,7 +66,7 @@ class rel(Enum):
 
 class dpower(Enum):
   # Definitely add the source, target, and relation to the graph.
-  # eg. attribute maps, affects/covers/groups keywords
+  # eg. attribute maps, affects/cover/groups keywords
   STRONG = enum.auto()
 
   # Add the relation if the source and target are already in the graph
@@ -424,36 +424,47 @@ def parse_relation(statement: str) -> rel|None:
   Map keywords to relations. 
   Returns None if it doesn't match, so it can be used to test for a keyword.
   """
-  if statement in ('mapto', '->'):
-    return rel.MAPTO
-  elif statement in ('alias'):
-    return rel.ALIAS
-  elif statement in ('subset', 'subsets', '.'):
-    return rel.SUBSET
-  elif statement in ('affects'):
-    return rel.AFFECTS
-  elif statement in ('covers'):
-    return rel.COVERS
-  elif statement in ('groups', 'group'):
-    return rel.GROUP
-  elif statement in ('groups foreach', 'group foreach'):
-    return rel.GROUP_FOREACH
-  elif statement in ('create'):
-    return rel.CREATE
-  elif statement in ('delete'):
-    return rel.DELETE
-  elif statement in ('update'):
-    return rel.UPDATE
-  elif statement in ('directions'):
-    return rel.DIRECTION
-  elif statement in ('subgroups'):
+  is_missing_bracket = False
+  if statement[-1] != '>':
+    is_missing_bracket = True
+
+  res = None
+
+  if statement in ('mapto>', '->'):
+    res = rel.MAPTO
+  elif statement in ('alias>'):
+    res = rel.ALIAS
+  elif statement in ('subset>', 'subsets>', '.'):
+    res = rel.SUBSET
+  elif statement in ('affects>'):
+    res = rel.AFFECTS
+  elif statement in ('cover>'):
+    res = rel.COVERS
+  elif statement in ('groups>', 'group>'):
+    res = rel.GROUP
+  elif statement in ('groups foreach>', 'group foreach>'):
+    res = rel.GROUP_FOREACH
+  elif statement in ('create>'):
+    res = rel.CREATE
+  elif statement in ('delete>'):
+    res = rel.DELETE
+  elif statement in ('update>'):
+    res = rel.UPDATE
+  elif statement in ('directions>'):
+    res = rel.DIRECTION
+  elif statement in ('subgroups>'):
     print('TODO: How do subgroups work??')
-    return rel.TBD
-  elif statement in ('arguments'):
+    res = rel.TBD
+  elif statement in ('arguments>'):
     print('TODO: How do arguments work??')
-    return rel.TBD
+    res = rel.TBD
   
-  return None
+  if res is None:
+    return None
+
+  assert not is_missing_bracket, f'Relation `{statement}` is missing the angle bracket. It should be `{statement}>`'
+
+  return res
 
 def parse_list(statements: list, key_parent: str|None, val_parent: str|None, interp: tuple[list, list], depth: int, path: SpecPath = []):
   """
@@ -708,6 +719,9 @@ def prepare_target_relation_statement(statement: str):
   if len(split) == 1:
     return None
   
+  if len(split) == 2 and parse_relation(statement) is not None:
+    # HACK: specifically catches `group foreach>`
+    return None
 
   # At this point we know it's *supposed* to be an action term, so we switch to asserts.
   assert len(split) == 3, f'Expected relation statement two split into 3 (on space): {statement}'
@@ -719,7 +733,6 @@ def prepare_target_relation_statement(statement: str):
   relation = split[1]
   assert relation[-1] == '>', f'Expected `relation>` in the statement: {statement}'
   
-  relation = relation[:-1]
   assert parse_relation(relation) is not None, f'`relation>` is not a relation in: {statement}'
   # NOTE: we don't actually use the relation, but we could do something with it (eg. tag it as an attribute somewhere)
 

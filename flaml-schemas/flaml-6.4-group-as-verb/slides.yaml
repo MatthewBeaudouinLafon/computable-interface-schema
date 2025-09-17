@@ -1,42 +1,42 @@
 # templates?
 # clickable things in the view?
 - slides:
-    group foreach:
+    group foreach>:
       # - /elements =: shapes and text
       - (gui) /view:
           /marks <>: /elements
           /encoding.canvas <>:
             (2D) /canvas:
-              cover: /elements
+              cover>: /elements
       - (action) /move-element:
-          update: /canvas cover> /elements
-          directions: /canvas
+          update>: /canvas cover> /elements
+          directions>: /canvas
       - (action) /create-element:
-          create: /elements
+          create>: /elements
       - (action) /delete-element:
-          delete: /elements
+          delete>: /elements
 
       - (gui) /edit-view:
           /marks <>: /elements
           /marks.hitboxes <>:
             - /move-element
             - (action) /select-element:
-                update: /elements.selected subset> /elements
+                update>: /elements.selected subset> /elements
           /encoding.canvas <>: /canvas
 
 - (action) new-slide:
-    create: slides
+    create>: slides
 - (action) delete-slide:
-    create: slides.selected
+    create>: slides.selected
 - (linear) slide-order:
-    affects: slides
+    affects>: slides
 
 - (gui) presentation-view:
     /marks <>: slides.current/view
 
 - (action) advance-slide:
-    update: slides.current subset> slides
-    directions: slide-order
+    update>: slides.current subset> slides
+    directions>: slide-order
 
 - (gui) main-view:
     /marks <>:
@@ -45,4 +45,4 @@
           /marks <>: slides/view
           /marks.hitboxes <>:
             (action) select-slide:
-              update: slides.selected subset> slides
+              update>: slides.selected subset> slides

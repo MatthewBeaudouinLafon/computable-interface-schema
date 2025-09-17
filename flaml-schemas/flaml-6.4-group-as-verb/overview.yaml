@@ -62,8 +62,8 @@
     # PARSE: SRC:ID=my-struct REL:affects TRG:ID=object-expression
     affects: object-expression
 
-    # PARSE: SRC:ID=my-struct REL:covers TRG:ID=object-expression
-    covers: name-expression # These are groups of the affected objects
+    # PARSE: SRC:ID=my-struct REL:cover TRG:ID=object-expression
+    cover: name-expression # These are groups of the affected objects
 
     # PARSE: SRC=my-instance/myargument REL:alias TRG:ID=obj-expression
     /argument =: any-expression

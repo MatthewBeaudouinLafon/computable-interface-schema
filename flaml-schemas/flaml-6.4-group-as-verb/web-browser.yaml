@@ -1,41 +1,41 @@
 - webpages:
-    group foreach:
+    group foreach>:
       - /links->webpages
       - (gui) /view:
           /marks <>:
             - /divs
             - /links
             - (action) nav-to-link:
-                update:
+                update>:
                   - webpages.open.active subset> webpages
                   - webpages.visited
                 directions: web-links
             - (action) open-in-new-tab:
-                create: tabs.open
-                update:
+                create>: tabs.open
+                update>:
                   - tabs.active subset> tabs
                   - webpages.open.active subset> webpages
                   - webpages.visited
-                directions: web-links
+                directions>: web-links
           /encoding <>:
             - (tree) /dom:
-                affects: /divs
+                affects>: /divs
       - (reader) page-reader:
           /marks.spoken <>: /divs.active
       - (action) nav-div:
-          update: /divs.active subset> /divs
-          directions: /dom
+          update>: /divs.active subset> /divs
+          directions>: /dom
 
 - (digraph) web-links:
-    affects: webpages
+    affects>: webpages
     /arrows =: webpages/links
 
 - (linear) history:
-    affects: webpages.visited
+    affects>: webpages.visited
 
 - (action) nav-history:
-    update: webpages.open.active subset> webpages.visited
-    directions: history
+    update>: webpages.open.active subset> webpages.visited
+    directions>: history
 
 - (gui) open-page-views:
     /marks <>: webpages.open/view
@@ -45,14 +45,14 @@
     /marks <>:
       - tabs
       - (action) change-tab:
-          update: tabs.active subset> tabs
+          update>: tabs.active subset> tabs
     /encoding.hstack <>:
       (linear) tab-order:
-        affects: tabs
+        affects>: tabs
 
 - (action) nav-tabs:
-    update: tabs.active subset> tabs
-    directions: tab-order
+    update>: tabs.active subset> tabs
+    directions>: tab-order
 
 - (gui) main-view:
     /marks <>:

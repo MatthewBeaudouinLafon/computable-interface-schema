@@ -1,27 +1,27 @@
 # ios messages
 - conversations:
-    group foreach:
+    group foreach>:
       - messages
       - people:
-          groups: messages
+          groups>: messages
 
 - (gui) chat-view:
     /marks.text <>: conversations.active->messages
     /encoding.vstack <>:
       (linear) time:
-        affects: messages, conversations
+        affects>: messages, conversations
     /encoding.left-right-align <>: people
 
 - (gui) convo-view:
     /marks <>: conversations
     /encoding.cluster <>:
       pin:
-        groups: conversations
+        groups>: conversations
     /encoding.vstack <>: time
 
 - (action) send-message:
-    create: conversations.active->messages
-    directions: time
+    create>: conversations.active->messages
+    directions>: time
 
 - (action) select-conversation:
-    update: conversations.active subsets> conversations
+    update>: conversations.active subsets> conversations

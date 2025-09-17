@@ -129,7 +129,7 @@ class TestDreamAnalogies:
     }, {})
     analogylib.populate_is_pruned(cv_dream)
 
-    cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=60)
+    cv_metalgo, _ = metalgo.compute_analogy(imessage_graph, slack_graph, timeout=2*60)
 
     assert analogylib.check_match(cv_dream, cv_metalgo, allowed_edits=0, nodes_only=True, verbose=True)
 

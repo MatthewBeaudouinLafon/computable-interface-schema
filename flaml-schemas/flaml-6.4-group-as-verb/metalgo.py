@@ -617,15 +617,15 @@ def mermaid_analogy_with_graphs(analogy: Analogy,
 
 if __name__ == '__main__':
   preferred_matches = None
-  timeout = 15*60
+  timeout = 10*60
   # sinister_graph = compiler.compile('calendar.yaml')
   # dexter_graph = compiler.compile('video-editor.yaml')
   # analogy, cost = compute_analogy(sinister_graph, dexter_graph, timeout=5, verbose=True)
-  sinister_name = 'imessage'
-  dexter_name = 'calendar'
+  # sinister_name = 'imessage'
+  # dexter_name = 'calendar'
 
-  # dexter_name = 'slack'
-  # dexter_name = 'imessage'
+  dexter_name = 'imessage'
+  sinister_name = 'slack'
 
   # sinister_name = 'calendar'
   # dexter_name = 'video-editor'
@@ -633,8 +633,8 @@ if __name__ == '__main__':
   #   'events': 'editors/videos'
   # }
 
-  sinister_name = 'slides'
-  dexter_name = 'figma'
+  # sinister_name = 'slides'
+  # dexter_name = 'figma'
   
   sinister_graph = compiler.compile(sinister_name + '.yaml')
   dexter_graph = compiler.compile(dexter_name + '.yaml')

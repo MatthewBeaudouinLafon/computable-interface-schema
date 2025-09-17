@@ -1,27 +1,27 @@
 # components?
 - pages:
-    group foreach:
+    group foreach>:
       - /layers:
-          subsets:
+          subsets>:
             - /frames
             - /shapes
             - /text # TODO: components
       - /layers:
-          groups foreach:
+          groups foreach>:
             - /properties
 
       - /frames:
           mapto:
             - (action) /navigate-prototype:
-                update: /frames.in-prototype.current subset> /frames
-                directions: /prototype-links
+                update>: /frames.in-prototype.current subset> /frames
+                directions>: /prototype-links
             # - (action) /prototype-actions:
             #     subset:
 
       - (action) create-layer:
-          create: /layers
+          create>: /layers
       - (action) delete-layer:
-          delete: /layers
+          delete>: /layers
 
       # - collaborators: # TODO: maybe there's a standard user type? kind of cheating maybe
       #     group foreach:
@@ -31,8 +31,8 @@
       #           update: pages/canvas affects> /cursor
 
       - (2D) /canvas:
-          affects: /points #, active_users/cursor
-          covers: /layers
+          affects>: /points #, active_users/cursor
+          cover>: /layers
 
       - (gui) /canvas-view:
           /marks.points <>: /points
@@ -40,14 +40,14 @@
           /marks.regions <>: /layers
           /marks.hitboxes <>:
             - (action) select-layer:
-                update: /layers.selected subset> /layers
+                update>: /layers.selected subset> /layers
             - (action) move-layer:
-                update: /canvas cover> /layers.selected
-                directions: /canvas
+                update>: /canvas cover> /layers.selected
+                directions>: /canvas
           /encoding.canvas <>: /canvas # could do z-order based on breadth-first-ordering of layers
 
       - (digraph) /prototype-links:
-          affects: /frames.in-prototype
+          affects>: /frames.in-prototype
 
       - (gui) prototype-canvas-view:
           /marks.points <>: /points
@@ -66,20 +66,20 @@
           /encoding.canvas <>: canvas
 
       - (tree) /layer-hierarchy:
-          affects: /layers
+          affects>: /layers
           # /parents =: /frames
           # /leaves =: /shapes and /text
           /depth-first-search-order:
-            affects: /layers
+            affects>: /layers
           /depth-order:
-            affects: /layers
+            affects>: /layers
 
       - (gui) /layer-panel:
           /marks.text <>:
             - /layers
             - select-layer
             - (action) reorder-layers:
-                update: /layer-hierarchy affects> /layers
+                update>: /layer-hierarchy affects> /layers
           /encoding.vstack <>: /layer-hierarchy/depth-first-search-order
           /encoding.hoffset <>: /layer-hierarchy/depth-order
 
@@ -91,13 +91,13 @@
 # - (gui) inspector-view =: pages.active/inspector-panel
 
 - (action) change-page:
-    update: pages.active subset> pages
+    update>: pages.active subset> pages
 
 - (gui) pages-view:
     /marks <>: pages, change-page
     /encoding.vstack <>:
       (linear) page-order: # huge action candidate
-        affects: pages
+        affects>: pages
 #
 # - $notes:
 #     - I wrote all of the spec for a single page, and now I want to make a bunch of pages.
