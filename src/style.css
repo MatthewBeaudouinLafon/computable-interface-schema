@@ -56,12 +56,12 @@ body {
 
 h1,
 h2 {
-  font-family: var(--header-font);
+  font-family: var(--header-font) !important;
 }
 
 h1 {
-  font-weight: 400;
-  font-size: 2em;
+  font-weight: 400 !important;
+  font-size: 2em !important;
 }
 
 hr {
