@@ -66,7 +66,7 @@ export function render_cost_matrix(cost_matrix: CostMatrix) {
         let color = "none";
         const classes = ["cost-matrix-item"];
 
-        if (analogy !== undefined && analogy.num_iterations < 3) {
+        if (analogy !== undefined && analogy.num_iterations <= 3) {
           classes.push("insignificant");
         }
 

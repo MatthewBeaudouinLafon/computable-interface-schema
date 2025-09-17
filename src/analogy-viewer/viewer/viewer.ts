@@ -72,7 +72,9 @@ async function render_ui_image(viewer: Viewer) {
     const patterns = [...svg.querySelectorAll("pattern")];
     patterns.forEach((p) => (p.id = `${p.id}_${id}`));
 
-    const backgrounds = [...svg.querySelectorAll("rect")];
+    const backgrounds = [
+      ...svg.querySelector("#BACKGROUND")!.querySelectorAll("rect"),
+    ];
     backgrounds.forEach((b) => {
       const fill = b.getAttribute("fill");
       if (fill === null) return;
@@ -161,6 +163,23 @@ function render_primitive(
 
   const classes = ["v-string"];
   if (is_key) classes.push("v-key");
+
+  if (
+    [
+      "affects",
+      "cover",
+      "group",
+      "subset",
+      "<>",
+      "create",
+      "delete",
+      "update",
+      "directions",
+    ].includes(thing)
+  ) {
+    classes.push("v-relation");
+    thing += ">";
+  }
 
   if (thing.startsWith("(")) {
     const end_idx = thing.indexOf(")", 1);

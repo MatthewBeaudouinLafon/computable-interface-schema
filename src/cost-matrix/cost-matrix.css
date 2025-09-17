@@ -1,5 +1,4 @@
 .cost-matrix {
-  display: none;
   bottom: 0px;
   right: 0px;
   flex-direction: column;
@@ -10,10 +9,7 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.178);
   font-size: 14px;
   margin-bottom: 10px;
-}
-
-.cost-matrix.visible {
-  display: flex;
+  width: fit-content;
 }
 
 .cost-matrix-item {

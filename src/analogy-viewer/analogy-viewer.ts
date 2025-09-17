@@ -6,7 +6,6 @@ import {
   get_curve_between_bbox_pivot,
   get_humane_pair_name,
   path,
-  pre,
   sanitize_name,
   svg,
 } from "../utilities/utilities";
@@ -56,15 +55,15 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
   // View
   const frag = hstack(".analogy-viewer", [
     el("p", ".analogy-title", get_humane_pair_name(a.name, b.name)),
-    pre(
-      ".analogy-info",
-      analogy.stdout.join("\n")
-      // `Cost: ${analogy.cost}\n\n` +
-      //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
-      //   analogy.punchline
-      //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
-      //     .join("\n")
-    ),
+    // pre(
+    //   ".analogy-info",
+    //   analogy.stdout.join("\n")
+    //   // `Cost: ${analogy.cost}\n\n` +
+    //   //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
+    //   //   analogy.punchline
+    //   //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+    //   //     .join("\n")
+    // ),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
       b_viewer.frag,
@@ -145,6 +144,7 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
         )
       )
       .filter((n) => n !== undefined);
+
     const to_nodes = to_paths
       .map((p) =>
         find_node_by(
@@ -224,65 +224,10 @@ function analogy_viewer_draw_connections(analogy_viewer: AnalogyViewer) {
     );
     overlay.append(...from_connections);
     overlay.append(...to_connections);
-
-    // for (const from_path of from_paths) {
-    //   const from_node = find_node_by(
-    //     a_viewer.view,
-    //     (n) => JSON.stringify(n.path) === JSON.stringify(from_path)
-    //   );
-
-    //   const from_img = a_viewer.frag.querySelector(
-    //     `img[data-id=${sanitize_name(from)}]`
-    //   ) as HTMLElement | null;
-
-    //   if (from_node === undefined) continue;
-
-    //   for (const to_path of to_paths) {
-    //     const to_node = find_node_by(
-    //       b_viewer.view,
-    //       (n) => JSON.stringify(n.path) === JSON.stringify(to_path)
-    //     );
-
-    //     if (to_node === undefined) continue;
-
-    //     const to_img = b_viewer.frag.querySelector(
-    //       `img[data-id=${sanitize_name(to)}]`
-    //     ) as HTMLElement | null;
-
-    //     const to_bbox = to_node.frag.getBoundingClientRect();
-    //     to_bbox.x -= container_bbox.x + 5;
-    //     to_bbox.y -= container_bbox.y;
-
-    //     const from_bbox = from_node.frag.getBoundingClientRect();
-    //     from_bbox.x -= container_bbox.x - 5;
-    //     from_bbox.y -= container_bbox.y;
-
-    //     const p = path(
-    //       ".connection-path",
-    //       get_curve_between_bbox(
-    //         from_bbox,
-    //         to_bbox
-    //         // a_viewer_bbox.right - from_bbox.right - container_bbox.x - 50,
-    //         // b_viewer_bbox.left - to_bbox.left - container_bbox.x + 50
-    //       )
-    //     );
-
-    //     // Event listeners
-    //     setup_connection_event_listeners(
-    //       to_node,
-    //       from_node,
-    //       p,
-    //       to_img,
-    //       from_img
-    //     );
-
-    //     overlay.append(p);
-    //   }
-    // }
   }
 }
 
-const HUES = [0, 180, 45, 135, 90];
+const HUES = [0, 45, 180, -90, 135, 90];
 
 function setup_connection_event_listeners(
   to_nodes: ViewNode[],

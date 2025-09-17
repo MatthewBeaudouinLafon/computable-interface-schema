@@ -36,7 +36,6 @@
   display: flex;
   border-right: 1px solid rgba(0, 0, 0, 0.164);
   padding: 1em 1em;
-  background: rgba(51, 56, 73, 0.05);
   overflow: auto;
   padding-bottom: 200px;
 
@@ -95,29 +94,5 @@
 
   &.vstack {
     flex-direction: column;
-  }
-}
-
-.file-icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: absolute;
-  top: 2px;
-  left: 0px;
-  border-radius: 3px;
-  overflow: hidden;
-
-  > img {
-    width: 13px;
-    height: 13px;
-  }
-
-  &.file-icon-ts {
-    filter: invert(1) hue-rotate(180deg);
-  }
-
-  &.file-icon-js {
-    filter: saturate(1.2) brightness(0.9);
   }
 }

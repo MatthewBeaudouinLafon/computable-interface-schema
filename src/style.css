@@ -1,10 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Cascadia+Mono:ital,wght@0,200..700;1,200..700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&display=swap");
 
 :root {
-  --monospace-font: "Ubuntu Mono";
+  --monospace-font: "Fragment Mono";
   --header-font: "EB Garamond";
   --sans-serif-font: "Source Sans 3";
   --serif-font: serif;
@@ -26,14 +25,13 @@ html {
   color: black;
   font-family: var(--sans-serif-font) !important;
   font-optical-sizing: auto;
-  background-color: #eff0f3;
+  background: white;
   overflow: hidden;
 }
 
 header {
   padding: 0em 1em;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  background: rgba(51, 56, 73, 0.05);
   display: flex;
   flex-direction: column;
 }
