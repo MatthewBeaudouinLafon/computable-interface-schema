@@ -6,6 +6,7 @@ import {
   get_curve_between_bbox_pivot,
   get_humane_pair_name,
   path,
+  pre,
   sanitize_name,
   svg,
 } from "../utilities/utilities";
@@ -55,15 +56,15 @@ export async function make_analogy_viewer(a: Spec, b: Spec, analogy: Analogy) {
   // View
   const frag = hstack(".analogy-viewer", [
     el("p", ".analogy-title", get_humane_pair_name(a.name, b.name)),
-    // pre(
-    //   ".analogy-info",
-    //   analogy.stdout.join("\n")
-    //   // `Cost: ${analogy.cost}\n\n` +
-    //   //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
-    //   //   analogy.punchline
-    //   //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
-    //   //     .join("\n")
-    // ),
+    pre(
+      ".analogy-info",
+      analogy.stdout.join("\n")
+      // `Cost: ${analogy.cost}\n\n` +
+      //   `Analogy Punchline (unpruned conceptual nodes only):\n` +
+      //   analogy.punchline
+      //     .map((pair) => `  ${pair[0]} <=> ${pair[1]}`)
+      //     .join("\n")
+    ),
     div(".analogy-viewer-viewers", [
       a_viewer.frag,
       b_viewer.frag,
